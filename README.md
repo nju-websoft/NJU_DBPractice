@@ -48,7 +48,7 @@ $ sudo apt install clang cmake flex bison
 Then change directory into the repository foot and run
 
 ```shell
-$ makedir build && cd build
+$ mkdir build && cd build
 ```
 
 ```shell

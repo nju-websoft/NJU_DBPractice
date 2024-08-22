@@ -25,7 +25,7 @@ or pulling requests.
 
 ## How to build
 
-First clone the repository from github. // TODO: change repository name for public repo
+First clone the repository from github.
 
 ```shell
 $ git clone --recursive https://github.com/nju-websoft/NJU_DBPractice

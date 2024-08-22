@@ -136,14 +136,14 @@ def nestedloop_join(left, right, condition):
 
 2. 功能分数（90%）：需要通过`wsdb/test/sql`目录下的SQL语句测试。
 
-   * t1: 完成`wsdb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
+   * t1: 顺序通过`wsdb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
 
      * `01_prepare_table_dbcourse.sql`: 15 pts
      * `02_seqscan_limit_projection.sql`: 30 pts
      * `03_filter_update_delete.sql`: 30 pts
      * `04_sort_final.sql`: 15 pts
 
-   * f1: 完成`wsdb/test/sql/lab02/f1`下的SQL测试，由于排序结果集较大，仓库并未包含排序测试的预期输出，请同学们确保测试充分后再提交。
+   * f1: 顺序通过`wsdb/test/sql/lab02/f1`下的SQL测试，由于排序结果集较大，仓库并未包含排序测试的预期输出，请同学们确保测试充分后再提交。
 
      * `04_merge_sort.sql`: 10pts
 

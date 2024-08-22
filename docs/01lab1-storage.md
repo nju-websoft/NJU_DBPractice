@@ -188,7 +188,7 @@ PAX Page Handle支持整列的读取（ReadChunk），给定一个记录模式�
     * f1：你需要通过`wsdb/test/storage/replacer_test.cpp`中的LRUK测试以获得该题目的功能分数。
     * f2：你需要通过`wsdb/test/system/table_handle_test.cpp`中的PAX_MultiThread测试以获得本实验的功能分数。
 
-**请勿抄袭，如被发现将取消大实验分数**!!!
+**请勿抄袭，如被发现将取消大实验分数!!!**
 
 ### 提交材料
 

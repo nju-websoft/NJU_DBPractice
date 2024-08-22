@@ -154,7 +154,7 @@ def nestedloop_join(left, right, condition):
      # e.g. bash evaluate.sh /path/to/wsdb/cmake-build-debug/bin t1
      ```
 
-**请勿抄袭，如被发现将取消大实验分数**!!!
+**请勿抄袭，如被发现将取消大实验分数!!!**
 
 ### 提交材料
 

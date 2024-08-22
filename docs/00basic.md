@@ -217,7 +217,7 @@ WSDB是为南京大学《数据库概论》设计的课程实验，总共包含�
 
 WSDB的服务端系统架构如下图所示（位于`wsdb_root/src`文件夹下）：
 
-![WSDB_arch](./00basic.assets/WSDB_arch.png)
+![WSDB_arch](./00basic.assets/wsdb_arch.png)
 
 * SQL Engine包含用于SQL解析和查询计划生成的Analyser，对查询计划进行逻辑和物理优化的Optimizer以及与客户端进行序列化交互的Net
   Controller。

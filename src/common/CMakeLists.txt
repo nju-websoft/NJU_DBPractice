@@ -1,0 +1,1 @@
+add_library(server_common SHARED types.cpp)

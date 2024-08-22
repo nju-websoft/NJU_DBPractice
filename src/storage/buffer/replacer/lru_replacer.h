@@ -1,0 +1,96 @@
+/*------------------------------------------------------------------------------
+ - Copyright (c) 2024. Websoft research group, Nanjing University.
+ -
+ - This program is free software: you can redistribute it and/or modify
+ - it under the terms of the GNU General Public License as published by
+ - the Free Software Foundation, either version 3 of the License, or
+ - (at your option) any later version.
+ -
+ - This program is distributed in the hope that it will be useful,
+ - but WITHOUT ANY WARRANTY; without even the implied warranty of
+ - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ - GNU General Public License for more details.
+ -
+ - You should have received a copy of the GNU General Public License
+ - along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ -----------------------------------------------------------------------------*/
+
+#ifndef WSDB_LRU_REPLACER_H
+#define WSDB_LRU_REPLACER_H
+
+#include <list>
+#include <mutex>  // NOLINT
+#include <vector>
+#include <unordered_map>
+#include "replacer.h"
+
+namespace wsdb {
+
+/**
+ * LRUReplacer implements the Least Recently Used replacement policy.
+ */
+class LRUReplacer : public Replacer
+{
+public:
+  /**
+   * Create a new LRUReplacer.
+   */
+  explicit LRUReplacer();
+
+  /**
+   * Destroys the LRUReplacer.
+   */
+  ~LRUReplacer() override = default;
+
+  /**
+   * Victimize a frame according to the LRU policy.
+   * 1. grant the latch
+   * 2. if there is no frame in the LRU list return false
+   * 3. get the frame id from the back of the LRU list
+   * 4. update the LRU list and hash map
+   * @param frame_id
+   * @return true if a victim frame was found, false otherwise
+   */
+  auto Victim(frame_id_t *frame_id) -> bool override;
+
+  /**
+   * Pin a frame, indicating that it should not be victimized until it is unpinned.
+   * 1. grant the latch
+   * 2. if the frame is not in the LRU hash map return
+   * 3. update the LRU list and hash map
+   * @param frame_id
+   */
+  void Pin(frame_id_t frame_id) override;
+
+  /**
+   * Unpin a frame, indicating that it can now be victimized.
+   * 1. grant the latch
+   * 2. if the frame is already unpinned return
+   * 3. add the frame to the LRU list and construct the LRU hash map
+   * @param frame_id
+   */
+  void Unpin(frame_id_t frame_id) override;
+
+  /**
+   * Get the number of elements in the replacer that can be victimized.
+   * 1. grant the latch
+   * 2. return the size of the LRU list
+   * @return the number of elements in the replacer that can be victimized
+   */
+  auto Size() -> size_t override;
+
+private:
+  /// Mutex
+  std::mutex latch_;
+  /// Stores the frame ids of unpinned pages in the order they were added, with the head being the most recently
+  /// accessed
+  std::list<frame_id_t> LRUlist_;
+  /// frame_id_t -> frame id of unpinned pages
+  std::unordered_map<frame_id_t, std::list<frame_id_t>::iterator> LRUhash_;
+  /// Maximum capacity (same as buffer pool capacity)
+  [[maybe_unused]] size_t max_size_;
+};
+
+}  // namespace wsdb
+
+#endif  // WSDB_LRU_REPLACER_H

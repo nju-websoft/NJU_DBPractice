@@ -1,0 +1,1 @@
+add_library(plan SHARED plan.cpp)

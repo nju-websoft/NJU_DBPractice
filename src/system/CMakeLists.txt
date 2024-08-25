@@ -6,7 +6,8 @@ add_library(system SHARED
         system.cpp
 )
 target_link_libraries(system
-        analyser
+        parser
+        planner
         optimizer
         execution
         log

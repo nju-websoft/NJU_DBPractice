@@ -8,5 +8,6 @@ add_flex_bison_dependency(lex yacc)
 
 include_directories(include)
 
-set(SOURCES ${BISON_yacc_OUTPUT_SOURCE} ${FLEX_lex_OUTPUTS} ast.cpp)
+set(SOURCES ${BISON_yacc_OUTPUT_SOURCE} ${FLEX_lex_OUTPUTS} ast.cpp parser.cpp)
 add_library(parser SHARED ${SOURCES})
+target_link_libraries(parser fmt::fmt)

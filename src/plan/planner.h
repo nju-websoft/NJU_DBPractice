@@ -25,19 +25,19 @@
 #include <utility>
 
 #include "parser/ast.h"
-#include "plan/plan.h"
+#include "plan.h"
 #include "system/context.h"
 
 namespace wsdb {
 
-class Analyser
+class Planner
 {
 public:
-  Analyser() = default;
+  Planner() = default;
 
-  [[nodiscard]] static auto Parse(const std::string &sql) -> std::shared_ptr<ast::TreeNode>;
+  DISABLE_COPY_MOVE_AND_ASSIGN(Planner)
 
-  [[nodiscard]] static auto Analyse(
+  [[nodiscard]] static auto PlanAST(
       const std::shared_ptr<ast::TreeNode> &ast, DatabaseHandle *db) -> std::shared_ptr<AbstractPlan>;
 
 private:

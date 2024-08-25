@@ -19,14 +19,13 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#include "analyser.h"
-#include "parser/def.h"
+#include "planner.h"
 
 #include <utility>
 
 namespace wsdb {
 
-std::shared_ptr<AbstractPlan> Analyser::Analyse(const std::shared_ptr<ast::TreeNode> &ast, DatabaseHandle *db)
+std::shared_ptr<AbstractPlan> Planner::PlanAST(const std::shared_ptr<ast::TreeNode> &ast, DatabaseHandle *db)
 {
 
   /// database related
@@ -121,19 +120,9 @@ std::shared_ptr<AbstractPlan> Analyser::Analyse(const std::shared_ptr<ast::TreeN
   return nullptr;
 }
 
-std::shared_ptr<ast::TreeNode> Analyser::Parse(const std::string &sql)
-{
-  auto buf = yy_scan_string(sql.c_str());
-  if (yyparse() != 0) {
-    yy_delete_buffer(buf);
-    throw WSDBException(WSDB_INVALID_SQL, Q(Analyser), Q(Parse), sql);
-  }
-  auto ret = ast::wsdb_ast_;
-  yy_delete_buffer(buf);
-  return ret;
-}
 
-auto Analyser::AnalyseSelect(const std::shared_ptr<ast::SelectStmt> &sel, wsdb::DatabaseHandle *db,
+
+auto Planner::AnalyseSelect(const std::shared_ptr<ast::SelectStmt> &sel, wsdb::DatabaseHandle *db,
     std::vector<std::string> &tabs) -> std::shared_ptr<AbstractPlan>
 {
   std::vector<RTField>          sel_fields;
@@ -260,7 +249,7 @@ auto Analyser::AnalyseSelect(const std::shared_ptr<ast::SelectStmt> &sel, wsdb::
   return nullptr;
 }
 
-auto Analyser::TransformValue(const std::shared_ptr<ast::Value> &val) -> ValueSptr
+auto Planner::TransformValue(const std::shared_ptr<ast::Value> &val) -> ValueSptr
 {
   if (const auto i = std::dynamic_pointer_cast<ast::IntLit>(val)) {
     return ValueFactory::CreateIntValue(i->val_);
@@ -277,7 +266,7 @@ auto Analyser::TransformValue(const std::shared_ptr<ast::Value> &val) -> ValueSp
   }
 }
 
-auto Analyser::TransformCols(const std::vector<std::shared_ptr<ast::Col>> &cols, wsdb::DatabaseHandle *db,
+auto Planner::TransformCols(const std::vector<std::shared_ptr<ast::Col>> &cols, wsdb::DatabaseHandle *db,
     const std::vector<std::string> &tabs) -> std::vector<RTField>
 {
   std::vector<RTField> fields;
@@ -298,7 +287,7 @@ auto Analyser::TransformCols(const std::vector<std::shared_ptr<ast::Col>> &cols,
   return fields;
 }
 
-auto Analyser::MakeConditionVec(const std::vector<std::shared_ptr<ast::BinaryExpr>> &exprs, DatabaseHandle *db,
+auto Planner::MakeConditionVec(const std::vector<std::shared_ptr<ast::BinaryExpr>> &exprs, DatabaseHandle *db,
     const std::vector<std::string> &tabs) -> ConditionVec
 {
   ConditionVec conds;
@@ -344,7 +333,7 @@ auto Analyser::MakeConditionVec(const std::vector<std::shared_ptr<ast::BinaryExp
   return conds;
 }
 
-auto Analyser::CreateRecordSchema(const std::vector<std::shared_ptr<ast::Field>> &fields, std::string &tab_name,
+auto Planner::CreateRecordSchema(const std::vector<std::shared_ptr<ast::Field>> &fields, std::string &tab_name,
     DatabaseHandle *db) -> RecordSchemaUptr
 {
   std::vector<RTField> rt_fields;
@@ -368,7 +357,7 @@ auto Analyser::CreateRecordSchema(const std::vector<std::shared_ptr<ast::Field>>
   return std::make_unique<RecordSchema>(rt_fields);
 }
 
-void Analyser::CheckFieldTabName(
+void Planner::CheckFieldTabName(
     std::string &tab_name, const std::string &field_name, DatabaseHandle *db, const std::vector<std::string> &cand_tabs)
 {
   if (!tab_name.empty()) {
@@ -414,7 +403,7 @@ void Analyser::CheckFieldTabName(
   }
 }
 
-auto Analyser::GetAllFields(const std::vector<std::string> &tabs, DatabaseHandle *db) -> std::vector<RTField>
+auto Planner::GetAllFields(const std::vector<std::string> &tabs, DatabaseHandle *db) -> std::vector<RTField>
 {
   std::vector<RTField> fields;
   for (const auto &tab_name : tabs) {
@@ -430,7 +419,7 @@ auto Analyser::GetAllFields(const std::vector<std::string> &tabs, DatabaseHandle
   return fields;
 }
 
-auto Analyser::GetConditionsForJoin(
+auto Planner::GetConditionsForJoin(
     const std::string &left, const std::string &right, ConditionVec &conds, DatabaseHandle *db) -> ConditionVec
 {
   ConditionVec ret;
@@ -448,7 +437,7 @@ auto Analyser::GetConditionsForJoin(
   return ret;
 }
 
-auto Analyser::GetConditionsForTable(
+auto Planner::GetConditionsForTable(
     const std::string &tab_name, const ConditionVec &conds, DatabaseHandle *db) -> ConditionVec
 {
   std::vector<Condition> ret;
@@ -462,7 +451,7 @@ auto Analyser::GetConditionsForTable(
   return ret;
 }
 
-auto Analyser::MakeFilterScanPlan(
+auto Planner::MakeFilterScanPlan(
     const std::string &tab_name, const ConditionVec &conds) -> std::shared_ptr<AbstractPlan>
 {
   auto scan_plan = std::make_shared<ScanPlan>(tab_name);
@@ -472,7 +461,7 @@ auto Analyser::MakeFilterScanPlan(
   return std::make_shared<FilterPlan>(std::move(scan_plan), conds);
 }
 
-auto Analyser::MakeAggregatePlan(std::shared_ptr<AbstractPlan> &child, const std::vector<RTField> &group_fields,
+auto Planner::MakeAggregatePlan(std::shared_ptr<AbstractPlan> &child, const std::vector<RTField> &group_fields,
     const std::vector<RTField> &proj_fields, const ConditionVec &havings) -> std::shared_ptr<AbstractPlan>
 {
   std::vector<RTField> agg_fields;
@@ -516,7 +505,7 @@ auto Analyser::MakeAggregatePlan(std::shared_ptr<AbstractPlan> &child, const std
   }
 }
 
-auto Analyser::MakeProjSortPlan(std::shared_ptr<AbstractPlan> &child, const std::vector<RTField> &proj_fields,
+auto Planner::MakeProjSortPlan(std::shared_ptr<AbstractPlan> &child, const std::vector<RTField> &proj_fields,
     const std::vector<RTField> &sort_fields, bool is_desc) -> std::shared_ptr<AbstractPlan>
 {
   if (sort_fields.empty()) {

@@ -23,8 +23,9 @@
 #define WSDB_SYSTEM_H
 
 #include "storage/storage.h"
-#include "analyse/analyser.h"
 #include "execution/executor.h"
+#include "parser/parser.h"
+#include "plan/planner.h"
 #include "optimizer/optimizer.h"
 #include "log/log_manager.h"
 #include "log/recovery.h"
@@ -77,7 +78,8 @@ private:
   std::unique_ptr<Recovery>          recovery_;
   std::unique_ptr<TableManager>      table_manager_;
   std::unique_ptr<IndexManager>      index_manager_;
-  std::unique_ptr<Analyser>          analyser_;
+  std::unique_ptr<Parser>            parser_;
+  std::unique_ptr<Planner>           planner_;
   std::unique_ptr<Executor>          executor_;
   std::unique_ptr<Optimizer>         optimizer_;
   std::unique_ptr<TxnManager>        txn_manager_;

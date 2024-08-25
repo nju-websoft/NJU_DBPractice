@@ -45,7 +45,8 @@ void SystemManager::Init()
   recovery_            = std::make_unique<Recovery>(disk_manager_.get(), buffer_pool_manager_.get());
   table_manager_       = std::make_unique<TableManager>(disk_manager_.get(), buffer_pool_manager_.get());
   index_manager_       = std::make_unique<IndexManager>(disk_manager_.get(), buffer_pool_manager_.get());
-  analyser_            = std::make_unique<Analyser>();
+  parser_              = std::make_unique<Parser>();
+  planner_             = std::make_unique<Planner>();
   executor_            = std::make_unique<Executor>();
   optimizer_           = std::make_unique<Optimizer>();
   txn_manager_         = std::make_unique<TxnManager>(log_manager_.get());
@@ -168,8 +169,8 @@ void SystemManager::ClientHandler(int client_fd)
         break;
       }
       txn_manager_->SetTransaction(&txn);
-      auto gm_tree = analyser_->Parse(sql);
-      auto plan    = analyser_->Analyse(gm_tree, context.db_);
+      auto gm_tree = parser_->Parse(sql);
+      auto plan    = planner_->PlanAST(gm_tree, context.db_);
       if (plan != nullptr) {
         if (!DoDBPlan(plan, &context)) {
           /// plan is not a db plan

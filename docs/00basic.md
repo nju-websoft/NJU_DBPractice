@@ -219,7 +219,7 @@ WSDB的服务端系统架构如下图所示（位于`wsdb_root/src`文件夹下�
 
 ![WSDB_arch](./00basic.assets/wsdb_arch.png)
 
-* SQL Engine包含用于SQL解析和查询计划生成的Analyser，对查询计划进行逻辑和物理优化的Optimizer以及与客户端进行序列化交互的Net
+* SQL Engine包含用于SQL解析的Parser，查询计划生成的Planner，对查询计划进行逻辑和物理优化的Optimizer以及与客户端进行序列化交互的Net
   Controller。
 * Executor定义了数据库中所有操作，包括事务处理，数据描述语句以及数据管理语句的相关操作。使用火山模型对算子树进行计算。
 * System模块由系统管理器（System Manager）和系统句柄（System Handle）两部分组成。其中系统管理器包括表管理器（Table

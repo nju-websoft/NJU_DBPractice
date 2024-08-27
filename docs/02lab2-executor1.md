@@ -172,7 +172,6 @@ def nestedloop_join(left, right, condition):
 ├── lab2_123456_张三.pdf
 └── src
     ├── CMakeLists.txt
-    ├── analyse
     ├── common
     ├── concurrency
     ├── execution

@@ -245,8 +245,7 @@ $ ./client -h
 
 项目根目录下的.clang-tidy文件在配置成功后能够对整个项目进行代码格式化，关于如何使用加载.clang-tidy，请参考你使用的IDE的官方文档或者询问GPT。
 
-除一些第三方软件出现的warning（比如某些版本的bison大概率会出现的yyerror unused的warning可以忽视），同学们提交的代码应尽量做到warning
-free。
+除一些第三方软件出现的warning（比如某些版本的bison大概率会出现的yyerror unused的warning可以忽视），同学们提交的代码应尽量做到warning free。
 
 ## 致选修这门课的同学们
 
@@ -257,7 +256,7 @@ issue或者课程qq群积极反馈，对于能提供完备bug复现方法或者�
 
 ## 如何快速优雅地运行WSDB
 
-你可以使用任意你喜欢的Linux发行版或者MacOS系统，按照README中的环境配置教程安装项目依赖的工具。如果你在使用Windows系统，可以使用WSL或者虚拟机来进行开发，我们强烈建议使用图形化的现代IDE对代码进行调试，关于如何使用VSCode或者CLion连接WSL可以参考下面的文章：[VSCode + WSL](https://code.visualstudio.com/docs/remote/wsl)，[CLion + WSL](https://www.jetbrains.com/help/clion/how-to-use-wsl-development-environment-in-product.html#wsl-general)。
+你可以使用任意你喜欢的Linux发行版或者MacOS系统，按照README中的环境配置教程安装项目依赖的工具。如果你在使用Windows系统，可以使用WSL或者虚拟机来进行开发，我们建议使用图形化的现代IDE对代码进行调试，关于如何使用VSCode或者CLion连接WSL可以参考下面的文章：[VSCode + WSL](https://code.visualstudio.com/docs/remote/wsl)，[CLion + WSL](https://www.jetbrains.com/help/clion/how-to-use-wsl-development-environment-in-product.html#wsl-general)。
 
 ## vscode
 

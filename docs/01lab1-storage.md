@@ -50,10 +50,7 @@ map字段。
 
 ## 实验要求
 
-本次实验需要同学们完成缓冲区管理器和表句柄的相关内容并通过相关单元测试。假设仓库目录名为`wsdb`
-，服务器代码文件均在`wsdb/src/`目录下。你只需要修改或添加`src`
-文件夹下的文件，如果遇到不在`WSDB_ERRORS`（`wsdb/common/errors.h`）列表中的未知异常，请使用`WSDB_EXCEPTION_EMPTY`
-，并在报告中写下你遇到的特殊情况。请完成所有标注`WSDB_STUDENT_TODO`宏的函数，并在完成后将宏删除。
+本次实验需要同学们完成缓冲区管理器和表句柄的相关内容并通过相关单元测试。假设仓库目录名为`wsdb`，服务器代码文件均在`wsdb/src/`目录下。你只需要修改或添加`src`文件夹下的文件，如果遇到不在`WSDB_ERRORS`（`wsdb/common/errors.h`）列表中的未知异常，请使用`WSDB_EXCEPTION_EMPTY`，并在报告中写下你遇到的特殊情况。请完成所有标注`WSDB_STUDENT_TODO`宏的函数，并在完成后将宏删除。
 
 ### t1. LRU (20 pts)
 
@@ -188,7 +185,9 @@ PAX Page Handle支持整列的读取（ReadChunk），给定一个记录模式�
     * f1：你需要通过`wsdb/test/storage/replacer_test.cpp`中的LRUK测试以获得该题目的功能分数。
     * f2：你需要通过`wsdb/test/system/table_handle_test.cpp`中的PAX_MultiThread测试以获得本实验的功能分数。
 
-**请勿抄袭，如被发现将取消大实验分数!!!**
+**请勿抄袭或搬运他人的实验结果，如被发现将取消大实验分数!!!**
+
+3. 测试方法：编译`replacer_test`，`buffer_pool_test`，`table_handle_test`并运行，并通过每一小题的测试样例。
 
 ### 提交材料
 

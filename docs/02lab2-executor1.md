@@ -154,7 +154,16 @@ def nestedloop_join(left, right, condition):
      # e.g. bash evaluate.sh /path/to/wsdb/cmake-build-debug/bin t1
      ```
 
-**请勿抄袭，如被发现将取消大实验分数!!!**
+**请勿抄袭或搬运他人的实验结果，如被发现将取消大实验分数!!!**
+
+3. 测试方法：编译`wsdb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
+
+   ```shell
+   $ ./wsdb
+   $ ./client
+   ```
+
+   关于client的更多用法可参考00basic.md或使用-h参数查看。如果`wsdb`因为端口监听异常启动失败（通常原因是已经启用了一个wsdb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间wsdb释放资源后再重新启动。
 
 ### 提交材料
 

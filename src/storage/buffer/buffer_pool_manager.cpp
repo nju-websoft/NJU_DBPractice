@@ -80,4 +80,10 @@ void BufferPoolManager::UpdateFrame(frame_id_t frame_id, file_id_t fid, page_id_
   WSDB_STUDENT_TODO(L1, t2, BufferPoolManager, UpdateFrame());
 }
 
+auto BufferPoolManager::GetFrame(file_id_t fid, page_id_t pid) -> Frame*
+{
+  const auto it = page_frame_lookup_.find({fid,pid});
+  return it == nullptr ? nullptr : &frames_[it->second];
+}
+
 }  // namespace wsdb

@@ -14,13 +14,9 @@
  - You should have received a copy of the GNU General Public License
  - along with this program.  If not, see <https://www.gnu.org/licenses/>.
  -----------------------------------------------------------------------------*/
-#define private public
-#define protected public
 #include "storage/buffer/buffer_pool_manager.h"
 #include "storage/buffer/replacer/lru_replacer.h"
 #include "../config.h"
-#undef private
-#undef protected
 
 #include <cassert>
 #include <cstring>
@@ -61,7 +57,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
     ASSERT_NE(page->GetData(), nullptr);
     buffer_pool_manager.UnpinPage(fd, 0, true);
     buffer_pool_manager.UnpinPage(fd, 0, false);
-    auto is_dirty = buffer_pool_manager.frames_[buffer_pool_manager.page_frame_lookup_[{fd, 0}]].IsDirty();
+    auto is_dirty = buffer_pool_manager.GetFrame(fd, 0)->IsDirty();
     ASSERT_EQ(is_dirty, true);
     buffer_pool_manager.DeletePage(fd, 0);
 
@@ -74,8 +70,8 @@ TEST(BufferPoolManagerTest, SimpleTest)
       buffer_pool_manager.UnpinPage(fd, i, false);
     }
     buffer_pool_manager.DeleteAllPages(fd);
-    auto it = buffer_pool_manager.page_frame_lookup_.find({fd, 0});
-    ASSERT_EQ(it, buffer_pool_manager.page_frame_lookup_.end());
+    auto fm = buffer_pool_manager.GetFrame(fd, 0);
+    ASSERT_EQ(fm, nullptr);
 
     /// test buffer pool with write
     std::vector<std::string> page_data(MAX_PAGES);

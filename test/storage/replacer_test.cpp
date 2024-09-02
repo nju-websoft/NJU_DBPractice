@@ -132,7 +132,7 @@ TEST(ReplacerTest, LRUK)
       replacer.Pin(frame_id);
       auto &history = access_history[frame_id];
       history.push_back(i);
-      if (history.size() > k) {
+      if (history.size() > static_cast<size_t>(k)) {
         history.pop_front();
       }
     }
@@ -149,7 +149,7 @@ TEST(ReplacerTest, LRUK)
       size_t        max_dist          = 0;
       // check if the frame id is the one with the largest backward k distance
       for (auto &[fid, history] : access_history) {
-        if (history.size() < k) {
+        if (history.size() < static_cast<size_t>(k)) {
           throw;
         }
         size_t dist = 1000 - history.front();

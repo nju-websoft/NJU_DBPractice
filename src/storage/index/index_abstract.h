@@ -58,11 +58,11 @@ public:
   [[nodiscard]] auto GetIndexType() const -> IndexType { return index_type_; }
 
 private:
-  [[maybe_unused]] DiskManager       *disk_manager_;
-  [[maybe_unused]] BufferPoolManager *buffer_pool_manager_;
-  [[maybe_unused]] IndexType          index_type_;
-  [[maybe_unused]] idx_id_t           index_id_;
-  [[maybe_unused]] RecordSchema      *key_schema_;
+  DiskManager       *disk_manager_;
+  BufferPoolManager *buffer_pool_manager_;
+  IndexType          index_type_;
+  idx_id_t           index_id_;
+  RecordSchema      *key_schema_;
 };
 
 }  // namespace wsdb

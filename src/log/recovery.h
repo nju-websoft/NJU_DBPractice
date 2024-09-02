@@ -43,9 +43,9 @@ public:
   void Undo();
 
 private:
-  [[maybe_unused]] DiskManager       *disk_manager_;
-  [[maybe_unused]] BufferPoolManager *buffer_pool_manager_;
-  [[maybe_unused]] DatabaseHandle    *db_hdl_{nullptr};
+  DiskManager       *disk_manager_;
+  BufferPoolManager *buffer_pool_manager_;
+  DatabaseHandle    *db_hdl_{nullptr};
 };
 }  // namespace wsdb
 

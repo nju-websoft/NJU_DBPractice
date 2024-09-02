@@ -88,7 +88,7 @@ private:
   /// frame_id_t -> frame id of unpinned pages
   std::unordered_map<frame_id_t, std::list<frame_id_t>::iterator> LRUhash_;
   /// Maximum capacity (same as buffer pool capacity)
-  [[maybe_unused]] size_t max_size_;
+  size_t max_size_;
 };
 
 }  // namespace wsdb

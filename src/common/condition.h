@@ -113,12 +113,12 @@ public:
   }
 
 private:
-  CondRvalType            rval_type_{kNone};
-  RTField                 l_col_{};
-  RTField                 r_col_{};
-  ValueSptr               r_val_{nullptr};
-  [[maybe_unused]] CompOp op_{};
-  int32_t                 subquery_id_{-1};
+  CondRvalType rval_type_{kNone};
+  RTField      l_col_{};
+  RTField      r_col_{};
+  ValueSptr    r_val_{nullptr};
+  CompOp       op_{};
+  int32_t      subquery_id_{-1};
 };
 
 }  // namespace wsdb

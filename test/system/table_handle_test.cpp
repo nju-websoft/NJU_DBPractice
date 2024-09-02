@@ -48,7 +48,7 @@ auto GenRecordUnderSchema(const RecordSchema &schema) -> RecordUptr
   std::vector<ValueSptr> values;
   for (const auto &f : schema.GetFields()) {
     auto data = new char[f.field_.field_size_];
-    for (int i = 0; i < f.field_.field_size_; ++i) {
+    for (int i = 0; i < static_cast<int>(f.field_.field_size_); ++i) {
       data[i] = rand() % 256;
     }
     values.emplace_back(ValueFactory::CreateValue(f.field_.field_type_, data, f.field_.field_size_));

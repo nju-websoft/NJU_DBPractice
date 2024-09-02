@@ -50,9 +50,9 @@ public:
   [[nodiscard]] auto GetTxnId() const -> txn_id_t { return txn_id_; }
 
 private:
-  txn_id_t                  txn_id_;
-  [[maybe_unused]] TxnState state_{TxnState::INVALID};
-  [[maybe_unused]] bool     is_explcit_{false};
+  txn_id_t txn_id_;
+  TxnState state_{TxnState::INVALID};
+  bool     is_explcit_{false};
 };
 
 class TxnManager
@@ -75,7 +75,7 @@ private:
   std::atomic<txn_id_t>                                      next_ts_{0};
   std::unordered_map<txn_id_t, std::unique_ptr<Transaction>> tid_to_ts_;
 
-  [[maybe_unused]] LogManager *log_manager_;
+  LogManager *log_manager_;
 
   std::mutex latch_;
 };

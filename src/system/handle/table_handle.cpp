@@ -112,7 +112,7 @@ auto TableHandle::GetStorageModel() const -> StorageModel { return storage_model
 auto TableHandle::GetFirstRID() -> RID
 {
   auto page_id = FILE_HEADER_PAGE_ID + 1;
-  while (page_id < tab_hdr_.page_num_) {
+  while (page_id < static_cast<page_id_t>(tab_hdr_.page_num_)) {
     auto pg_hdl = FetchPageHandle(page_id);
     auto id     = BitMap::FindFirst(pg_hdl->GetBitmap(), tab_hdr_.rec_per_page_, 0, true);
     if (id != tab_hdr_.rec_per_page_) {
@@ -129,10 +129,10 @@ auto TableHandle::GetNextRID(const RID &rid) -> RID
 {
   auto page_id = rid.PageID();
   auto slot_id = rid.SlotID();
-  while (page_id < tab_hdr_.page_num_) {
+  while (page_id < static_cast<page_id_t>(tab_hdr_.page_num_)) {
     auto pg_hdl = FetchPageHandle(page_id);
     slot_id = static_cast<slot_id_t>(BitMap::FindFirst(pg_hdl->GetBitmap(), tab_hdr_.rec_per_page_, slot_id + 1, true));
-    if (slot_id == tab_hdr_.rec_per_page_) {
+    if (slot_id == static_cast<slot_id_t>(tab_hdr_.rec_per_page_)) {
       buffer_pool_manager_->UnpinPage(table_id_, page_id, false);
       page_id++;
       slot_id = -1;

@@ -84,6 +84,7 @@ static std::string WSDBExceptionTypeToString(WSDBExceptionType type)
     WSDB_ERRORS
   }
 #undef WSDB_ERROR
+  return {};
 }
 
 /// usage:

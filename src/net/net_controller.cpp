@@ -92,7 +92,7 @@ void NetController::SendRecHeader(int fd, const RecordSchema *header)
   auto &pkg_ = client_buffer_[fd];
   pkg_.type_ = net::NET_PKG_REC_HEADER;
   std::string header_str;
-  for (int i = 0; i < header->GetFieldCount(); ++i) {
+  for (int i = 0; i < static_cast<int>(header->GetFieldCount()); ++i) {
     auto &field = header->GetFieldAt(i);
     // check alias
     if (field.alias_.empty()) {
@@ -121,7 +121,7 @@ void NetController::SendRec(int fd, const Record *rec)
   pkg_.type_ = net::NET_PKG_REC_BODY;
   // record format: {field_value}\t{field_value}\t ...
   std::string rec_str;
-  for (int i = 0; i < rec->GetSchema()->GetFieldCount(); ++i) {
+  for (int i = 0; i < static_cast<int>(rec->GetSchema()->GetFieldCount()); ++i) {
     auto v = rec->GetValueAt(i);
     rec_str += v->ToString();
     rec_str += '\t';

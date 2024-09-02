@@ -70,10 +70,10 @@ private:
     auto SetEvictable(bool set_evictable) -> void { WSDB_STUDENT_TODO(L1, f1, LRUKNode, SetEvictable()); }
 
   private:
-    [[maybe_unused]] std::list<timestamp_t> history_;
-    [[maybe_unused]] frame_id_t             fid_{INVALID_FRAME_ID};
-    [[maybe_unused]] size_t                 k{};
-    [[maybe_unused]] bool                   is_evictable_{};
+    std::list<timestamp_t> history_;
+    frame_id_t             fid_{INVALID_FRAME_ID};
+    size_t                 k{};
+    bool                   is_evictable_{};
   };
 
 private:

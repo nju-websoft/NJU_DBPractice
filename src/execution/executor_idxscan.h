@@ -47,12 +47,12 @@ private:
   /// schema. Store the record fetched from the table handle with the
   /// indexed rid into AbstractExecutor::record_. Remove [[maybe_unused]]
   /// when you implement this executor
-  [[maybe_unused]] TableHandle *tbl_;            // table handle
-  [[maybe_unused]] IndexHandle *idx_;            // index handle
-  [[maybe_unused]] ConditionVec conds_;          // conditions
-  [[maybe_unused]] RecordUptr   low_;            // low key
-  [[maybe_unused]] RecordUptr   high_;           // high key
-  [[maybe_unused]] int          cmp_field_num_;  // number of field to be compared from the 0th field
+  TableHandle *tbl_;            // table handle
+  IndexHandle *idx_;            // index handle
+  ConditionVec conds_;          // conditions
+  RecordUptr   low_;            // low key
+  RecordUptr   high_;           // high key
+  int          cmp_field_num_;  // number of field to be compared from the 0th field
 };
 }  // namespace wsdb
 

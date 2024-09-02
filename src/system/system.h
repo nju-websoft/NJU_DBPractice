@@ -85,8 +85,7 @@ private:
   std::unique_ptr<TxnManager>        txn_manager_;
   std::unique_ptr<NetController>     net_controller_;
 
-  [[maybe_unused]] bool is_server_{false};   // indicates whether the system is running as a server or an instance
-  bool                  is_running_{false};  // indicates whether the system is running
+  bool is_running_{false};  // indicates whether the system is running
 
   std::unordered_map<std::string, std::unique_ptr<DatabaseHandle>> databases_;
 };

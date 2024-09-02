@@ -21,6 +21,7 @@
 
 #include "lru_k_replacer.h"
 #include "common/config.h"
+#include "../common/error.h"
 
 namespace wsdb {
 

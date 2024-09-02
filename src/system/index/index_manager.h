@@ -45,8 +45,8 @@ public:
   void CloseIndex(const IndexHandle &index_handle);
 
 private:
-  [[maybe_unused]] DiskManager       *disk_manager_;
-  [[maybe_unused]] BufferPoolManager *buffer_pool_manager_;
+  DiskManager       *disk_manager_;
+  BufferPoolManager *buffer_pool_manager_;
 };
 }  // namespace wsdb
 

@@ -134,7 +134,7 @@ auto Optimizer::CanIndexScan(ConditionVec &conds, ConditionVec &index_conds, con
     std::vector<int> tmp_conds_pos;
     for (const auto &field : idx->GetKeySchema().GetFields()) {
       bool matched = false;
-      for (int i = 0; i < conds.size(); ++i) {
+      for (int i = 0; i < static_cast<int>(conds.size()); ++i) {
         auto       &cond = conds[i];
         const auto &lcol = cond.GetLCol();
         if (lcol.field_.table_id_ == field.field_.table_id_ && lcol.field_.field_name_ == field.field_.field_name_) {

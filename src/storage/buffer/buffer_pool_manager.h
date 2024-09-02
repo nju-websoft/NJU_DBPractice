@@ -129,6 +129,11 @@ public:
    */
   auto FlushAllPages(file_id_t fid) -> bool;
 
+ /**
+   * Get the frame, used for test
+   */
+ auto GetFrame(file_id_t fid, page_id_t pid) -> Frame*;
+
 private:
   /// sub procedures used by public APIs, should not be locked by latch
 
@@ -155,7 +160,7 @@ private:
 private:
   std::mutex                                latch_;
   DiskManager                              *disk_manager_;
-  [[maybe_unused]] LogManager              *log_manager_;
+  LogManager                               *log_manager_;
   std::unique_ptr<Replacer>                 replacer_;
   std::array<Frame, BUFFER_POOL_SIZE>       frames_;
   std::list<frame_id_t>                     free_list_;

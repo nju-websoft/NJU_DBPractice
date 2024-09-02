@@ -198,7 +198,7 @@ public:
   auto GetCol(int index) -> ArrayValueSptr;
 
 private:
-  [[maybe_unused]] const RecordSchema *schema_;
+  const RecordSchema *schema_;
   std::vector<ArrayValueSptr>          cols_;
 };
 

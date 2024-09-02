@@ -411,7 +411,7 @@ auto Planner::GetAllFields(const std::vector<std::string> &tabs, DatabaseHandle 
     if (tab == nullptr) {
       throw WSDBException(WSDB_TABLE_MISS, Q(Analyser), Q(GetAllFields), tab_name);
     }
-    for (int i = 0; i < tab->GetSchema().GetFieldCount(); ++i) {
+    for (int i = 0; i < static_cast<int>(tab->GetSchema().GetFieldCount()); ++i) {
       auto &field = tab->GetSchema().GetFieldAt(i);
       fields.push_back(field);
     }

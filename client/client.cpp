@@ -79,15 +79,12 @@ public:
       input_.basic_ios<char>::rdbuf(std::cin.rdbuf());
     }
     if (!output.empty()) {
-      output_.open(output);
-      if (!output_.is_open()) {
+      output_file_.open(output);
+      if (!output_file_.is_open()) {
         err_no_ = -1;
         WSDB_LOG(net, Init, "ERROR opening output file");
       }
-    } else {
-      output_.copyfmt(std::cout);
-      output_.clear(std::cout.rdstate());
-      output_.basic_ios<char>::rdbuf(std::cout.rdbuf());
+      output_.rdbuf(output_file_.rdbuf());
     }
   }
 
@@ -96,8 +93,8 @@ public:
     if (input_.is_open()) {
       input_.close();
     }
-    if (output_.is_open()) {
-      output_.close();
+    if (output_file_.is_open()) {
+      output_file_.close();
     }
   }
 
@@ -242,14 +239,14 @@ private:
     // print fields
     size_t height = 1;
     // get max height according to field size
-    for (int i = 0; i < fields.size(); ++i) {
+    for (size_t i = 0; i < fields.size(); ++i) {
       auto  &f = fields[i];
       size_t h = f.size() / (col_width[i] - 2) + 1;
       height   = std::max(height, h);
     }
-    for (int i = 0; i < height; ++i) {
+    for (size_t i = 0; i < height; ++i) {
       output_ << "| ";
-      for (int j = 0; j < fields.size(); ++j) {
+      for (size_t j = 0; j < fields.size(); ++j) {
         auto &f = fields[j];
         if (i < f.size() / (col_width[j] - 2) + 1) {
           auto sub_str = f.substr(i * (col_width[j] - 2), col_width[j] - 2);
@@ -268,7 +265,8 @@ private:
 private:
   bool                     is_interactive_{true};
   std::ifstream            input_;
-  std::ofstream            output_;
+  std::ofstream            output_file_;
+  std::ostream             output_{std::cout.rdbuf()};
   net::NetPkg              pkg_;
   int                      sock_fd_{-1};
   int                      err_no_ = 0;

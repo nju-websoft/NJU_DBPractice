@@ -68,12 +68,12 @@ public:
   auto GetKeySchema() const -> const RecordSchema & { return *key_schema_; }
 
 private:
-  DiskManager                        *disk_manager_;
-  [[maybe_unused]] BufferPoolManager *buffer_pool_manager_;
-  table_id_t                          table_id_;
-  idx_id_t                            index_id_;
-  Index                              *index_;
-  RecordSchemaUptr                    key_schema_;
+  DiskManager       *disk_manager_;
+  BufferPoolManager *buffer_pool_manager_;
+  table_id_t         table_id_;
+  idx_id_t           index_id_;
+  Index             *index_;
+  RecordSchemaUptr   key_schema_;
 };
 
 DEFINE_UNIQUE_PTR(IndexHandle);

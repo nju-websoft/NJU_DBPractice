@@ -111,6 +111,7 @@ Record::Record(const RecordSchema *schema, const std::vector<ValueSptr> &values,
   schema_  = schema;
   data_    = new char[schema_->GetRecordLength()];
   nullmap_ = new char[BITMAP_SIZE(schema_->GetFieldCount())];
+  bzero(data_, schema_->GetRecordLength());
   bzero(nullmap_, BITMAP_SIZE(schema_->GetFieldCount()));
   size_t cursor = 0;
   for (size_t i = 0; i < schema_->GetFieldCount(); ++i) {
@@ -189,6 +190,7 @@ Record::Record(const RecordSchema *schema, const Record &other) : schema_(schema
   // new can deal with GetRecordLength() == 0
   data_    = new char[schema_->GetRecordLength()];
   nullmap_ = new char[BITMAP_SIZE(schema_->GetFieldCount())];
+  bzero(data_, schema_->GetRecordLength());
   bzero(nullmap_, BITMAP_SIZE(schema_->GetFieldCount()));
   for (size_t i = 0; i < schema_->GetFieldCount(); ++i) {
     auto &field     = schema_->GetFieldAt(i);
@@ -242,6 +244,7 @@ Record::Record(const wsdb::RecordSchema *schema)
   data_    = new char[schema_->GetRecordLength()];
   nullmap_ = new char[BITMAP_SIZE(schema_->GetFieldCount())];
   // set nullmap to all 1
+  bzero(data_, schema_->GetRecordLength());
   memset(nullmap_, 0xff, BITMAP_SIZE(schema_->GetFieldCount()));
   rid_ = INVALID_RID;
 }

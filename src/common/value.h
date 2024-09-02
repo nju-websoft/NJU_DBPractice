@@ -349,11 +349,10 @@ class StringValue : public Value
 public:
   StringValue() = delete;
   StringValue(const char *value, size_t size, bool is_null)
-      : Value(FieldType::TYPE_STRING, size, is_null), value_(value, size)
+      : Value(FieldType::TYPE_STRING, std::min(size, strlen(value)), is_null), value_(value, std::min(size, strlen(value)))
   {
     // resize the string to prune out '\0' characters
     // the given size is larger than the actual string size, so we need to resize it
-    value_.resize(strlen(value_.c_str()));
   }
   StringValue(const StringValue &value)            = default;
   StringValue(StringValue &&value)                 = default;

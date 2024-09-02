@@ -84,7 +84,13 @@ public:
         err_no_ = -1;
         WSDB_LOG(net, Init, "ERROR opening output file");
       }
+      output_.copyfmt(output_file_);
+      output_.clear(output_file_.rdstate());
       output_.rdbuf(output_file_.rdbuf());
+    }else {
+      output_.copyfmt(std::cout);
+      output_.clear(std::cout.rdstate());
+      output_.rdbuf(std::cout.rdbuf());
     }
   }
 

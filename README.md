@@ -42,7 +42,7 @@ $ sudo apt install gcc g++ cmake flex bison libreadline-dev
 For MacOS:
 
 ```shell
-$ sudo apt install clang cmake flex bison readline
+$ sudo brew install clang cmake flex bison readline
 ```
 
 Then change directory into the repository foot and run

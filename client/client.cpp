@@ -24,6 +24,8 @@
 #include <vector>
 #include <sstream>
 #include <fstream>
+#include <readline/history.h>
+#include <readline/readline.h>
 #include "../common/net/net.h"
 #include "../common/error.h"
 #include "../common/micro.h"
@@ -84,13 +86,7 @@ public:
         err_no_ = -1;
         WSDB_LOG(net, Init, "ERROR opening output file");
       }
-      output_.copyfmt(output_file_);
-      output_.clear(output_file_.rdstate());
       output_.rdbuf(output_file_.rdbuf());
-    }else {
-      output_.copyfmt(std::cout);
-      output_.clear(std::cout.rdstate());
-      output_.rdbuf(std::cout.rdbuf());
     }
   }
 
@@ -107,23 +103,45 @@ public:
   void Run()
   {
     OpenSocket();
+    std::string sql;
     while (err_no_ >= 0) {
       // if input is not from file, show prompt
-      if (is_interactive_)
-        std::cout << "wsdb> ";
-      auto sql = GetUserInput();
-      if (sql.empty()) {
-        if (input_.eof()) {
+      if (is_interactive_) {
+        char *line;
+        if (sql.empty())
+          line = readline("wsdb> ");
+        else
+          line = readline(" ... ");
+        if (line == nullptr) {
+          // EOF encountered
           break;
         }
-        continue;
-      }
-      if (sql == "exit;") {
+        add_history(line);
+        sql += line;
+        free(line);
+        if (sql == "exit;") {
+          SendSql(sql);
+          break;
+        } else if (sql.find(';') != std::string::npos) {
+          SendSql(sql);
+          DoReceive();
+          sql.clear();
+        }
+      } else {
+        auto sql = GetUserInput();
+        if (sql.empty()) {
+          if (input_.eof()) {
+            break;
+          }
+          continue;
+        }
+        if (sql == "exit;") {
+          SendSql(sql);
+          break;
+        }
         SendSql(sql);
-        break;
+        DoReceive();
       }
-      SendSql(sql);
-      DoReceive();
     }
     CloseSocket();
     if (is_interactive_)

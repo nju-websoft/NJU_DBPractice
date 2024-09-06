@@ -29,7 +29,9 @@ flowchart LR
 
 ## 火山模型与算子
 
-火山模型，又叫迭代器模型，是数据库界已经很成熟的解释计算模型，该计算模型将关系代数中每一种操作抽象为一个算子，每个算子有一个`Next`接口，将整个 SQL 语句构建成一个算子树，从根节点到叶子结点自上而下地递归调用`Next`函数。推荐阅读[Volcano— An Extensible and Parallel Query Evaluation System](https://www.computer.org/csdl/journal/tk/1994/01/k0120/13rRUwI5TRe)以对火山模型进行更深入的了解。
+火山模型，又叫迭代器模型，是数据库界已经很成熟的解释计算模型，该计算模型将关系代数中每一种操作抽象为一个算子，每个算子有一个`Next`接口，每次调用这个接口将会返回这个算子产生的一行数据（即一个tuple）。将整个 SQL 语句构建成一个算子树，从根节点到叶子结点可以自上而下地递归调用`Next`函数，因此在算子树的根节点迭代地调用`Next`函数就可以获得整个查询的全部结果。
+
+推荐阅读[Volcano— An Extensible and Parallel Query Evaluation System](https://www.computer.org/csdl/journal/tk/1994/01/k0120/13rRUwI5TRe)以对火山模型进行更深入的了解。
 
 对于引言中的例子，其算子树如下图所示：
 
@@ -45,7 +47,57 @@ flowchart LR
 
 ### t1: 基本执行算子（90 pts）
 
-本次实验需要完成除DDL语句（数据描述语句），表连接算子，聚合算子，索引扫描算子以外的其余所有算子的`Init`, `Next`, `IsEnd`函数。包括基本算子和用于增删改的DML语句（数据操作语句），并通过SQL测试。请仔细阅读`execution/executor_ddl.cpp`中`ShowTablesExecutor`的逻辑，它能够帮你快速理解火山模型的执行过程。关于`Init`，`Next`，和`IsEnd`的调用顺序，请参考`execution/executor.cpp`中的`Execute`函数。
+本次实验需要完成除DDL语句（数据描述语句），表连接算子，聚合算子，索引扫描算子以外的其余所有算子的`Init`, `Next`, `IsEnd`函数。包括基本算子和用于增删改的DML语句（数据操作语句），并通过SQL测试。
+
+下面以`execution/executor_ddl.cpp`中`ShowTablesExecutor`为例，介绍火山模型的执行过程。
+`ShowTablesExecutor`类定义如下：
+```c++
+class ShowTablesExecutor : public AbstractExecutor
+{
+public:
+  explicit ShowTablesExecutor(DatabaseHandle *db);
+  void Init() override;
+  void Next() override;
+  [[nodiscard]] auto IsEnd() const -> bool override;
+private:
+  DatabaseHandle *db_;
+private:
+  bool   is_end_;
+  size_t cursor_;
+};
+```
+`ShowTablesExecutor`的主要成员变量包括：
+- `db_`为数据库句柄，用于获取所有表的信息
+- `is_end`表示算子是否已输出全部记录
+- `cursor`记录当前输出的记录所在的位置
+- 以及继承自`AbstractExecutor`的`record_`用于存放生成的记录
+```c++
+void ShowTablesExecutor::Next()
+{
+  if (is_end_) {
+    WSDB_FETAL(ShowTablesExecutor, Next, "ShowTablesExecutor is end");
+  }
+  auto &tables = db_->GetAllTables();
+  if (cursor_ >= tables.size()) {
+    is_end_ = true;
+    return;
+  }
+  auto it = tables.begin();
+  std::advance(it, cursor_);
+  auto tab_hdl = it->second.get();
+  auto values  = MakeTableDescValue(db_->GetName(),
+      tab_hdl->GetTableName(),
+      tab_hdl->GetSchema().GetFieldCount(),
+      tab_hdl->GetSchema().GetRecordLength(),
+      StorageModelToString(tab_hdl->GetStorageModel()),
+      db_->GetIndexNum(tab_hdl->GetTableId()));
+  record_      = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
+  cursor_++;
+}
+```
+在`ShowTablesExecutor`的`Next`函数中，首先检查 table 信息是否已全部输出，如果没有则根据 cursor_ 位置获取对应的 table 信息，并生成记录，最后递增 cursor_ 。
+
+关于`Init`，`Next`，和`IsEnd`的调用顺序，请参考`execution/executor.cpp`中的`Execute`函数。
 
 具体来说，你需要确保以下列表中的接口都已被正确实现，才能够执行如下SQL：
 

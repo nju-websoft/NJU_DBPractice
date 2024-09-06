@@ -97,12 +97,14 @@ void ShowTablesExecutor::Next()
 ```
 在`ShowTablesExecutor`的`Next`函数中，首先检查 table 信息是否已全部输出，如果没有则根据 cursor_ 位置获取对应的 table 信息，并生成记录，最后递增 cursor_ 。
 
+需要注意的是，DDL语句以及DML中的增删改语句不需要执行`Init`函数，大部分的基本算子（`Basic`）可能都需要在Init期间做一些资源的初始化。
+
 关于`Init`，`Next`，和`IsEnd`的调用顺序，请参考`execution/executor.cpp`中的`Execute`函数。
 
 具体来说，你需要确保以下列表中的接口都已被正确实现，才能够执行如下SQL：
 
 ```sql
-select name, score, remark from nju_db where group_id = 2 and l1_score > 90 order by desc score limit 10; 
+select name, score, remark from nju_db where group_id = 2 and l1_score > 90 order by desc score, id limit 10; 
 ```
 
 * `execution/executor_insert.cpp`：插入记录，需要同时插入表格和索引
@@ -112,7 +114,7 @@ select name, score, remark from nju_db where group_id = 2 and l1_score > 90 orde
 * `execution/executor_delete.cpp`：删除记录，需要同时在表格和索引中删除
 * `execution/executor_update.cpp`：更新记录，需要同时更新表格和索引
 * `execution/executor_filter.cpp`：过滤掉不符合条件的记录
-* `execution/executor_sort.cpp`：内排序，中间结果能全部载入内存，根据给定列模式进行升序或降序排序，目前只需要支持全列降序或全列升序，即不需要支持单列顺序，语法为order by (asc,desc,_) \<column list\>。
+* `execution/executor_sort.cpp`：内排序，中间结果能全部载入内存，根据给定列模式进行升序或降序排序，目前只需要支持全列降序或全列升序，即不需要支持单列顺序，语法为order by (asc,desc,_) \<column list\>，例如上述示例中的`order by desc score, id`会首先按照score降序排列，对于相等的score再根据id降序排列。
 
 建议阅读代码列表：
 
@@ -201,7 +203,7 @@ def nestedloop_join(left, right, condition):
 
      * `04_merge_sort.sql`: 10pts
 
-   * 提示：你可以cd到`wsdb/test/sql/lab02`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试。
+   * 提示：你可以cd到`wsdb/test/sql/lab02`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，注意：脚本并不负责项目的编译，所以请在运行脚本之前手动编译。
 
      ```bash
      $ bash evaluate.sh <bin directory> <test sql directory>

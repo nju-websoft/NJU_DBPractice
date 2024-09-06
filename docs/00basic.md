@@ -219,18 +219,71 @@ WSDB的服务端系统架构如下图所示（位于`wsdb_root/src`文件夹下�
 
 ![WSDB_arch](./00basic.assets/wsdb_arch.png)
 
-* SQL Engine包含用于SQL解析的Parser，查询计划生成的Planner，对查询计划进行逻辑和物理优化的Optimizer以及与客户端进行序列化交互的Net
-  Controller。
-* Executor定义了数据库中所有操作，包括事务处理，数据描述语句以及数据管理语句的相关操作。使用火山模型对算子树进行计算。
-* System模块由系统管理器（System Manager）和系统句柄（System Handle）两部分组成。其中系统管理器包括表管理器（Table
-  Manager）和索引管理器（Index Manager），分别负责表文件和索引文件的创建和删除。系统句柄是对数据库，表，索引，页面以及元组的抽象，分别对不同的数据层级进行增删改查操作。
-* Storage模块由缓冲区管理器（Buffer Pool Manager），磁盘管理器（Disk Manager）以及索引存储（Index Storage）组成。缓冲区管理器负责内存与磁盘间页面的调度，磁盘管理器负责文件和页面的读写，索引存储是对索引文件数据结构的定义与物理实现。
-* Concurrency和Log是维护OLTP数据库ACID原则的重要管理模块，分别由事务管理器，日志与恢复系统，以及锁管理器组成。事务管理器负责事务的开始（Begin），提交（Commit）与中止（Abort）并对异常中止的事务进行回滚。日志管理器通过WAL策略维护“增删改”操作的完整记录以便从系统故障中恢复。Lock Manager管理系统中所有层级上数据结构的锁以保证事务处理的可串行化。
+### SQL Engine
+
+SQL 引擎负责提供用户输入的处理接口，其处理流程大致如下：
+
+* 首先通过Net Controller模块与客户端进行序列化交互，接收用户在客户端的输入；
+  
+* 然后在Parser模块对用户输入的SQL语句进行解析，并在Planner模块生成查询计划，查询计划的形式为一个抽象语法树（AST）；
+  
+* 最后在Optimizer模块中对查询计划进行逻辑优化和物理优化。
+  
+
+### Executor
+
+执行器模块定义了数据库的算子，每个算子负责执行数据库的一个基本操作，算子主要包括：
+
+* 数据定义算子：负责定义数据库结构和对象，例如 CREATE、DROP、DESC 等。
+  
+* 数据操纵算子：负责操作数据库中的数据，例如 INSERT、UPDATE、DELETE 等。
+  
+* 事务处理算子：负责管理事务的操作符或机制，例如 BEGIN、COMMIT、ABORT 等。
+  
+* 其他基本算子：负责执行其他数据库底层操作，例如 SCAN、JOIN、PROJECTION等。
+  
+
+### System
+
+系统模块由系统管理器（System Manager）和系统句柄（System Handle）两部分组成。
+
+系统管理器负责数据库系统中一个DB的创建与管理。系统管理器中的组件包括表管理器（TableManager）和索引管理器（Index Manager），分别负责当前DB中表文件和索引文件的维护。
+
+系统句柄是对数据库，表，索引，页面以及元组的抽象，为不同的数据层级提供增删改查的接口。
+
+### Storage
+
+存储模块由缓冲区管理器（Buffer Pool Manager），磁盘管理器（Disk Manager）以及索引存储（Index Storage）组成。
+
+缓冲区管理器负责管理内存中的缓冲区（Buffer Pool），缓冲区是数据库在内存开辟的一块空间，用于缓存数据库存储在磁盘上的数据页面，以减少频繁访问磁盘的开销。缓冲区管理器提供的功能主要是数据页在磁盘和缓冲区之间的读写以及各种页面替换策略（replacer）的实现。
+
+磁盘管理器负责磁盘文件的管理，并且为缓冲区管理器的页面读写提供底层接口。
+
+索引存储负责对索引文件数据结构的定义与物理实现。
+
+### Concurrency&Log
+
+并发和日志模块是维护OLTP数据库ACID原则的重要管理模块，分别由事务管理器，日志与恢复系统，以及组成。
+
+事务管理器负责事务的开始（Begin），提交（Commit）与中止（Abort）并对异常中止的事务进行回滚。
+
+日志管理器通过WAL策略维护“增删改”操作的完整记录以便从系统故障中恢复。
+
+锁管理器管理系统中所有层级上数据结构的锁以保证事务处理的可串行化。
 
 ## WSDB客户端介绍
 
-完成实验2后，你可以使用WSDB的客户端对服务器程序进行测试，客户端可以自定义输入文件和输出文件，如果不指定则默认为标准输入输出。在指定输入文件时，客户端进入非交互模式运行，运行完文件中的SQL语句后自动退出。如果不指定输入文件，将进入命令行交互模式。
+完成实验2后，你可以使用WSDB的客户端对服务器程序进行测试。客户端可以自定义输入文件和输出文件，如果不指定则默认为标准输入输出。在指定输入文件时，客户端进入非交互模式运行，运行完文件中的SQL语句后自动退出。如果不指定输入文件，将进入命令行交互模式。
 
+编译完成后，在`wsdb_root/build/bin`目录下执行指令
+```shell
+$ ./wsdb
+```
+启动服务端进程后，在当前目录下再打开一个shell执行指令
+```shell
+$ ./client
+```
+启动客户端即可使用命令行与服务器交互。
 <img src="./00basic.assets/client_interactive.png" alt="截屏2024-08-22 09.26.18" style="zoom:50%;" />
 
 每次都会统计返回的记录数，结合表格信息能够方便检查服务器可能出现的异常。
@@ -254,7 +307,7 @@ issue或者课程qq群积极反馈，对于能提供完备bug复现方法或者�
 
 # 附录：环境配置
 
-## 如何快速优雅地运行WSDB
+## 如何快速优雅地编译运行WSDB
 
 你可以使用任意你喜欢的Linux发行版或者MacOS系统，按照README中的环境配置教程安装项目依赖的工具。如果你在使用Windows系统，可以使用WSL或者虚拟机来进行开发，我们建议使用图形化的现代IDE对代码进行调试，关于如何使用VSCode或者CLion连接WSL可以参考下面的文章：[VSCode + WSL](https://code.visualstudio.com/docs/remote/wsl)，[CLion + WSL](https://www.jetbrains.com/help/clion/how-to-use-wsl-development-environment-in-product.html#wsl-general)。
 
@@ -266,7 +319,7 @@ issue或者课程qq群积极反馈，对于能提供完备bug复现方法或者�
 
 在插件市场中安装C/C++套件。
 
-<img src="./00basic.assets/vscode_c++.png" alt="alt text" style="zoom:50%;" />
+<img src="./00basic.assets/vscode_c++.png" alt="alt text" style="zoom:100%;" />
 
 
 

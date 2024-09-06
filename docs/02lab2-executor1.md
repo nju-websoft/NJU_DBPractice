@@ -29,6 +29,8 @@ flowchart LR
 
 ## 火山模型与算子
 
+火山模型，又叫迭代器模型，是数据库界已经很成熟的解释计算模型，该计算模型将关系代数中每一种操作抽象为一个算子，每个算子有一个`Next`接口，将整个 SQL 语句构建成一个算子树，从根节点到叶子结点自上而下地递归调用`Next`函数。推荐阅读[Volcano— An Extensible and Parallel Query Evaluation System](https://www.computer.org/csdl/journal/tk/1994/01/k0120/13rRUwI5TRe)以对火山模型进行更深入的了解。
+
 对于引言中的例子，其算子树如下图所示：
 
 <img src="./02lab2-executor1.assets/valcano.png" alt="valcano" style="zoom:50%;" />

@@ -24,16 +24,16 @@
 页面句柄（PageHandle）负责将页面中的序列化数据反序列化出来，并负责元组的插入删除和读取。页面由页头和槽数据组成，页头位于页面的开头固定字节的内存段，分别为：1、当前页面上最后一个写回硬盘的日志序列号；2、下一个拥有空闲槽位的页面ID；3、当前页面上的记录个数。
 
 下图展示了行存模式下（NAry PageHandle）的页面组织格式：
-
-    |<-------------------- Page Header ------------------->|<------------------slot memory---------------->|
-    | page last LSN | next_free_page_id | number of record | bitmap | record 1 | record 2 | ... | record n |
-
+```
+|<-------------------- Page Header ------------------->|<------------------slot memory---------------->|
+| page last LSN | next_free_page_id | number of record | bitmap | record 1 | record 2 | ... | record n |
+```
 紧跟页头的是槽数据，不同数据库对槽数据的排布方式不同，但总体上可以分为两部分：指示槽位是否空闲的Bitmap，以及元组的实际数据信息。Bitmap用于指示某个槽位的内存空间是否空闲，例如，如果需要在slot_id =8的位置插入一个元组，页面句柄会首先检查第8位是否已经有记录，如果已有记录会抛出记录已存在的异常，如果没有会首先将Bitmap的第8位置为1，然后将数据写入槽位。
 
 WSDB采用定长数据的组织形式，即在表创建时一条记录的长度就已经确定。定长记录的好处是一条记录的起始位置通过简单的偏移量计算就能获得，并且在插入删除时不会产生碎片化内存（*想想看为什么*），从而不需要额外线程清理碎片化空间。对于变长记录，一条记录由记录头信息和记录数据组成。
-
-    | slot id | prev_rec_off | next_rec_off | record_lenth | null map | record data |
-
+```
+| slot id | prev_rec_off | next_rec_off | record_lenth | null map | record data |
+```
 记录句柄（Record Handle）是对一条记录的抽象，包括记录模式（Record Schema）、记录头、以及实际数据，负责管理记录数据的解析和中间结果的计算。slot id为当前槽的id，用于定位记录在本页面的位置；prev_rec_off，next_rec_off分别为前一条和后一条记录起始位置相对本记录起始位置的偏移，record_lenth为record data部分的长度；null map指示该记录中的哪些列为空。对于定长数据，上述页面组织形式已经能够满足数据存储和搜索的需求，对于变长数据，其页面组织形式与定长数据略有不同，会从页尾存放第一条记录，感兴趣的同学可以自行搜索了解。WSDB中一条记录也有记录头信息，但由于采取定长记录组织形式，只保留了null map字段。
 
 表句柄（Table Handle）通过封装页面句柄从而向上层提供针对记录的CRUD接口，即对记录的增删改查以及对整个表的遍历操作。
@@ -49,29 +49,29 @@ LRU是最经典也是实现相对简单的淘汰策略，具体来说，对于�
 在WSDB中，页面替换策略位于`storage/buffer/replacer`文件夹下，继承自同一基类`Replacer`。
 
 `Replacer`需要支持如下接口：
+```c++
+/**
+* Remove the victim frame as defined by the replacement policy.
+* @param[out] frame_id id of frame that was removed, nullptr if no victim was found
+* @return true if a victim frame was found, false otherwise
+*/
+virtual auto Victim(frame_id_t *frame_id) -> bool = 0;
 
-    /**
-    * Remove the victim frame as defined by the replacement policy.
-    * @param[out] frame_id id of frame that was removed, nullptr if no victim was found
-    * @return true if a victim frame was found, false otherwise
-    */
-    virtual auto Victim(frame_id_t *frame_id) -> bool = 0;
-    
-    /**
-    * Pins a frame, indicating that it should not be victimized until it is unpinned.
-    * @param frame_id the id of the frame to pin
-    */
-    virtual void Pin(frame_id_t frame_id) = 0;
-    
-    /**
-    * Unpins a frame, indicating that it can now be victimized.
-    * @param frame_id the id of the frame to unpin
-    */
-    virtual void Unpin(frame_id_t frame_id) = 0;
-    
-    /** @return the number of elements in the replacer that can be victimized */
-    virtual auto Size() -> size_t = 0;
+/**
+* Pins a frame, indicating that it should not be victimized until it is unpinned.
+* @param frame_id the id of the frame to pin
+*/
+virtual void Pin(frame_id_t frame_id) = 0;
 
+/**
+* Unpins a frame, indicating that it can now be victimized.
+* @param frame_id the id of the frame to unpin
+*/
+virtual void Unpin(frame_id_t frame_id) = 0;
+
+/** @return the number of elements in the replacer that can be victimized */
+virtual auto Size() -> size_t = 0;
+```
 * `Victim`：选择一个帧中的页面淘汰，并将该帧的帧号返回给调用者。
 * `Pin`：固定一帧，使得该帧不允许被淘汰直到`Unpin`被吊用。
 * `Unpin`：取消固定一帧，被取消的帧可以是没被`Pin`过的，此时直接返回即可。
@@ -91,22 +91,22 @@ LRU是最经典也是实现相对简单的淘汰策略，具体来说，对于�
 * `FlushAllPages`：将内存中指定文件的所有页面写回磁盘。
 
 `BufferPoolManager`中定义了以下类成员变量：
-
-    // 互斥锁，用于并发控制
-    std::mutex latch_;  
-    // 磁盘管理器，负责磁盘页面读写
-    DiskManager *disk_manager_;  
-    // 日志管理器
-    LogManager *log_manager_;  
-    // 页面替换策略，调用t1中实现的接口
-    std::unique_ptr<Replacer> replacer_;  
-    // 定长数组，用于存储缓冲区中的数据页面
-    std::array<Frame, BUFFER_POOL_SIZE> frames_;  
-    // 链表，用于记录缓冲区中空闲数据页面的标识符
-    std::list<frame_id_t> free_list_;  
-    // 磁盘页面标识符（file id 和 page id）到缓冲区中数据页面标识符（frame ID）的映射
-    std::unordered_map<fid_pid_t, frame_id_t> page_frame_lookup_;  
-    
+```c++
+// 互斥锁，用于并发控制
+std::mutex latch_;  
+// 磁盘管理器，负责磁盘页面读写
+DiskManager *disk_manager_;  
+// 日志管理器
+LogManager *log_manager_;  
+// 页面替换策略，调用t1中实现的接口
+std::unique_ptr<Replacer> replacer_;  
+// 定长数组，用于存储缓冲区中的数据页面
+std::array<Frame, BUFFER_POOL_SIZE> frames_;  
+// 链表，用于记录缓冲区中空闲数据页面的标识符
+std::list<frame_id_t> free_list_;  
+// 磁盘页面标识符（file id 和 page id）到缓冲区中数据页面标识符（frame ID）的映射
+std::unordered_map<fid_pid_t, frame_id_t> page_frame_lookup_;  
+```    
 
 其余辅助函数和具体实现步骤请参考`storage/buffer/buffer_pool_manager.cpp`和`storage/buffer/buffer_pool_manager.h`。
 
@@ -139,12 +139,16 @@ LRU K就是为解决这一问题提出的改进版LRU算法，其规则如下：
 **定义**：数列具有时间访问顺序，对于一组顺序访问的序列，在当前访问的索引位置为$i_c$定义某个数$e$的backward k distance为如下函数
 
 $$
-d_k^e = \left\{\begin{aligned}& +\text{inf} &\text{if }backward_k^e = na \\& i_c - backward_k^e &\text{other}\end{aligned}\right.
+d_k^e = \left\{
+\begin{aligned}
+& +\text{inf} 
+&\text{if }backward_k^e = na \\
+& i_c - backward_k^e &\text{other}
+\end{aligned}
+\right.
 $$
 
-索引指向序列第13位，上述索引序列中
-
-$d_3^1 = 13 - 4 = 9$，$d_3^2 = 13 - 2 = 11$，$d_4^2 = +inf$。LRU K算法选择具有最大$d_k^e$的页面$e$作为被淘汰页面，如果有多个页面满足$d_k^e =+inf$，选择第一次出现时索引最小的那个页面。例如，$d_4^2 = d_4^3 = d_4^1 = +inf$，由于2号页面出现的最早，索引最小，所以2号页面被淘汰。
+索引指向序列第13位，上述索引序列中$d_3^1 = 13 - 4 = 9$，$d_3^2 = 13 - 2 = 11$，$d_4^2 = +inf$。LRU K算法选择具有最大$d_k^e$的页面$e$作为被淘汰页面，如果有多个页面满足$d_k^e =+inf$，选择第一次出现时索引最小的那个页面。例如，$d_4^2 = d_4^3 = d_4^1 = +inf$，由于2号页面出现的最早，索引最小，所以2号页面被淘汰。
 
 请完成`storage/buffer/replacer/lru_k_replacer.cpp`，`storage/buffer/replacer/lru_k_replacer.h`中的公有函数，实现方式和相关数据结构定义仅供参考，除公有函数的声明之外，其余数据结构可以随意修改。
 
@@ -153,16 +157,16 @@ $d_3^1 = 13 - 4 = 9$，$d_3^2 = 13 - 2 = 11$，$d_4^2 = +inf$。LRU K算法选�
 请确保已经了解并掌握了WSDB中页面的组织形式，以更好上手本实验的内容
 
 PAX存储格式是一种行列混存的格式，其优势在于能够快速访问和抽取一页中的部分列数据。在OLAP任务中，列式存储利于数据分析算子进行有效的聚合运算和向量化加速。而PAX存储相比列室存储既能快速取出某一记录，也能做到读取整列数据。在WSDB中，PAX页面格式如下（与NAry模式存储的主要区别在slot memory部分）：
-
-    |<-------------------- Page Header ------------------->|
-    | page last LSN | next_free_page_id | number of record |
-    |<-------------------- Slot Memory ------------------->|
-    | bitmap |     nullmap_1, nullmap_2, ..., nullmap_n    |
-    |    col_1_1, col_1_2,      ...            , col_1_n   |
-    |    col_2_1, col_2_2,      ...            , col_2_n   |
-    |                           ...                        |
-    |    col_m_1, col_m_2,      ...            , col_m_n   |
-
+```
+|<-------------------- Page Header ------------------->|
+| page last LSN | next_free_page_id | number of record |
+|<-------------------- Slot Memory ------------------->|
+| bitmap |     nullmap_1, nullmap_2, ..., nullmap_n    |
+|    col_1_1, col_1_2,      ...            , col_1_n   |
+|    col_2_1, col_2_2,      ...            , col_2_n   |
+|                           ...                        |
+|    col_m_1, col_m_2,      ...            , col_m_n   |
+```
 Page Header和bitmap部分与NAry相同，指示当前页面上哪些位置的记录是有效的。紧跟bitmap的是一串nullmap区域，与NAry模式存储下的nullmap定义相同，一共有n个连续存储的null map。nullmap区域之后是以列为单位组织的存储空间，每一列的n个数据被连续存放。对于某个槽位的记录访问，PageHandle需要正确定位到每一列，并拼接成一条完整的记录返回到调用者；对于槽位写入需要定位到单元在文件中的准确位置并写入当前列上的值。每一列的起始位置由`TableHandle`计算并存放在`field_offset_`成员变量中。
 
 PAX Page Handle支持整列的读取（ReadChunk），给定一个记录模式（RecordSchema），需要返回当前页上请求的所有列，将一列数据组织成数组值（ArrayValue）并将所有列打包为一个Chunk返回给调用者。
@@ -187,11 +191,11 @@ PAX Page Handle支持整列的读取（ReadChunk），给定一个记录模式�
 
 1. 实验报告（提交一份PDF，命名格式：lab1\_学号\_姓名.pdf）：请在报告开头写上相关信息。
   
-  | 学号     | 姓名 | 邮箱                      | 完成题目    |
-  | -------- | ---- | ------------------------- | ----------- |
-  | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | 1\2\3\f1\f2 |
+   | 学号     | 姓名 | 邮箱                      | 完成题目       |
+   | -------- | ---- | ------------------------- | -------------- |
+   | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | t1/t2/t3/f1/f2 |
   
-2. 代码：`wsdb/src`文件夹
+1. 代码：`wsdb/src`文件夹
   
 
 *提交示例：请将以上两部分内容打包并命名为lab1\_学号\_姓名.zip（例如lab1_123456_张三.zip）并上传至教学立方，请确保解压后目录树如下：*

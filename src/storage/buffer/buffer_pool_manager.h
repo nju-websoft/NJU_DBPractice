@@ -119,7 +119,6 @@ public:
    * @param pid
    * @return true if the page is flushed successfully
    */
-
   auto FlushPage(file_id_t fid, page_id_t pid) -> bool;
 
   /**

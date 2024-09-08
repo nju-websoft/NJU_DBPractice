@@ -141,6 +141,7 @@ private:
    * Get the available frame
    * 1. if the free list is not empty, get the frame id from the free list
    * 2. else use the replacer to get the frame id
+   * 3. if no frame can be evicted, throw WSDB_NO_FREE_FRAME
    * @return the frame id
    */
   auto GetAvailableFrame() -> frame_id_t;

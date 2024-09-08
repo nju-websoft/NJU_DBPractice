@@ -36,20 +36,20 @@ public:
    * insert the given record into the index, rid is recorded in rec
    * @param rec
    */
-  void InsertEntry(const Record &rec);
+  void InsertRecord(const Record &rec);
 
   /**
    * delete the record from the index
    * @param rec
    */
-  void DeleteEntry(const Record &rec);
+  void DeleteRecord(const Record &rec);
 
   /**
    * update the old record to the new record in the index, rid is recorded in new_rec
    * @param old_rec
    * @param new_rec
    */
-  void UpdateEntry(const Record &old_rec, const Record &new_rec);
+  void UpdateRecord(const Record &old_rec, const Record &new_rec);
 
   [[nodiscard]] auto GetTableId() const -> table_id_t { return table_id_; }
 

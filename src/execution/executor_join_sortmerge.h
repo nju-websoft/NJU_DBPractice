@@ -19,6 +19,11 @@
 // Created by ziqi on 2024/8/7.
 //
 
+/**
+ * @brief Join the two ordered tables by sort-merge join
+ * 
+ */
+
 #ifndef WSDB_EXECUTOR_JOIN_SORTMERGE_H
 #define WSDB_EXECUTOR_JOIN_SORTMERGE_H
 

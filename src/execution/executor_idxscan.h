@@ -19,6 +19,11 @@
 // Created by ziqi on 2024/8/5.
 //
 
+/**
+ * @brief scan the table using the index range
+ * 
+ */
+
 #ifndef WSDB_EXECUTOR_IDXSCAN_H
 #define WSDB_EXECUTOR_IDXSCAN_H
 

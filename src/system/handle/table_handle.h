@@ -44,8 +44,8 @@ public:
   /**
    * Get a record by rid
    * 1. fetch the page handle by rid
-   * 2. check if there is a record in the slot, if not, unpin the page and throw WSDB_RECORD_MISS
-   * 3. read the record from the slot
+   * 2. check if there is a record in the slot using bitmap, if not, unpin the page and throw WSDB_RECORD_MISS
+   * 3. read the record from the slot using page handle
    * 4. unpin the page
    * @param rid
    * @return record

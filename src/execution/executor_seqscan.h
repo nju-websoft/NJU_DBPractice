@@ -19,6 +19,11 @@
 // Created by ziqi on 2024/8/4.
 //
 
+/**
+ * @brief Iterate over all records in the table, check TableHandle for more details
+ * 
+ */
+
 #ifndef WSDB_EXECUTOR_SEQSCAN_H
 #define WSDB_EXECUTOR_SEQSCAN_H
 #include "executor_abstract.h"

@@ -19,6 +19,10 @@
 // Created by ziqi on 2024/8/5.
 //
 
+/**
+ * @brief set the fields in the records extracted from the child executor to the new values and update the tables and indexes
+ */
+
 #ifndef WSDB_EXECUTOR_UPDATE_H
 #define WSDB_EXECUTOR_UPDATE_H
 

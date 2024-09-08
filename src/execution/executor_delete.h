@@ -19,6 +19,12 @@
 // Created by ziqi on 2024/8/5.
 //
 
+/**
+ * @brief delete the records returned by the child executor
+ * should delete the records both in the table and the indexes
+ * 
+ */
+
 #ifndef WSDB_EXECUTOR_DELETE_H
 #define WSDB_EXECUTOR_DELETE_H
 

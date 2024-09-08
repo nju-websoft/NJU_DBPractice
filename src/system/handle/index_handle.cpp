@@ -50,11 +50,11 @@ IndexHandle::IndexHandle(DiskManager *disk_manager, BufferPoolManager *buffer_po
   }
 }
 
-void IndexHandle::InsertEntry(const Record &rec) {}
+void IndexHandle::InsertRecord(const Record &rec) {}
 
-void IndexHandle::DeleteEntry(const Record &rec) {}
+void IndexHandle::DeleteRecord(const Record &rec) {}
 
-void IndexHandle::UpdateEntry(const Record &old_rec, const Record &new_rec) {}
+void IndexHandle::UpdateRecord(const Record &old_rec, const Record &new_rec) {}
 
 IndexHandle::~IndexHandle() { delete index_; }
 }  // namespace wsdb

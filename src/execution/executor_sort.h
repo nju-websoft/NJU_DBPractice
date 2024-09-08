@@ -19,6 +19,11 @@
 // Created by ziqi on 2024/8/5.
 //
 
+/**
+ * @brief Sort the records returned by the child executor
+ * 
+ */
+
 #ifndef WSDB_EXECUTOR_SORT_H
 #define WSDB_EXECUTOR_SORT_H
 #include <functional>
@@ -126,7 +131,7 @@ private:
   size_t                  buf_idx_;
   bool                    is_desc_;
   bool                    is_sorted_;
-  // use for merge sort
+  // use for merge sort, if you want to use merge sort, set it to true if the record number is larger than max_rec_num_
   bool        is_merge_sort_;
   size_t      max_rec_num_;
   size_t      tmp_file_num_;

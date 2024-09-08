@@ -69,7 +69,7 @@ public:
    * Fetch the requested page from disk.
    * 1. grant the latch
    * 2. check if the page is in the frame
-   * 3. if the page is not in the frame, get the frame id by GetAvailableFrame and update the frame
+   * 3. if the page is not in the frame, GetAvailableFrame and UpdateFrame
    * 4. else pin the frame both in the buffer and the replacer and return the page
    * @param fid file that the page belongs to
    * @param pid page id

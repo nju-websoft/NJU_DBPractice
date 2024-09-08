@@ -45,12 +45,15 @@ SortExecutor::SortExecutor(AbstractExecutorUptr child, RecordSchemaUptr key_sche
 SortExecutor::~SortExecutor()
 {
   if (is_merge_sort_) {
+    // TODO: do some clean up, e.g. close the result file
     WSDB_STUDENT_TODO(L2, f1, SortExecutor, ~SortExecutor());
   }
 }
 
 void SortExecutor::Init()
 {
+  // TODO: decide whether to use merge sort according to the cardinality of the child.
+  is_merge_sort_ = false;
   if (is_merge_sort_) {
     WSDB_STUDENT_TODO(L2, f1, SortExecutor, Init());
   }

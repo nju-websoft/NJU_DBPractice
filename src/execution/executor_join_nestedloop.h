@@ -19,6 +19,11 @@
 // Created by ziqi on 2024/8/4.
 //
 
+/**
+ * @brief Make a nested loop join between two tables, for outer join, the left table is the outer table
+ * 
+ */
+
 #ifndef WSDB_EXECUTOR_JOIN_NESTEDLOOP_H
 #define WSDB_EXECUTOR_JOIN_NESTEDLOOP_H
 
@@ -46,6 +51,7 @@ private:
   [[nodiscard]] auto IsEndOuterJoin() const -> bool override;
 
 private:
+  // temporarily store record from the left executor
   RecordUptr left_rec_ = nullptr;
   // for outer join, indicates whether a valid right value is found
   bool need_gen_null_{false};

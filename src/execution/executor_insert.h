@@ -19,6 +19,11 @@
 // Created by ziqi on 2024/8/5.
 //
 
+/**
+ * @brief Insert the records into the table and the indexes
+ * 
+ */
+
 #include "executor_abstract.h"
 #include "system/handle/table_handle.h"
 #include "system/handle/index_handle.h"

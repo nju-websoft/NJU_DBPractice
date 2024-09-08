@@ -19,6 +19,11 @@
 // Created by ziqi on 2024/8/5.
 //
 
+/**
+ * @brief Filter out the records that can not pass the filter function
+ * 
+ */
+
 #ifndef WSDB_EXECUTOR_FILTER_H
 #define WSDB_EXECUTOR_FILTER_H
 #include <functional>

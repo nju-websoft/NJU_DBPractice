@@ -46,18 +46,11 @@ TEST(ReplacerTest, LRU)
     }
     ASSERT_EQ(replacer.Size(), 8);
     frame_id_t frame_id;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; ++i) {
       replacer.Victim(&frame_id);
-      ASSERT_EQ(frame_id, i);
+      ASSERT_EQ(frame_id,  i);
     }
     ASSERT_EQ(replacer.Size(), 0);
-  }
-  // unpin all
-  {
-    for (auto frame_id : frame_ids) {
-      replacer.Unpin(frame_id);
-    }
-    ASSERT_EQ(replacer.Size(), 8);
   }
 
   // randomly pin and unpin frames
@@ -83,13 +76,50 @@ TEST(ReplacerTest, LRU)
     }
     ASSERT_EQ(replacer.Size(), 8);
   }
-  // randomly victim
-  SUB_TEST(RandomlyVictim)
+
+  SUB_TEST(VictimOrder)
   {
+    // generate a random pin order
+    std::vector<frame_id_t> pin_order;
+    std::list<frame_id_t>    victim_order;
+    pin_order.reserve(1000);
+    for (int i = 0; i < 1000; ++i) {
+      frame_id_t frame_id = i < 8 ? i : rand() % 8;
+      pin_order.push_back(frame_id);
+      if(std::find(victim_order.begin(), victim_order.end(), frame_id) == victim_order.end()){
+        victim_order.push_back(frame_id);
+      } else{
+        victim_order.remove(frame_id);
+        victim_order.push_back(frame_id);
+      }
+    }
+    // unpin all
+    for (auto frame_id : frame_ids) {
+      replacer.Unpin(frame_id);
+    }
+    ASSERT_EQ(replacer.Size(), 8);
+    // victimize frames and check if the order is correct
+    for (auto frame_id : pin_order) {
+      replacer.Pin(frame_id);
+    }
+    ASSERT_EQ(replacer.Size(), 0);
+    for(int i = 0; i < 8; ++i){
+      replacer.Unpin(i);
+    }
+    ASSERT_EQ(replacer.Size(), 8);
+    for (auto frame_id : victim_order) {
+      frame_id_t victim_frame_id;
+      replacer.Victim(&victim_frame_id);
+      ASSERT_EQ(victim_frame_id, frame_id);
+    }
+  }
+
+  SUB_TEST(AlwaysAvaibleFrame)
+  {
+    // this test will pin, unpin and victimize, but at least one frame is always available
     std::unordered_set<frame_id_t> pinned;
     for (int i = 0; i < 1000; ++i) {
-      frame_id_t frame_id;
-      replacer.Victim(&frame_id);
+      frame_id_t frame_id = rand() % 8;
       if (pinned.find(frame_id) == pinned.end()) {
         replacer.Pin(frame_id);
         pinned.insert(frame_id);
@@ -97,8 +127,12 @@ TEST(ReplacerTest, LRU)
         replacer.Unpin(frame_id);
         pinned.erase(frame_id);
       }
+      frame_id_t victim_frame_id;
+      replacer.Victim(&victim_frame_id);
+      if (pinned.size() < 8) {
+        ASSERT_NE(victim_frame_id, INVALID_FRAME_ID);
+      }
     }
-    ASSERT_EQ(replacer.Size(), frame_ids.size() - pinned.size());
   }
 }
 

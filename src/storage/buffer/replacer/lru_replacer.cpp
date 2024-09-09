@@ -24,7 +24,7 @@
 #include "../common/error.h"
 namespace wsdb {
 
-LRUReplacer::LRUReplacer() : max_size_(BUFFER_POOL_SIZE) {}
+LRUReplacer::LRUReplacer() : cur_size_(0), max_size_(BUFFER_POOL_SIZE) {}
 
 auto LRUReplacer::Victim(frame_id_t *frame_id) -> bool { WSDB_STUDENT_TODO(L1, t1, LRUReplacer, Victim()); }
 

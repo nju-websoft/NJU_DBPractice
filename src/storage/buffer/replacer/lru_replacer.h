@@ -82,12 +82,13 @@ public:
 private:
   /// Mutex
   std::mutex latch_;
-  /// Stores the frame ids of unpinned pages in the order they were added, with the head being the most recently
-  /// accessed
-  std::list<frame_id_t> LRUlist_;
-  /// frame_id_t -> frame id of unpinned pages
-  std::unordered_map<frame_id_t, std::list<frame_id_t>::iterator> LRUhash_;
-  /// Maximum capacity (same as buffer pool capacity)
+  /// LRU list to store the frame id and the evictable status
+  std::list<std::pair<frame_id_t, bool>> lru_list_;
+  /// Hash map to store the frame id and the iterator in the LRU list
+  std::unordered_map<frame_id_t, std::list<std::pair<frame_id_t, bool>>::iterator> lru_hash_;
+  // number of evictable frames
+  size_t cur_size_;
+  // maximum number of frames
   size_t max_size_;
 };
 

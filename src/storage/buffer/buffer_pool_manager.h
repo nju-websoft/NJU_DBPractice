@@ -81,7 +81,7 @@ public:
    * Unpin the page indicating that it can be victimized
    * 1. grant the latch
    * 2. if the frame is not in the buffer or the frame is not in use, return false
-   * 3. unpin the frame, if the frame is not in use, unpin the frame in the replacer
+   * 3. unpin the frame, after that if the frame is not in use, unpin the frame in the replacer
    * 4. set the frame dirty if the page is dirty
    * @param fid
    * @param pid
@@ -128,10 +128,10 @@ public:
    */
   auto FlushAllPages(file_id_t fid) -> bool;
 
- /**
+  /**
    * Get the frame, used for test
    */
- auto GetFrame(file_id_t fid, page_id_t pid) -> Frame*;
+  auto GetFrame(file_id_t fid, page_id_t pid) -> Frame *;
 
 private:
   /// sub procedures used by public APIs, should not be locked by latch

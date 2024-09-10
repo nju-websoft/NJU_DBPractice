@@ -6,20 +6,19 @@
 
 ## 磁盘管理器
 
-磁盘管理器主要负责管理文件标识符与文件名的映射以内存和硬盘之间的数据交换，请在开始实验之前阅读相关代码，并理解函数的异常和返回值处理。
+磁盘管理器主要负责管理文件标识符与文件名之间的映射，以及负责内存和磁盘之间的数据交换，提供磁盘文件创建、打开、关闭、删除，以及页面、文件、日志的读写接口。
+
+请在开始实验之前阅读文件`storage/disk/disk_manager.h`中的相关代码，并理解函数的异常和返回值处理。
 
 ## 缓冲区管理器
 
 我们在操作系统中学过，内存被划分成一个个页面，当出现内存数据缺失时，内存管理单元（MMU）通过某种页面淘汰策略从所有页面中选出一个最近不经常使用的页面并标记为空闲，意味着当前页面被淘汰出去，如果页面为脏还需要重新写入磁盘。缓冲区管理器拥有完全一致的功能，对于一个庞大的数据库文件，将整个数据库全部载入内存是不现实的。一个数据库文件被划分成大小相同的多个页面（Page），在系统读取数据时，会首先在内存中寻找目标页面，如果出现页面缺失，缓冲区管理器选择一个可被淘汰的页面置换回硬盘。
 
-数据库中，缓冲区是一段连续的内存空间，被划分成与页面大小相等的物理帧（Frame）。一个物理帧需要管理三个信息：载入当前帧的页面数据、指示该页面是否被修改的脏页标记、以及当前帧被多个线程同时访问的引用计数。缓冲区管理器自身维护一个空闲帧链表，出现页面缺失时首先从空闲列表中取出空闲帧并读取硬盘。如果没有空闲帧，系统通过置换策略获取最合适的置换帧。缓冲区管理器需要为上层组件支持以下几种功能：
-
-* FetchPage：获取目标页面。缓冲区管理器需要根据上述策略将目标页面载入内存，并将所在内存空间指针返回调用者。
-* UnpinPage：取消固定页面。表示当前线程在下次FetchPage之前不会再次访问目标页面。
-* FlushPage：将目标页面的数据根据脏页标记写回硬盘。
-* DeletePage：如果没有线程使用目标页面，需要将该页面根据脏页标记写回硬盘，并重置所在帧的信息，加入到空闲帧链表。
+数据库中，缓冲区是一段连续的内存空间，被划分成与页面大小相等的物理帧（Frame）。一个物理帧需要管理三个信息：载入当前帧的页面数据、指示该页面是否被修改的脏页标记、以及当前帧被多个线程同时访问的引用计数。缓冲区管理器自身维护一个空闲帧链表，出现页面缺失时首先从空闲列表中取出空闲帧并读取硬盘。如果没有空闲帧，系统将根据置换策略获取最合适的置换帧。
 
 ## 句柄
+
+#### 页面句柄
 
 页面句柄（PageHandle）负责将页面中的序列化数据反序列化出来，并负责元组的插入删除和读取。页面由页头和槽数据组成，页头位于页面的开头固定字节的内存段，分别为：1、当前页面上最后一个写回硬盘的日志序列号；2、下一个拥有空闲槽位的页面ID；3、当前页面上的记录个数。
 
@@ -32,15 +31,32 @@
 
 紧跟页头的是槽数据，不同数据库对槽数据的排布方式不同，但总体上可以分为两部分：指示槽位是否空闲的Bitmap，以及元组的实际数据信息。Bitmap用于指示某个槽位的内存空间是否空闲，例如，如果需要在slot_id =8的位置插入一个元组，页面句柄会首先检查第8位是否已经有记录，如果已有记录会抛出记录已存在的异常，如果没有会首先将Bitmap的第8位置为1，然后将数据写入槽位。
 
-WSDB采用定长数据的组织形式，即在表创建时一条记录的长度就已经确定。定长记录的好处是一条记录的起始位置通过简单的偏移量计算就能获得，并且在插入删除时不会产生碎片化内存（*想想看为什么*），从而不需要额外线程清理碎片化空间。对于变长记录，一条记录由记录头信息和记录数据组成。
+#### 记录句柄
+
+WSDB采用**定长数据**的组织形式，即在表创建时一条记录的长度就已经确定。定长记录的好处是一条记录的起始位置通过简单的偏移量计算就能获得，并且在插入删除时不会产生碎片化内存（*想想看为什么*），从而不需要额外线程清理碎片化空间。
+
+对于变长记录，一条记录由记录头信息和记录数据组成。
 
 ```
-| slot id | prev_rec_off | next_rec_off | record_lenth | null map | record data |
+| slot id | prev_rec_off | next_rec_off | record_lenth | nullmap | record data |
 ```
 
-记录句柄（Record Handle）是对一条记录的抽象，包括记录模式（Record Schema）、记录头、以及实际数据，负责管理记录数据的解析和中间结果的计算。slot id为当前槽的id，用于定位记录在本页面的位置；prev_rec_off，next_rec_off分别为前一条和后一条记录起始位置相对本记录起始位置的偏移，record_lenth为record data部分的长度；null map指示该记录中的哪些列为空。对于定长数据，上述页面组织形式已经能够满足数据存储和搜索的需求，对于变长数据，其页面组织形式与定长数据略有不同，会从页尾存放第一条记录，感兴趣的同学可以自行搜索了解。WSDB中一条记录也有记录头信息，但由于采取定长记录组织形式，只保留了null map字段。
+记录句柄（Record Handle）是对一条记录的抽象，包括记录模式（Record Schema）、记录头、以及实际数据，负责管理记录数据的解析和中间结果的计算。`slot id`为当前槽的id，用于定位记录在本页面的位置；`prev_rec_off`，`next_rec_off`分别为前一条和后一条记录起始位置相对本记录起始位置的偏移，`record_lenth`为`record data`部分的长度；`nullmap`指示该记录中的哪些列为空。对于定长数据，上述页面组织形式已经能够满足数据存储和搜索的需求，对于变长数据，其页面组织形式与定长数据略有不同，会从页尾存放第一条记录，感兴趣的同学可以自行搜索了解。
 
-表句柄（Table Handle）通过封装页面句柄从而向上层提供针对记录的CRUD接口，即对记录的增删改查以及对整个表的遍历操作。
+WSDB中一条记录也有记录头信息，但由于采取定长记录组织形式，因此上图的字段中只保留了`nullmap`字段。
+
+##### 表句柄
+
+表句柄（Table Handle）通过封装页面句柄从而向上层提供针对记录的增删改查接口以及对整个表的遍历操作。
+
+表头（Table Header）是表的第一页，存储了表的元信息，在表句柄中Table Header格式如下：
+
+```
+|<------------------------------------------------- Table Header ------------------------------------------------>|
+| page_num_ | first_free_page_ | rec_num_ | rec_size_ | rec_per_page_ | field_num_ | bitmap_size_ | nullmap_size_ |
+```
+
+其中，`page_num_ `表示表中页面的数量，`first_free_page_ `记录了表中第一个空闲页面的页面号，`rec_num_`,`rec_size_`,`rec_per_page_`分别表示表中记录的数量，一条记录的大小和每页能存储的记录数量，`field_num_`表示表中的属性数，`bitmap_size_`,`nullmap_size_`分别表示页面句柄中`bitmap`的大小和记录句柄中`nullmap`的大小。
 
 ## 实验要求
 
@@ -85,15 +101,15 @@ virtual auto Size() -> size_t = 0;
 
 `LRUReplacer`类中定义的成员变量如下：
 
-`std::mutex latch_` 用于并发控制。
+- `std::mutex latch_` 用于并发控制。
 
-`std::list<std::pair<frame_id_t, bool>> lru_list_` 存储帧的id以及记录该帧是否可被淘汰的标志位。
+- `std::list<std::pair<frame_id_t, bool>> lru_list_` 存储帧的id以及记录该帧是否可被淘汰的标志位。
 
-`std::unordered_map<frame_id_t, std::list<std::pair<frame_id_t, bool>>::iterator> lru_hash_` 维护所有帧id到`lru_list_`上的迭代器的映射。
+- `std::unordered_map<frame_id_t, std::list<std::pair<frame_id_t, bool>>::iterator> lru_hash_` 维护所有帧id到`lru_list_`上的迭代器的映射。
 
-`size_t cur_size_` 表示当前**可被淘汰**的帧的数量。
+- `size_t cur_size_` 表示当前**可被淘汰**的帧的数量。
 
-`size_t max_size_` 表示帧的最大数量。
+- `size_t max_size_` 表示帧的最大数量。
 
 下面是你需要完成的函数，位于文件`storage/buffer/replacer/lru_replacer.cpp`中：
 
@@ -101,17 +117,13 @@ virtual auto Size() -> size_t = 0;
   根据LRU策略淘汰缓冲池中一个帧中的页面并传回`frame_id`，如果成功淘汰了一个页面返回`true`，否则返回`false`。
 
 - `void LRUReplacer::Pin(frame_id_t frame_id);`
-  
   固定id为`frame_id`的帧，如果该帧不在`lru_list_`中，应先将其加入。
-  
   **注意**：固定id为`frame_id`的帧应该被视作对此页面进行访问，因此调用`Pin`函数后该页面即为最近访问的页面。
 
 - `void LRUReplacer::Unpin(frame_id_t frame_id);`
-  
   取消固定id为`frame_id`的帧。
 
 - `auto LRUReplacer::Size() -> size_t;`
-  
   返回可以被淘汰的帧数量（即`lru_list_`的大小）。
 
 下面列举一些例子，对期望你实现的LRU策略进行说明：
@@ -127,37 +139,91 @@ virtual auto Size() -> size_t = 0;
 
 ### t2. Buffer Pool Manager (30 pts)
 
-缓冲区管理器负责页面在内存和硬盘中的交换，具体来说，你需要完成以下几个函数：
+缓冲区管理器主要负责内存缓冲区中的页面管理。
 
-* `FetchPage`：返回请求的页面，需要考虑页面不在内存中的情况。
-* `UnpinPage`：取消页面固定，并正确设置页面的脏位。
-* `DeletePage`：将页面从内存中标记删除，同时将所在帧标记为空闲。
-* `FlushPage`：将内存中的页面写到硬盘中。
-* `DeleteAllPages`：删除内存中指定文件的所有页面。
-* `FlushAllPages`：将内存中指定文件的所有页面写回磁盘。
+`BufferPoolManager`类中定义了以下类成员变量：
 
-`BufferPoolManager`中定义了以下类成员变量：
+- `std::mutex latch_` 用于并发控制。
 
-```cpp
-std::mutex                                latch_;  // 互斥锁，用于并发控制
-DiskManager                              *disk_manager_;  // 磁盘管理器，负责磁盘页面读写
-LogManager                               *log_manager_;  // 日志管理器
-std::unique_ptr<Replacer>                 replacer_;  // 页面替换策略，调用t1中实现的接口
-std::array<Frame, BUFFER_POOL_SIZE>       frames_;  // 定长数组，用于存储缓冲区中的数据页面
-std::list<frame_id_t>                     free_list_;  // 链表，用于记录缓冲区中空闲数据页面的标识符
-std::unordered_map<fid_pid_t, frame_id_t> page_frame_lookup_;  // 磁盘页面标识符（file id和page id）到缓冲区中数据页面标识符（frame ID）的映射
-```
+- `DiskManager *disk_manager_` 磁盘管理器，提供磁盘和缓冲区之间的页面读写接口。
 
-其余辅助函数和具体实现步骤请参考`storage/buffer/buffer_pool_manager.cpp`和`storage/buffer/buffer_pool_manager.h`。
+- `LogManager *log_manager_` 日志管理器。
+
+- `std::unique_ptr<Replacer> replacer_` 页面替换策略，调用你在t1中实现的接口。
+
+- `std::array<Frame, BUFFER_POOL_SIZE> frames_` 用于存储缓冲区中的数据页面。
+
+- `std::list<frame_id_t> free_list_` 用于记录缓冲区中空闲数据页面的标识符。
+
+- `std::unordered_map<fid_pid_t, frame_id_t> page_frame_lookup_` 维护磁盘页面标识符（file id和page id）到缓冲区中数据页面标识符（frame id）的映射。
+
+下面是你需要完成的函数，位于文件`storage/buffer/buffer_pool_manager.cpp`中：
+
+* `BufferPoolManager::BufferPoolManager(DiskManager *disk_manager, wsdb::LogManager *log_manager, size_t replacer_lru_k);`
+  补充类构造函数，对成员变量进行必要的初始化。
+
+* `auto BufferPoolManager::FetchPage(file_id_t fid, page_id_t pid) -> Page *;`
+  返回缓冲区中对应的页面，如果页面不在缓冲区中，将其添加后返回。
+
+* `auto BufferPoolManager::UnpinPage(file_id_t fid, page_id_t pid, bool is_dirty) -> bool;`
+  取消固定页面，并正确设置页面的脏位。
+
+* `auto BufferPoolManager::DeletePage(file_id_t fid, page_id_t pid) -> bool;`
+  将页面从缓冲区中删除，注意需要将脏页写回磁盘。
+- `auto BufferPoolManager::DeleteAllPages(file_id_t fid) -> bool;`
+  删除缓冲区中指定文件对应的所有页面。
+
+- `auto BufferPoolManager::FlushPage(file_id_t fid, page_id_t pid) -> bool;`
+  将缓冲区中的页面写到硬盘中。
+
+- `auto BufferPoolManager::FlushAllPages(file_id_t fid) -> bool;`
+  将缓冲区中指定文件的所有页面写回磁盘。
+
+- `auto BufferPoolManager::GetAvailableFrame() -> frame_id_t;`
+  获取一个缓冲区中的空闲数据页面。如果没有空闲页面，执行页面替换策略，替换失败需要抛出`WSDB_NO_FREE_FRAME`异常。
+
+- `void BufferPoolManager::UpdateFrame(frame_id_t frame_id, file_id_t fid, page_id_t pid);`
+  更新缓冲区中指定的页面。
+
+更具体的实现步骤说明可以查看文件`storage/buffer/buffer_pool_manager.h`中的函数注释。
+
+在你开始实现以上函数前，**建议首先阅读以下文件内容**，其中包含你可能会用到的函数接口：
+
+- `storage/disk/disk_manager.h`
+
+- `storage/buffer/frame.h`
+
+- `common/page.h`
 
 ### t3. Table Handle (40 pts)
 
-实现表格句柄对记录的“增删改查”接口。具体来说，你需要完成以下几个函数：
+实现表句柄对记录的“增删改查”接口。
 
-* `GetRecord`：给定RID，返回对应位置的记录数据。
-* `InsertRecord`：两个Insert函数，分别是在指定位置插入一条记录，以及在任意空闲位置插入一条数据。
-* `DeleteRecord`：给定RID，删除对应位置的记录数据。
-* `UpdateRecord`：给定RID，用新记录数据覆盖旧记录。
+`TableHandle`类中主要定义了以下类成员变量：
+
+- `tab_hdr_`为表的元数据。
+
+- `table_id_`为表的id。
+
+- `disk_manager_`为磁盘管理器。
+
+- `buffer_pool_manager_`为缓冲区管理器。
+
+- `schema_` 为表中存储的记录的模式
+
+你需要完成以下几个函数：
+
+* `auto GetRecord(const RID &rid) -> RecordUptr;`
+  给定RID，返回对应位置的记录数据。
+
+* `auto InsertRecord(const Record &record) -> RID;`
+  两个Insert函数，分别是在指定位置插入一条记录，以及在任意空闲位置插入一条数据。
+
+* `void DeleteRecord(const RID &rid);`
+  给定RID，删除对应位置的记录数据。
+
+* `void UpdateRecord(const RID &rid, const Record &record);`
+  给定RID，用新记录数据覆盖旧记录。
 
 具体实现步骤和辅助函数请参考`system/handle/table_handle.cpp`和`system/handle/table_handle.h`，建议在开始实现前阅读以下文件：
 
@@ -205,7 +271,7 @@ PAX存储格式是一种行列混存的格式，其优势在于能够快速访�
 |    col_m_1, col_m_2,      ...            , col_m_n   |
 ```
 
-Page Header和bitmap部分与NAry相同，指示当前页面上哪些位置的记录是有效的。紧跟bitmap的是一串nullmap区域，与NAry模式存储下的nullmap定义相同，一共有n个连续存储的null map。nullmap区域之后是以列为单位组织的存储空间，每一列的n个数据被连续存放。对于某个槽位的记录访问，PageHandle需要正确定位到每一列，并拼接成一条完整的记录返回到调用者；对于槽位写入需要定位到单元在文件中的准确位置并写入当前列上的值。每一列的起始位置由`TableHandle`计算并存放在`field_offset_`成员变量中。
+Page Header和bitmap部分与NAry相同，指示当前页面上哪些位置的记录是有效的。紧跟bitmap的是一串nullmap区域，与NAry模式存储下的nullmap定义相同，一共有n个连续存储的nullmap。nullmap区域之后是以列为单位组织的存储空间，每一列的n个数据被连续存放。对于某个槽位的记录访问，PageHandle需要正确定位到每一列，并拼接成一条完整的记录返回到调用者；对于槽位写入需要定位到单元在文件中的准确位置并写入当前列上的值。每一列的起始位置由`TableHandle`计算并存放在`field_offset_`成员变量中。
 
 PAX Page Handle支持整列的读取（ReadChunk），给定一个记录模式（RecordSchema），需要返回当前页上请求的所有列，将一列数据组织成数组值（ArrayValue）并将所有列打包为一个Chunk返回给调用者。
 

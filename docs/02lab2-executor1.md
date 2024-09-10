@@ -14,16 +14,18 @@ select name, score, remark from nju_db where group_id = 2 and l1_score > 90;  
 
 ```mermaid
 flowchart LR
-	SQL(sql)--客户端发送到服务端-->sys(Server)--Parser-->ast(语法树)
-	ast--Analyser-->plan(查询计划)--Optimizer-->opt(优化后的查询计划)
+    SQL(sql)--客户端发送到服务端-->sys(Server)--Parser-->ast(语法树)
+    ast--Analyser-->plan(查询计划)--Optimizer-->opt(优化后的查询计划)
 ```
 
 后处理执行流程如下：
 
 ```mermaid
 flowchart LR
-	opt(优化后的查询计划)--Executor-->exec(根据查询计划生成的算子树)--Executor-->res(执行结果)--Net-->cl(返回客户端)
+    opt(优化后的查询计划)--Executor-->exec(根据查询计划生成的算子树)--Executor-->res(执行结果)--Net-->cl(返回客户端)
 ```
+
+感兴趣的同学可以查看位于`system/system.cpp`文件的函数`SystemManager::ClientHandler(int client_fd)`对以上流程进行更细致的了解。
 
 本次实验需要同学们实现后处理流程中Executor的内容，理解和掌握火山模型的计算流程。
 
@@ -35,9 +37,29 @@ flowchart LR
 
 对于引言中的例子，其算子树如下图所示：
 
-<img src="./02lab2-executor1.assets/valcano.png" alt="valcano" style="zoom:50%;" />
+<img title="" src="./02lab2-executor1.assets/valcano.png" alt="valcano" style="zoom:50%;">
+
+上图中，Executor生成的算子树结构应为一个类型为`ProjectionExecutor`的算子`exec_tree`，`exec_tree`的成员变量`child_`是一个类型为`FilterExecutor`的算子，该算子的成员变量`child_`是一个类型为`SeqScanExecutor`的算子。
 
 在WSDB中，每个算子都由`Init`，`Next`，`IsEnd`接口组成，分别用于算子资源的初始化，获取下一条记录，以及判断算子计算是否结束。
+
+要执行上述的算子树，我们只需要将最顶层的算子`exec_tree`传入函数：
+
+```c++
+void Executor::Execute(const AbstractExecutorUptr &executor, Context *ctx)
+```
+
+这个函数主要负责对算子进行初始化，然后迭代地调用算子的`Next`接口获取下一条记录，直到算子计算全部结束。
+
+回到之前的例子，在上述算子树的执行过程中，算子的递归调用关系如下：
+
+1. 当调用`ProjectionExecutor`算子的`Next`接口时，该算子会调用其`child_`（即`FilterExecutor`算子）的`Next`接口，然后调用`FilterExecutor`算子的`GetRecord`接口，并根据子算子返回的`child_record`选择其中的部分属性（定义在其成员变量`proj_schema`中）生成自己的`record_`。
+
+2. 调用`FilterExecutor`算子的`Next`接口时，该算子会调用其`child_`（即`SeqScanExecutor`算子）的`Next`接口，然后调用`SeqScanExecutor`算子的`GetRecord`接口，并根据子算子返回的`child_record`是否满足`FilterExecutor`算子的过滤条件（定义在其成员变量`filter_`中）来决定是否将其作为自己的`record_`返回。
+
+3. 调用`SeqScanExecutor`算子的`Next`接口时，该算子将调用其成员变量`tab_`（类型为`TableHandle*`）的`GetNextRID`和`GetRecord`接口，获取当前表的下一条记录作为自己的`record_`并返回。`SeqScanExecutor`算子执行的过程即为全表扫描的过程。
+
+通过这个例子，你应该已经理解了算子树的构建和基本执行过程，并且也对`ProjectionExecutor`、`FilterExecutor`、`SeqScanExecutor`三个算子接口的实现思路有一定了解。
 
 火山模型的优点是逻辑简单，可以通过简单的算子实现复杂的查询功能。但是缺点也显而易见，即每次获取下一条记录时都需要调用一次`Next`函数，大幅降低了计算速度。因此，向量执行引擎被提出，该模型与列存模型能够很好地兼容，感兴趣的同学可以自行查阅资料了解。
 
@@ -51,6 +73,7 @@ flowchart LR
 
 下面以`execution/executor_ddl.cpp`中`ShowTablesExecutor`为例，介绍火山模型的执行过程。
 `ShowTablesExecutor`类定义如下：
+
 ```c++
 class ShowTablesExecutor : public AbstractExecutor
 {
@@ -66,14 +89,20 @@ private:
   size_t cursor_;
 };
 ```
+
 `ShowTablesExecutor`的主要成员变量包括：
+
 - `db_`为数据库句柄，用于获取所有表的信息
+
 - `is_end`表示算子是否已输出全部记录
-- `cursor`记录当前输出的记录所在的位置
+
+- `cursor_`记录当前输出的记录所在的位置
+
 - 以及继承自`AbstractExecutor`的`record_`用于存放生成的记录
-```c++
-void ShowTablesExecutor::Next()
-{
+  
+  ```c++
+  void ShowTablesExecutor::Next()
+  {
   if (is_end_) {
     WSDB_FETAL(ShowTablesExecutor, Next, "ShowTablesExecutor is end");
   }
@@ -93,9 +122,10 @@ void ShowTablesExecutor::Next()
       db_->GetIndexNum(tab_hdl->GetTableId()));
   record_      = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
   cursor_++;
-}
-```
-在`ShowTablesExecutor`的`Next`函数中，首先检查 table 信息是否已全部输出，如果没有则根据 cursor_ 位置获取对应的 table 信息，并生成记录，最后递增 cursor_ 。
+  }
+  ```
+  
+  在`ShowTablesExecutor`的`Next`函数中，首先检查 table 信息是否已全部输出，如果没有则根据 cursor_ 位置获取对应的 table 信息，并生成记录，最后递增 cursor_ 。
 
 需要注意的是，DDL语句以及DML中的增删改语句不需要执行`Init`函数，大部分的基本算子（`Basic`）可能都需要在Init期间做一些资源的初始化。
 
@@ -191,20 +221,20 @@ def nestedloop_join(left, right, condition):
 1. 实验报告（10%）：实现思路，优化技巧，实验结果，对框架代码和实验的建议，以及在报告中出现的思考等，请尽量避免直接粘贴代码，建议2-4页。
 
 2. 功能分数（90%）：需要通过`wsdb/test/sql`目录下的SQL语句测试。
-
+   
    * t1: 顺序通过`wsdb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
-
+     
      * `01_prepare_table_dbcourse.sql`: 15 pts
      * `02_seqscan_limit_projection.sql`: 30 pts
      * `03_filter_update_delete.sql`: 30 pts
      * `04_sort_final.sql`: 15 pts
-
+   
    * f1: 顺序通过`wsdb/test/sql/lab02/f1`下的SQL测试，由于排序结果集较大，仓库并未包含排序测试的预期输出，请同学们确保测试充分后再提交。
-
+     
      * `04_merge_sort.sql`: 10pts
-
+   
    * 提示：你可以cd到`wsdb/test/sql/lab02`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，注意：脚本并不负责项目的编译，所以请在运行脚本之前手动编译。
-
+     
      ```bash
      $ bash evaluate.sh <bin directory> <test sql directory>
      # e.g. bash evaluate.sh /path/to/wsdb/cmake-build-debug/bin t1
@@ -213,18 +243,18 @@ def nestedloop_join(left, right, condition):
 **请勿抄袭或搬运他人的实验结果，如被发现将取消大实验分数!!!**
 
 3. 测试方法：编译`wsdb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
-
+   
    ```shell
    $ ./wsdb
    $ ./client
    ```
-
+   
    关于client的更多用法可参考00basic.md或使用-h参数查看。如果`wsdb`因为端口监听异常启动失败（通常原因是已经启用了一个wsdb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间wsdb释放资源后再重新启动。
 
 ### 提交材料
 
 1. 实验报告（提交一份PDF，命名格式：lab2\_学号\_姓名.pdf）：请在报告开头写上相关信息。
-
+   
    | 学号     | 姓名 | 邮箱                      | 完成题目 |
    | -------- | ---- | ------------------------- | -------- |
    | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | t1/f1    |
@@ -233,25 +263,20 @@ def nestedloop_join(left, right, condition):
 
 *提交示例：请将以上两部分内容打包并命名为lab2\_学号\_姓名.zip（例如lab2_123456_张三.zip）并上传至教学立方，请确保解压后目录树如下：*
 
-   ```
+```
 ├── lab2_123456_张三.pdf
 └── src
-    ├── CMakeLists.txt
-    ├── common
-    ├── concurrency
-    ├── execution
-    ├── expr
-    ├── log
-    ├── main.cpp
-    ├── net
-    ├── optimizer
-    ├── parser
-    ├── plan
-    ├── storage
-    └── system
-   ```
-
-   
-
-
-
+ ├── CMakeLists.txt
+ ├── common
+ ├── concurrency
+ ├── execution
+ ├── expr
+ ├── log
+ ├── main.cpp
+ ├── net
+ ├── optimizer
+ ├── parser
+ ├── plan
+ ├── storage
+ └── system
+```

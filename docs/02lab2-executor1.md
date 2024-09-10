@@ -14,16 +14,18 @@ select name, score, remark from nju_db where group_id = 2 and l1_score > 90;  
 
 ```mermaid
 flowchart LR
-	SQL(sql)--客户端发送到服务端-->sys(Server)--Parser-->ast(语法树)
-	ast--Analyser-->plan(查询计划)--Optimizer-->opt(优化后的查询计划)
+    SQL(sql)--客户端发送到服务端-->sys(Server)--Parser-->ast(语法树)
+    ast--Analyser-->plan(查询计划)--Optimizer-->opt(优化后的查询计划)
 ```
 
 后处理执行流程如下：
 
 ```mermaid
 flowchart LR
-	opt(优化后的查询计划)--Executor-->exec(根据查询计划生成的算子树)--Executor-->res(执行结果)--Net-->cl(返回客户端)
+    opt(优化后的查询计划)--Executor-->exec(根据查询计划生成的算子树)--Executor-->res(执行结果)--Net-->cl(返回客户端)
 ```
+
+感兴趣的同学可以查看位于`system/system.cpp`文件的函数`SystemManager::ClientHandler(int client_fd)`对以上流程进行更细致的了解。
 
 本次实验需要同学们实现后处理流程中Executor的内容，理解和掌握火山模型的计算流程。
 
@@ -35,9 +37,57 @@ flowchart LR
 
 对于引言中的例子，其算子树如下图所示：
 
-<img src="./02lab2-executor1.assets/valcano.png" alt="valcano" style="zoom:50%;" />
+<img title="" src="./02lab2-executor1.assets/valcano.png" alt="valcano" style="zoom:50%;">
 
 在WSDB中，每个算子都由`Init`，`Next`，`IsEnd`接口组成，分别用于算子资源的初始化，获取下一条记录，以及判断算子计算是否结束。
+
+要执行上述的算子树，我们只需要将最顶层的算子`exec_tree`传入函数：
+
+```c++
+void Executor::Execute(const AbstractExecutorUptr &executor, Context *ctx)
+```
+
+这个函数主要负责对算子进行初始化，然后迭代地调用算子的`Next`接口获取下一条记录，直到算子计算全部结束。
+
+```
++----+------+-------+----------+----------+--------+
+| id | name | score | group_id | l1_score | remark |
++----+------+-------+----------+----------+--------+
+| 1  | n1   | 90    | 2        | 91.5     | r1     |
++----+------+-------+----------+----------+--------+
+| 2  | n2   | 83    | 1	       | 89       | r2     |
++----+------+-------+----------+----------+--------+
+| 3  | n3   | 97    | 2        | 92       | r3     |
++----+------+-------+----------+----------+--------+
+```
+
+回到之前的例子，假如我们有一个三个记录的表，在上述算子树的执行过程中
+
+1. `Projection`需要输出一个记录，则通过下层算子`Filter`的`Next`抽取记录。
+
+2. `Filter`接到记录抽取请求，并继续向下层请求记录。
+
+3. `Scan`作为最底层算子，接受请求，并返回给`Filter`第一条记录，`Filter`经过检查后发现第一条记录满足过滤条件，于是继续将该条记录传递给`Projection`
+
+4. 至此`Projection`的`Next`接口得到了一个记录，通过投影操作向`Executor`返回请求的字段，作为最终结果
+
+   ```
+   +-------+-------+--------+
+   | n1	| 90	| r1	 |
+   +-------+-------+--------+
+   ```
+
+5. `Executor`继续通过`Projection`的`Next`接口抽取下一条记录，当`Filter`收到`Scan`返回的记录时发现第二条记录无法通过过滤，于是再次通过`Scan`的`Next`抽取第三条记录，经过检查后发现满足过滤条件，于是返回给`Projection`，并由其完成其余投影操作后将结果返回给`Executor`。
+
+   ```
+   +-------+-------+--------+
+   | n3	| 97	| r3	 |
+   +-------+-------+--------+
+   ```
+
+6. `Executor`向`Projection`询问是否还有记录，由于`Projection`是否结束取决于下层的`Filter`是否结束，`Filter`是否结束取决于Scan是否结束，`Scan`发现表中已无更多记录于是将执行结束的信息一步步向上传递，`Executor`收到结束信息后做其余收尾工作。
+
+通过这个例子，你应该已经理解了算子树的构建和基本执行过程，并且也对`ProjectionExecutor`、`FilterExecutor`、`SeqScanExecutor`三个算子接口的实现思路有一定了解。
 
 火山模型的优点是逻辑简单，可以通过简单的算子实现复杂的查询功能。但是缺点也显而易见，即每次获取下一条记录时都需要调用一次`Next`函数，大幅降低了计算速度。因此，向量执行引擎被提出，该模型与列存模型能够很好地兼容，感兴趣的同学可以自行查阅资料了解。
 
@@ -51,6 +101,7 @@ flowchart LR
 
 下面以`execution/executor_ddl.cpp`中`ShowTablesExecutor`为例，介绍火山模型的执行过程。
 `ShowTablesExecutor`类定义如下：
+
 ```c++
 class ShowTablesExecutor : public AbstractExecutor
 {
@@ -66,14 +117,20 @@ private:
   size_t cursor_;
 };
 ```
+
 `ShowTablesExecutor`的主要成员变量包括：
+
 - `db_`为数据库句柄，用于获取所有表的信息
+
 - `is_end`表示算子是否已输出全部记录
-- `cursor`记录当前输出的记录所在的位置
+
+- `cursor_`记录当前输出的记录所在的位置
+
 - 以及继承自`AbstractExecutor`的`record_`用于存放生成的记录
-```c++
-void ShowTablesExecutor::Next()
-{
+
+  ```c++
+  void ShowTablesExecutor::Next()
+  {
   if (is_end_) {
     WSDB_FETAL(ShowTablesExecutor, Next, "ShowTablesExecutor is end");
   }
@@ -93,9 +150,10 @@ void ShowTablesExecutor::Next()
       db_->GetIndexNum(tab_hdl->GetTableId()));
   record_      = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
   cursor_++;
-}
-```
-在`ShowTablesExecutor`的`Next`函数中，首先检查 table 信息是否已全部输出，如果没有则根据 cursor_ 位置获取对应的 table 信息，并生成记录，最后递增 cursor_ 。
+  }
+  ```
+
+  在`ShowTablesExecutor`的`Next`函数中，首先检查 table 信息是否已全部输出，如果没有则根据 cursor_ 位置获取对应的 table 信息，并生成记录，最后递增 cursor_ 。
 
 需要注意的是，DDL语句以及DML中的增删改语句不需要执行`Init`函数，大部分的基本算子（`Basic`）可能都需要在Init期间做一些资源的初始化。
 
@@ -192,23 +250,23 @@ def nestedloop_join(left, right, condition):
 
 2. 功能分数（90%）：需要通过`wsdb/test/sql`目录下的SQL语句测试。
 
-   * t1: 顺序通过`wsdb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
+    * t1: 顺序通过`wsdb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
 
-     * `01_prepare_table_dbcourse.sql`: 15 pts
-     * `02_seqscan_limit_projection.sql`: 30 pts
-     * `03_filter_update_delete.sql`: 30 pts
-     * `04_sort_final.sql`: 15 pts
+        * `01_prepare_table_dbcourse.sql`: 15 pts
+        * `02_seqscan_limit_projection.sql`: 30 pts
+        * `03_filter_update_delete.sql`: 30 pts
+        * `04_sort_final.sql`: 15 pts
 
-   * f1: 顺序通过`wsdb/test/sql/lab02/f1`下的SQL测试，由于排序结果集较大，仓库并未包含排序测试的预期输出，请同学们确保测试充分后再提交。
+    * f1: 顺序通过`wsdb/test/sql/lab02/f1`下的SQL测试，由于排序结果集较大，仓库并未包含排序测试的预期输出，请同学们确保测试充分后再提交。
 
-     * `04_merge_sort.sql`: 10pts
+        * `04_merge_sort.sql`: 10pts
 
-   * 提示：你可以cd到`wsdb/test/sql/lab02`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，注意：脚本并不负责项目的编译，所以请在运行脚本之前手动编译。
+    * 提示：你可以cd到`wsdb/test/sql/lab02`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，注意：脚本并不负责项目的编译，所以请在运行脚本之前手动编译。
 
-     ```bash
-     $ bash evaluate.sh <bin directory> <test sql directory>
-     # e.g. bash evaluate.sh /path/to/wsdb/cmake-build-debug/bin t1
-     ```
+      ```bash
+      $ bash evaluate.sh <bin directory> <test sql directory>
+      # e.g. bash evaluate.sh /path/to/wsdb/cmake-build-debug/bin t1
+      ```
 
 **请勿抄袭或搬运他人的实验结果，如被发现将取消大实验分数!!!**
 
@@ -226,32 +284,27 @@ def nestedloop_join(left, right, condition):
 1. 实验报告（提交一份PDF，命名格式：lab2\_学号\_姓名.pdf）：请在报告开头写上相关信息。
 
    | 学号     | 姓名 | 邮箱                      | 完成题目 |
-   | -------- | ---- | ------------------------- | -------- |
+      | -------- | ---- | ------------------------- | -------- |
    | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | t1/f1    |
 
 2. 代码：`wsdb/src`文件夹
 
 *提交示例：请将以上两部分内容打包并命名为lab2\_学号\_姓名.zip（例如lab2_123456_张三.zip）并上传至教学立方，请确保解压后目录树如下：*
 
-   ```
+```
 ├── lab2_123456_张三.pdf
 └── src
-    ├── CMakeLists.txt
-    ├── common
-    ├── concurrency
-    ├── execution
-    ├── expr
-    ├── log
-    ├── main.cpp
-    ├── net
-    ├── optimizer
-    ├── parser
-    ├── plan
-    ├── storage
-    └── system
-   ```
-
-   
-
-
-
+ ├── CMakeLists.txt
+ ├── common
+ ├── concurrency
+ ├── execution
+ ├── expr
+ ├── log
+ ├── main.cpp
+ ├── net
+ ├── optimizer
+ ├── parser
+ ├── plan
+ ├── storage
+ └── system
+```

@@ -81,14 +81,14 @@ CreateTableExecutor::CreateTableExecutor(
   out_schema_ = MakeTableDescOutSchema(db_->GetName().size(), tab_name_.size());
 }
 
-void CreateTableExecutor::Init() { WSDB_FETAL(CreateTableExecutor, Init, "CreateTableExecutor does not support Init"); }
+void CreateTableExecutor::Init() { WSDB_FETAL("CreateTableExecutor does not support Init"); }
 void CreateTableExecutor::Next()
 {
   if (is_end_) {
-    WSDB_FETAL(CreateTableExecutor, Next, "CreateTableExecutor is end");
+    WSDB_FETAL("CreateTableExecutor is end");
   }
   if (db_->GetTable(tab_name_) != nullptr) {
-    throw WSDBException(WSDB_TABLE_EXIST, Q(CreateTableExecutor), Q(Next), tab_name_);
+    WSDB_THROW(WSDB_TABLE_EXIST, tab_name_);
   }
   db_->CreateTable(tab_name_, *schema_, storage_);
   auto values = MakeTableDescValue(db_->GetName(),
@@ -109,15 +109,15 @@ DropTableExecutor::DropTableExecutor(std::string table_name, wsdb::DatabaseHandl
   out_schema_ = MakeTableDescOutSchema(db_->GetName().size(), tab_name_.size());
 }
 
-void DropTableExecutor::Init() { WSDB_FETAL(DropTableExecutor, Init, "DropTableExecutor does not support Init"); }
+void DropTableExecutor::Init() { WSDB_FETAL("DropTableExecutor does not support Init"); }
 void DropTableExecutor::Next()
 {
   if (is_end_) {
-    WSDB_FETAL(DropTableExecutor, Next, "DropTableExecutor is end");
+    WSDB_FETAL("DropTableExecutor is end");
   }
   auto tab = db_->GetTable(tab_name_);
   if (tab == nullptr) {
-    throw WSDBException(WSDB_TABLE_MISS, Q(DropTableExecutor), Q(Next), tab_name_);
+    WSDB_THROW(WSDB_TABLE_MISS, tab_name_);
   }
   auto values = MakeTableDescValue(db_->GetName(),
       tab_name_,
@@ -148,14 +148,14 @@ DescTableExecutor::DescTableExecutor(wsdb::TableHandle *tbl_hdl)
   out_schema_ = std::make_unique<RecordSchema>(fields);
 }
 
-void DescTableExecutor::Init() { WSDB_FETAL(DescTableExecutor, Init, "DescTableExecutor does not support Init"); }
+void DescTableExecutor::Init() { WSDB_FETAL("DescTableExecutor does not support Init"); }
 void DescTableExecutor::Next()
 {
   if (IsEnd()) {
-    WSDB_FETAL(DescTableExecutor, Next, "DescTableExecutor is end");
+    WSDB_FETAL("DescTableExecutor is end");
   }
   if (tab_hdl_ == nullptr) {
-    throw WSDBException(WSDB_TABLE_MISS, Q(DescTableExecutor), Q(Next), "TableHandle is null");
+    WSDB_THROW(WSDB_TABLE_MISS, "TableHandle is null");
   }
   if (cursor_ >= tab_hdl_->GetSchema().GetFieldCount()) {
     is_end_ = true;
@@ -170,7 +170,7 @@ void DescTableExecutor::Next()
           .c_str(),
       20));
   values.push_back(ValueFactory::CreateStringValue(field.field_.nullable_ ? "YES" : "NO", 10));
-  WSDB_ASSERT(DescTableExecutor, Next, values.size() == out_schema_->GetFieldCount(), "Value size not match");
+  WSDB_ASSERT(values.size() == out_schema_->GetFieldCount(), "Value size not match");
   record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
   cursor_++;
 }
@@ -183,11 +183,11 @@ ShowTablesExecutor::ShowTablesExecutor(wsdb::DatabaseHandle *db)
   out_schema_ = MakeTableDescOutSchema(db_->GetName().size(), MAX_TABNAME_LEN);
 }
 
-void ShowTablesExecutor::Init() { WSDB_FETAL(ShowTablesExecutor, Init, "ShowTablesExecutor does not support Init"); }
+void ShowTablesExecutor::Init() { WSDB_FETAL("ShowTablesExecutor does not support Init"); }
 void ShowTablesExecutor::Next()
 {
   if (is_end_) {
-    WSDB_FETAL(ShowTablesExecutor, Next, "ShowTablesExecutor is end");
+    WSDB_FETAL("ShowTablesExecutor is end");
   }
   auto &tables = db_->GetAllTables();
   if (cursor_ >= tables.size()) {

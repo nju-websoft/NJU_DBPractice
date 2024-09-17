@@ -26,8 +26,8 @@
 int main()
 {
   auto wsdb_sys = wsdb::SystemManager::GetInstance();
-  WSDB_LOG(Main, main, "Creating components");
+  WSDB_LOG("Creating components");
   wsdb_sys->Init();
-  WSDB_LOG(Main, main, "System Running");
+  WSDB_LOG("System Running");
   wsdb_sys->Run();
 }

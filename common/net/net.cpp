@@ -32,10 +32,10 @@ static ssize_t readn(int sockfd, char *buf, int len)
   while (nleft > 0) {
     n = read(sockfd, buf, nleft);
     if (n < 0) {
-      WSDB_LOG(net, readn, "ERROR reading from socket");
+      WSDB_LOG("ERROR reading from socket");
       return -1;
     } else if (n == 0) {
-      WSDB_LOG(net, readn, fmt::format("connection to {} closed", sockfd));
+      WSDB_LOG(fmt::format("connection to {} closed", sockfd));
       return -1;
     }
     nleft -= n;
@@ -51,10 +51,10 @@ static ssize_t writen(int sockfd, char *buf, int len)
   while (nleft > 0) {
     n = write(sockfd, buf, nleft);
     if (n < 0) {
-      WSDB_LOG(net, writen, "ERROR writing to socket");
+      WSDB_LOG("ERROR writing to socket");
       return -1;
     } else if (n == 0) {
-      WSDB_LOG(net, writen, fmt::format("connection to {} closed", sockfd));
+      WSDB_LOG(fmt::format("connection to {} closed", sockfd));
       return -1;
     }
     nleft -= n;

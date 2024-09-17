@@ -24,7 +24,6 @@
 
 #include <string>
 #include <vector>
-#include <algorithm>
 #include "types.h"
 #include "../../common/error.h"
 #include "../../common/micro.h"
@@ -77,14 +76,11 @@ public:
 
   virtual auto operator+=(const Value &value) -> Value &
   {
-    throw WSDBException(WSDB_UNSUPPORTED_OP, Q(Value), Q(operator+=), FieldTypeToString(GetType()));
+    WSDB_THROW(WSDB_UNSUPPORTED_OP, FieldTypeToString(GetType()));
   }
 
   // this special operator is used to support average calculation in aggregation
-  virtual auto operator/=(int k) -> Value &
-  {
-    throw WSDBException(WSDB_UNSUPPORTED_OP, Q(Value), Q(operator/=), FieldTypeToString(GetType()));
-  }
+  virtual auto operator/=(int k) -> Value & { WSDB_THROW(WSDB_UNSUPPORTED_OP, FieldTypeToString(GetType())); }
 
   static auto Max(const Value &lval, const Value &rval) -> const Value &
   {
@@ -131,14 +127,12 @@ public:
     return *lval < *rval ? lval : rval;
   }
 
-  [[nodiscard]] virtual auto ToString() const -> std::string { WSDB_FETAL(Value, ToString, "never reach here"); }
+  [[nodiscard]] virtual auto ToString() const -> std::string { WSDB_FETAL("never reach here"); }
 
   static void CheckBasic(const Value &lval, const Value &rval)
   {
     if (lval.GetType() != rval.GetType()) {
-      throw WSDBException(WSDB_TYPE_MISSMATCH,
-          Q(Value),
-          Q(CheckBasic()),
+      WSDB_THROW(WSDB_TYPE_MISSMATCH,
           fmt::format("Type mismatch: {} != {}", FieldTypeToString(lval.GetType()), FieldTypeToString(rval.GetType())));
     }
   }
@@ -163,7 +157,7 @@ public:
   {}
   explicit IntValue(const char *mem) : Value(FieldType::TYPE_INT, sizeof(int32_t), false)
   {
-    WSDB_ASSERT(IntValue, IntValue, mem != nullptr, "mem is nullptr");
+    WSDB_ASSERT(mem != nullptr, "mem is nullptr");
     value_ = *reinterpret_cast<const int32_t *>(mem);
   }
   IntValue(const IntValue &value)            = default;
@@ -210,7 +204,7 @@ public:
       return *this;
     }
     if (k == 0) {
-      throw WSDBException(WSDB_UNEXPECTED_NULL, Q(IntValue), Q(operator/=), "Divide by zero");
+      WSDB_THROW(WSDB_UNEXPECTED_NULL, "Divide by zero");
     }
     value_ /= k;
     return *this;
@@ -233,7 +227,7 @@ public:
   FloatValue(float value, bool is_null) : Value(FieldType::TYPE_FLOAT, sizeof(float), is_null), value_(value) {}
   explicit FloatValue(const char *mem) : Value(FieldType::TYPE_FLOAT, sizeof(float), false)
   {
-    WSDB_ASSERT(FloatValue, FloatValue, mem != nullptr, "mem is nullptr");
+    WSDB_ASSERT(mem != nullptr, "mem is nullptr");
     value_ = *reinterpret_cast<const float *>(mem);
   }
   FloatValue(const FloatValue &value)            = default;
@@ -280,7 +274,7 @@ public:
       return *this;
     }
     if (k == 0) {
-      throw WSDBException(WSDB_UNEXPECTED_NULL, Q(FloatValue), Q(operator/=), "Divide by zero");
+      WSDB_THROW(WSDB_UNEXPECTED_NULL, "Divide by zero");
     }
     value_ /= static_cast<float>(k);
     return *this;
@@ -304,7 +298,7 @@ public:
 
   explicit BoolValue(const char *mem) : Value(FieldType::TYPE_BOOL, sizeof(bool), false)
   {
-    WSDB_ASSERT(BoolValue, BoolValue, mem != nullptr, "mem is nullptr");
+    WSDB_ASSERT(mem != nullptr, "mem is nullptr");
     value_ = *reinterpret_cast<const bool *>(mem);
   }
 
@@ -350,7 +344,8 @@ class StringValue : public Value
 public:
   StringValue() = delete;
   StringValue(const char *value, size_t size, bool is_null)
-      : Value(FieldType::TYPE_STRING, std::min(size, strlen(value)), is_null), value_(value, std::min(size, strlen(value)))
+      : Value(FieldType::TYPE_STRING, std::min(size, strlen(value)), is_null),
+        value_(value, std::min(size, strlen(value)))
   {
     // resize the string to prune out '\0' characters
     // the given size is larger than the actual string size, so we need to resize it
@@ -496,9 +491,7 @@ public:
       return *this;
     }
     if (values_.size() != dynamic_cast<const ArrayValue &>(value).values_.size()) {
-      throw WSDBException(WSDB_TYPE_MISSMATCH,
-          Q(ArrayValue),
-          Q(operator+=),
+      WSDB_THROW(WSDB_TYPE_MISSMATCH,
           fmt::format("sizes: {}, {}", values_.size(), dynamic_cast<const ArrayValue &>(value).values_.size()));
     }
     for (size_t i = 0; i < values_.size(); i++) {
@@ -580,7 +573,7 @@ public:
       case FieldType::TYPE_INT: return ValueFactory::CreateIntValue(*reinterpret_cast<const int32_t *>(data));
       case FieldType::TYPE_FLOAT: return ValueFactory::CreateFloatValue(*reinterpret_cast<const float *>(data));
       case FieldType::TYPE_STRING: return ValueFactory::CreateStringValue(data, size);
-      default: WSDB_FETAL(Record, GetValueAt, "Unsupported field type");
+      default: WSDB_FETAL("Unsupported field type");
     }
   }
 
@@ -592,7 +585,7 @@ public:
       case FieldType::TYPE_BOOL: return std::make_shared<BoolValue>(false, true);
       case FieldType::TYPE_STRING: return std::make_shared<StringValue>("", 0, true);
       case FieldType::TYPE_ARRAY: return std::make_shared<ArrayValue>(std::vector<ValueSptr>(), true);
-      default: WSDB_FETAL(ValueFactory, CreateNullValue, "Unknown FieldType");
+      default: WSDB_FETAL("Unknown FieldType");
     }
   }
 
@@ -605,9 +598,7 @@ public:
     } else if (lval->GetType() == FieldType::TYPE_FLOAT && rval->GetType() == FieldType::TYPE_INT) {
       rval = CreateFloatValue(static_cast<float>(std::dynamic_pointer_cast<IntValue>(rval)->Get()));
     } else {
-      throw WSDBException(WSDB_TYPE_MISSMATCH,
-          Q(ValueFactory),
-          Q(AlignTypes),
+      WSDB_THROW(WSDB_TYPE_MISSMATCH,
           fmt::format(
               "Type mismatch: {} != {}", FieldTypeToString(lval->GetType()), FieldTypeToString(rval->GetType())));
     }
@@ -620,9 +611,7 @@ public:
     }
     if (value->GetType() == FieldType::TYPE_INT) {
       if (type != FieldType::TYPE_FLOAT) {
-        throw WSDBException(WSDB_TYPE_MISSMATCH,
-            Q(ValueFactory),
-            Q(CastTo),
+        WSDB_THROW(WSDB_TYPE_MISSMATCH,
             fmt::format("Type mismatch {} != {}", FieldTypeToString(value->GetType()), FieldTypeToString(type)));
       }
       if (value->IsNull()) {
@@ -631,9 +620,7 @@ public:
       return CreateFloatValue(static_cast<float>(std::dynamic_pointer_cast<IntValue>(value)->Get()));
     } else if (value->GetType() == FieldType::TYPE_FLOAT) {
       if (type != FieldType::TYPE_INT) {
-        throw WSDBException(WSDB_TYPE_MISSMATCH,
-            Q(ValueFactory),
-            Q(CastTo),
+        WSDB_THROW(WSDB_TYPE_MISSMATCH,
             fmt::format("Type mismatch {} != {}", FieldTypeToString(value->GetType()), FieldTypeToString(type)));
       }
       if (value->IsNull()) {
@@ -641,9 +628,7 @@ public:
       }
       return CreateIntValue(static_cast<int>(std::dynamic_pointer_cast<FloatValue>(value)->Get()));
     } else {
-      throw WSDBException(WSDB_TYPE_MISSMATCH,
-          Q(ValueFactory),
-          Q(CastTo),
+      WSDB_THROW(WSDB_TYPE_MISSMATCH,
           fmt::format("Type mismatch {} != {}", FieldTypeToString(value->GetType()), FieldTypeToString(type)));
     }
   }

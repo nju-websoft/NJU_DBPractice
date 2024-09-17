@@ -52,7 +52,7 @@ private:
 
     explicit LRUKNode(frame_id_t fid, size_t k) : fid_(fid), k(k), is_evictable_(false) {}
 
-    void AddHistory(timestamp_t ts) { WSDB_STUDENT_TODO(L1, f1, LRUKNode, AddHistory()); }
+    void AddHistory(timestamp_t ts) { WSDB_STUDENT_TODO(l1, f1); }
 
     /**
      * Get the distance between the current timestamp and the k-th timestamp in the history,
@@ -62,12 +62,12 @@ private:
      */
     auto GetBackwardKDistance(timestamp_t cur_ts) -> unsigned long long
     {
-      WSDB_STUDENT_TODO(L1, f1, LRUKNode, GetBackwardKDistance());
+      WSDB_STUDENT_TODO(l1, f1);
     }
 
-    [[nodiscard]] auto IsEvictable() const -> bool { WSDB_STUDENT_TODO(L1, f1, LRUKNode, IsEvictable()); }
+    [[nodiscard]] auto IsEvictable() const -> bool { WSDB_STUDENT_TODO(l1, f1); }
 
-    auto SetEvictable(bool set_evictable) -> void { WSDB_STUDENT_TODO(L1, f1, LRUKNode, SetEvictable()); }
+    auto SetEvictable(bool set_evictable) -> void { WSDB_STUDENT_TODO(l1, f1); }
 
   private:
     std::list<timestamp_t> history_;

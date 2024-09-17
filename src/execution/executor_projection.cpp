@@ -29,10 +29,10 @@ ProjectionExecutor::ProjectionExecutor(AbstractExecutorUptr child, RecordSchemaU
   out_schema_ = std::move(proj_schema);
 }
 
-void ProjectionExecutor::Init() { WSDB_STUDENT_TODO(L2, t1, ProjectionExecutor, Init()); }
+void ProjectionExecutor::Init() { WSDB_STUDENT_TODO(l2, t1); }
 
-void ProjectionExecutor::Next() { WSDB_STUDENT_TODO(L2, t1, ProjectionExecutor, Next()); }
+void ProjectionExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
 
-auto ProjectionExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(L2, t1, ProjectionExecutor, IsEnd()); }
+auto ProjectionExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l2, t1); }
 
 }  // namespace wsdb

@@ -82,7 +82,7 @@ auto Optimizer::LogicalOptimizeJoin(std::shared_ptr<JoinPlan> join) -> std::shar
   if (join->strategy_ == NESTED_LOOP) {
     return join;
   }
-  WSDB_ASSERT(Optimizer, LogicalOptimize(), join->strategy_ == SORT_MERGE, "Unknown join strategy");
+  WSDB_ASSERT(join->strategy_ == SORT_MERGE, "Unknown join strategy");
   // try to generate SortMergeJoin
   // check if all conditions are equality comparison
   auto all_eq =

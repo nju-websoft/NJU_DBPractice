@@ -73,7 +73,7 @@ SystemManager::~SystemManager() {}
 
 void SystemManager::CreateDatabase(const std::string &db_name)
 {
-  WSDB_ASSERT(databases_.find(db_name) == databases_.end(), WSDB_DB_EXISTS, Q(SystemManager), Q(CreateDatabase()));
+  WSDB_ASSERT(databases_.find(db_name) == databases_.end(), "Database already exists");
   // 2. create a new directory for the database
   std::filesystem::create_directory(db_name);
   // 3. create a new database handle
@@ -85,7 +85,7 @@ void SystemManager::CreateDatabase(const std::string &db_name)
 
 void SystemManager::DropDatabase(const std::string &db_name)
 {
-  throw WSDBException(WSDB_NOT_IMPLEMENTED, Q(SystemManager), Q(DropDatabase()));
+  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
 }
 
 void SystemManager::Recover()
@@ -101,10 +101,10 @@ void SystemManager::Recover()
 void SystemManager::SIGINTHandler(int sig)
 {
   // flush all the logs into disk
-  WSDB_LOG(SystemManager, SIGINTHandler, "Received SIGINT signal, exiting the system...");
+  WSDB_LOG("Received SIGINT signal, exiting the system...");
   is_running_ = false;
   log_manager_->FlushLog();
-  WSDB_LOG(SystemManager, SIGINTHandler, "Log flushed successfully.");
+  WSDB_LOG("Log flushed successfully.");
   net_controller_->Close();
   // close all databases
   for (auto &db : databases_) {
@@ -123,14 +123,14 @@ void SystemManager::Run()
   Recover();
   // start the server
   if (net_controller_->Listen() < 0) {
-    WSDB_LOG(SystemManager, Run, "ERROR on init server socket");
+    WSDB_LOG("ERROR on init server socket");
     return;
   }
-  WSDB_LOG(SystemManager, Run, "Server listening on port " + std::to_string(net::SERVER_PORT));
+  WSDB_LOG("Server listening on port " + std::to_string(net::SERVER_PORT));
   while (is_running_) {
     auto client_sock = net_controller_->Accept();
     if (client_sock < 0) {
-      WSDB_LOG(SystemManager, Run, "ERROR on accept");
+      WSDB_LOG("ERROR on accept");
       continue;
     }
     // create a new thread to handle the client
@@ -144,7 +144,7 @@ void SystemManager::Run()
   // wait for the clean-up daemon
   std::this_thread::sleep_for(std::chrono::seconds(1));
   // exit the system
-  WSDB_LOG(SystemManager, SIGINTHandler, "Bye!");
+  WSDB_LOG("Bye!");
 }
 void SystemManager::ClientHandler(int client_fd)
 {
@@ -154,14 +154,14 @@ void SystemManager::ClientHandler(int client_fd)
   // 3. execute the request
   // 4. send the response
   // 5. close the connection
-  WSDB_LOG(SystemManager, ClientHandler, fmt::format("Client {} connected", client_fd));
+  WSDB_LOG(fmt::format("Client {} connected", client_fd));
   // 1. read the request
   Transaction txn{};
   Context     context(&txn, log_manager_.get(), nullptr, net_controller_.get(), client_fd);
   while (is_running_) {
     try {
       auto sql = net_controller_->ReadSQL(client_fd);
-      WSDB_LOG(SystemManager, ClientHandler, fmt::format("Client {} sent: {}", client_fd, sql));
+      WSDB_LOG(fmt::format("Client {} sent: {}", client_fd, sql));
       if (sql == "exit;") {
         break;
       } else if (sql == "shutdown;") {
@@ -183,9 +183,9 @@ void SystemManager::ClientHandler(int client_fd)
       } else {
         net_controller_->SendOK(client_fd);
       }
-    } catch (WSDBException &e) {
+    } catch (WSDBException_ &e) {
       if (e.type_ == WSDB_CLIENT_DOWN) {
-        WSDB_LOG(SystemManager, ClientHandler, fmt::format("Client {} disconnected", client_fd));
+        WSDB_LOG(fmt::format("Client {} disconnected", client_fd));
         break;
       } else if (e.type_ == WSDB_TXN_ABORTED) {
         // TODO: rollback the transaction, txn_manager_->Abort(txn_id, log_manager_);
@@ -209,18 +209,17 @@ bool SystemManager::DoDBPlan(const std::shared_ptr<AbstractPlan> &plan, Context 
 {
   if (const auto cdb = std::dynamic_pointer_cast<CreateDBPlan>(plan)) {
     if (cdb->db_name_ == TMP_DIR) {
-      throw WSDBException(
-          WSDB_INVALID_SQL, Q(SystemManager), Q(DoDBPlan), fmt::format("invalid db name: {}", cdb->db_name_));
+      WSDB_THROW(WSDB_INVALID_SQL, fmt::format("invalid db name: {}", cdb->db_name_));
     }
     if (databases_.find(cdb->db_name_) == databases_.end()) {
       CreateDatabase(cdb->db_name_);
     } else {
-      throw WSDBException(WSDB_DB_EXISTS, Q(SystemManager), Q(DoDBPlan), fmt::format("{}", cdb->db_name_));
+      WSDB_THROW(WSDB_DB_EXISTS, fmt::format("{}", cdb->db_name_));
     }
     return true;
   } else if (const auto odb = std::dynamic_pointer_cast<OpenDBPlan>(plan)) {
     if (databases_.find(odb->db_name_) == databases_.end()) {
-      throw WSDBException(WSDB_DB_MISS, Q(SystemManager), Q(DoDBPlan), fmt::format("{}", odb->db_name_));
+      WSDB_THROW(WSDB_DB_MISS, fmt::format("{}", odb->db_name_));
     } else {
       ctx->db_ = databases_[odb->db_name_].get();
       ctx->db_->ref_cnt_++;

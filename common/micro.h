@@ -44,6 +44,6 @@
 #define FILE_NAME(db_name, obj_name, suffix) (fmt::format("{}/{}{}", db_name, obj_name, suffix))
 #define OBJNAME_FROM_FILENAME(filename) (std::filesystem::path(filename).stem().string())
 
-#define WSDB_LOG(class_, func_, msg) std::cout << fmt::format("\033[32mLOG <{}::{}>: {}\033[0m\n", #class_, #func_, msg)
+#define WSDB_LOG(msg) std::cout << fmt::format("\033[32mLOG <{}::{}>: {}\033[0m\n", __func__, __LINE__, msg)
 
 #endif  // WSDB_MICRO_H

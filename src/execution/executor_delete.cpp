@@ -30,9 +30,9 @@ DeleteExecutor::DeleteExecutor(AbstractExecutorUptr child, TableHandle *tbl, std
   fields[0]   = RTField{.field_ = {.field_name_ = "deleted", .field_size_ = sizeof(int), .field_type_ = TYPE_INT}};
   out_schema_ = std::make_unique<RecordSchema>(fields);
 }
-void DeleteExecutor::Init() { WSDB_FETAL(DeleteExecutor, Init(), "DeleteExecutor does not support Init"); }
+void DeleteExecutor::Init() { WSDB_FETAL("DeleteExecutor does not support Init"); }
 
-void DeleteExecutor::Next() { WSDB_STUDENT_TODO(L2, t1, DeleteExecutor, Next()); }
+void DeleteExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
 
-auto DeleteExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(L2, t1, DeleteExecutor, IsEnd()); }
+auto DeleteExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l2, t1); }
 }  // namespace wsdb

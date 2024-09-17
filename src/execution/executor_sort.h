@@ -57,7 +57,7 @@ private:
     SortHeapNode(std::shared_ptr<std::ifstream> file_handle, const RecordSchema *schema, size_t rec_idx)
         : file_handle_(std::move(file_handle)), schema_(schema), rec_idx_(rec_idx), record_(nullptr)
     {
-      WSDB_STUDENT_TODO(L2, f1, SortHeapNode, SortHeapNode());
+      WSDB_STUDENT_TODO(l2, f1);
     }
 
     SortHeapNode(const SortHeapNode &other)
@@ -93,13 +93,13 @@ private:
      * @param max_rec_num
      * @return true if the record is loaded successfully, false if the file is end or idx exceeds the max record number
      */
-    auto LoadNextRecord(size_t max_rec_num) -> bool { WSDB_STUDENT_TODO(L2, f1, SortHeapNode, LoadNextRecord()); }
+    auto LoadNextRecord(size_t max_rec_num) -> bool { WSDB_STUDENT_TODO(l2, f1); }
 
     [[nodiscard]] auto GetRecord() const -> const RecordUptr & { return record_; }
 
     void CloseFile()
     {
-      WSDB_ASSERT(SortHeapNode, CloseFile(), file_handle_ != nullptr, "file_handle_ is nullptr");
+      WSDB_ASSERT(file_handle_ != nullptr, "file_handle_ is nullptr");
       file_handle_->close();
       file_handle_ = nullptr;
     }

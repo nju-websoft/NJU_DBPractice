@@ -25,11 +25,11 @@ namespace wsdb {
 
 SeqScanExecutor::SeqScanExecutor(TableHandle *tab) : AbstractExecutor(Basic), tab_(tab) {}
 
-void SeqScanExecutor::Init() { WSDB_STUDENT_TODO(L2, t1, SeqScanExecutor, Init()); }
+void SeqScanExecutor::Init() { WSDB_STUDENT_TODO(l2, t1); }
 
-void SeqScanExecutor::Next() { WSDB_STUDENT_TODO(L2, t1, SeqScanExecutor, Next()); }
+void SeqScanExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
 
-auto SeqScanExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(L2, t1, SeqScanExecutor, IsEnd()); }
+auto SeqScanExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l2, t1); }
 
 auto SeqScanExecutor::GetOutSchema() const -> const RecordSchema * { return &tab_->GetSchema(); }
 }  // namespace wsdb

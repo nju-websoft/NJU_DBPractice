@@ -35,30 +35,21 @@ TableHandle::TableHandle(DiskManager *disk_manager, BufferPoolManager *buffer_po
   schema_->SetTableId(table_id_);
   if (storage_model_ == PAX_MODEL) {
     // TODO: calculate offsets of fields
-    WSDB_STUDENT_TODO(L1, f2, TableHandle, TableHandle());
+    WSDB_STUDENT_TODO(l1, f2);
   }
 }
 
-auto TableHandle::GetRecord(const RID &rid) -> RecordUptr { WSDB_STUDENT_TODO(L1, t3, TableHandle, GetRecord()); }
+auto TableHandle::GetRecord(const RID &rid) -> RecordUptr { WSDB_STUDENT_TODO(l1, t3); }
 
-auto TableHandle::GetChunk(page_id_t pid, const RecordSchema *chunk_schema) -> ChunkUptr
-{
-  WSDB_STUDENT_TODO(L1, f2, TableHandle, GetChunk());
-}
+auto TableHandle::GetChunk(page_id_t pid, const RecordSchema *chunk_schema) -> ChunkUptr { WSDB_STUDENT_TODO(l1, f2); }
 
-auto TableHandle::InsertRecord(const Record &record) -> RID { WSDB_STUDENT_TODO(L1, t3, TableHandle, InsertRecord()); }
+auto TableHandle::InsertRecord(const Record &record) -> RID { WSDB_STUDENT_TODO(l1, t3); }
 
-void TableHandle::InsertRecord(const RID &rid, const Record &record)
-{
-  WSDB_STUDENT_TODO(L1, t3, TableHandle, InsertRecord());
-}
+void TableHandle::InsertRecord(const RID &rid, const Record &record) { WSDB_STUDENT_TODO(l1, t3); }
 
-void TableHandle::DeleteRecord(const RID &rid) { WSDB_STUDENT_TODO(L1, t3, TableHandle, DeleteRecord()); }
+void TableHandle::DeleteRecord(const RID &rid) { WSDB_STUDENT_TODO(l1, t3); }
 
-void TableHandle::UpdateRecord(const RID &rid, const Record &record)
-{
-  WSDB_STUDENT_TODO(L1, t3, TableHandle, UpdateRecord());
-}
+void TableHandle::UpdateRecord(const RID &rid, const Record &record) { WSDB_STUDENT_TODO(l1, t3); }
 
 auto TableHandle::FetchPageHandle(page_id_t page_id) -> PageHandleUptr
 {
@@ -91,7 +82,7 @@ auto TableHandle::WrapPageHandle(Page *page) -> PageHandleUptr
   switch (storage_model_) {
     case StorageModel::NARY_MODEL: return std::make_unique<NAryPageHandle>(&tab_hdr_, page);
     case StorageModel::PAX_MODEL: return std::make_unique<PAXPageHandle>(&tab_hdr_, page, schema_.get(), field_offset_);
-    default: WSDB_FETAL(TableHandle, WrapPageHandle, "Unknown storage model");
+    default: WSDB_FETAL("Unknown storage model");
   }
 }
 

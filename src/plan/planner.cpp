@@ -37,7 +37,7 @@ std::shared_ptr<AbstractPlan> Planner::PlanAST(const std::shared_ptr<ast::TreeNo
     return std::make_shared<OpenDBPlan>(odb->db_name_);
   }
   if (db == nullptr) {
-    throw WSDBException(WSDB_DB_NOT_OPEN, Q(Analyser), Q(Analyse));
+    WSDB_THROW(WSDB_DB_NOT_OPEN, "");
   }
   /// select
   if (const auto sel = std::dynamic_pointer_cast<ast::SelectStmt>(ast)) {
@@ -114,13 +114,11 @@ std::shared_ptr<AbstractPlan> Planner::PlanAST(const std::shared_ptr<ast::TreeNo
   } else if (const auto txnback = std::dynamic_pointer_cast<ast::TxnRollback>(ast)) {
 
   } else {
-    throw WSDBException(WSDB_INVALID_ARGUMENT, Q(Analyser), Q(Analyse));
+    WSDB_FETAL("Invalid AST node");
   }
   // never reach here
   return nullptr;
 }
-
-
 
 auto Planner::AnalyseSelect(const std::shared_ptr<ast::SelectStmt> &sel, wsdb::DatabaseHandle *db,
     std::vector<std::string> &tabs) -> std::shared_ptr<AbstractPlan>
@@ -134,13 +132,13 @@ auto Planner::AnalyseSelect(const std::shared_ptr<ast::SelectStmt> &sel, wsdb::D
       tabs.push_back(tab->tab_name);
     } else if (const auto join = std::dynamic_pointer_cast<ast::JoinExpr>(t)) {
       if (sel->tabs.size() != 1) {
-        throw WSDBException(WSDB_GRAMMAR_ERROR, Q(Analyser), Q(Analyse), "Explicit join only support two named tables");
+        WSDB_THROW(WSDB_GRAMMAR_ERROR, "Explicit join only support two named tables");
       }
       tabs.push_back(join->left);
       tabs.push_back(join->right);
     } else if (const auto subq = std::dynamic_pointer_cast<ast::SelectStmt>(t)) {
       if (sel->tabs.size() != 1) {
-        throw WSDBException(WSDB_GRAMMAR_ERROR, Q(Analyser), Q(AnalyseSelect), "only support single sub query now");
+        WSDB_THROW(WSDB_GRAMMAR_ERROR, "only support single sub query now");
       }
       sub_plan = AnalyseSelect(subq, db, tabs);
     }
@@ -202,7 +200,7 @@ auto Planner::AnalyseSelect(const std::shared_ptr<ast::SelectStmt> &sel, wsdb::D
     /// analyse joins
     if (sel->tabs.size() == 1) {
       // explicit join
-      WSDB_ASSERT(Analyser, Analyse, tabs.size() == 2, "table size should be 2");
+      WSDB_ASSERT(tabs.size() == 2, "table size should be 2");
       auto                          join_expr  = std::dynamic_pointer_cast<ast::JoinExpr>(sel->tabs[0]);
       auto                          join_cond  = GetConditionsForJoin(join_expr->left, join_expr->right, where, db);
       auto                          left_cond  = GetConditionsForTable(join_expr->left, where, db);
@@ -262,7 +260,7 @@ auto Planner::TransformValue(const std::shared_ptr<ast::Value> &val) -> ValueSpt
     // handle carefully in executors
     return ValueFactory::CreateNullValue(TYPE_INT);
   } else {
-    throw WSDBException(WSDB_INVALID_ARGUMENT, Q(Analyser), Q(TransformValue));
+    WSDB_FETAL("Invalid value type");
   }
 }
 
@@ -274,9 +272,7 @@ auto Planner::TransformCols(const std::vector<std::shared_ptr<ast::Col>> &cols, 
   for (auto &c : cols) {
     CheckFieldTabName(c->tab_name, c->col_name, db, tabs);
     if (const auto agg_col = std::dynamic_pointer_cast<ast::AggCol>(c)) {
-      throw WSDBException(WSDB_GRAMMAR_ERROR,
-          Q(Analyser),
-          Q(TransformCols),
+      WSDB_THROW(WSDB_GRAMMAR_ERROR,
           fmt::format(
               "Aggregation in wrong place, type: {}, col: {}", AggTypeToString(agg_col->agg_type), agg_col->col_name));
     }
@@ -313,8 +309,7 @@ auto Planner::MakeConditionVec(const std::vector<std::shared_ptr<ast::BinaryExpr
     auto rhs = e->rhs_;
     if (const auto col = std::dynamic_pointer_cast<ast::Col>(rhs)) {
       if (const auto agg = std::dynamic_pointer_cast<ast::AggCol>(rhs)) {
-        throw WSDBException(
-            WSDB_GRAMMAR_ERROR, Q(Analyser), Q(MakeConditionVec), "Aggregation function in right hand side");
+        WSDB_THROW(WSDB_GRAMMAR_ERROR, "Aggregation function in right hand side");
       }
       CheckFieldTabName(col->tab_name, col->col_name, db, tabs);
       auto rtab   = db->GetTable(col->tab_name);
@@ -327,7 +322,7 @@ auto Planner::MakeConditionVec(const std::vector<std::shared_ptr<ast::BinaryExpr
     } else if (const auto sel = std::dynamic_pointer_cast<ast::SelectStmt>(rhs)) {
       // TODO: subquery in condition
     } else {
-      throw WSDBException(WSDB_GRAMMAR_ERROR, Q(Analyser), Q(MakeConditionVec), "Invalid right hand side");
+      WSDB_THROW(WSDB_GRAMMAR_ERROR, "Invalid right hand side");
     }
   }
   return conds;
@@ -341,7 +336,7 @@ auto Planner::CreateRecordSchema(const std::vector<std::shared_ptr<ast::Field>> 
   for (const auto &f : fields) {
     const auto col_def = std::dynamic_pointer_cast<ast::ColDef>(f);
     if (col_def == nullptr) {
-      WSDB_FETAL(Analyser, CreateRecordSchema, "Invalid field definition");
+      WSDB_FETAL("Invalid field definition");
     }
     FieldSchema fs;
     fs.field_name_ = col_def->col_name_;
@@ -350,7 +345,7 @@ auto Planner::CreateRecordSchema(const std::vector<std::shared_ptr<ast::Field>> 
     auto tbl       = db->GetTable(tab_name);
     fs.table_id_   = tbl != nullptr ? tbl->GetTableId() : INVALID_TABLE_ID;
     if (fs.field_size_ == 0) {
-      throw WSDBException(WSDB_EMPTY_FIELD_DEF, Q(Analyser), Q(CreateRecordSchema), "Field size cannot be 0");
+      WSDB_THROW(WSDB_EMPTY_FIELD_DEF, "Field size cannot be 0");
     }
     rt_fields.push_back({.field_ = fs});
   }
@@ -363,22 +358,20 @@ void Planner::CheckFieldTabName(
   if (!tab_name.empty()) {
     // check if the table exists and if the field exists
     if (db->GetTable(tab_name) == nullptr) {
-      throw WSDBException(WSDB_TABLE_MISS, Q(Analyser), Q(CheckFieldTabName), tab_name);
+      WSDB_THROW(WSDB_TABLE_MISS, tab_name);
     }
     if (field_name.empty()) {
-      throw WSDBException(WSDB_GRAMMAR_ERROR, Q(Analyser), Q(CheckFieldTabName), "Field name cannot be empty");
+      WSDB_THROW(WSDB_GRAMMAR_ERROR, "Field name cannot be empty");
     }
     if (!db->GetTable(tab_name)->HasField(field_name)) {
-      throw WSDBException(WSDB_FIELD_MISS, Q(Analyser), Q(CheckFieldTabName), field_name);
+      WSDB_THROW(WSDB_FIELD_MISS, field_name);
     }
   } else {
     auto checkField = [&](TableHandle *tab, const std::string &field) -> void {
       if (tab->HasField(field)) {
         if (!tab_name.empty()) {
-          throw WSDBException(WSDB_AMBIGUOUS_FIELD,
-              Q(Analyser),
-              Q(CheckFieldTabName),
-              fmt::format("field:{}, tab1:{}, tab2:{}", field, tab_name, tab->GetTableName()));
+          WSDB_THROW(
+              WSDB_AMBIGUOUS_FIELD, fmt::format("field:{}, tab1:{}, tab2:{}", field, tab_name, tab->GetTableName()));
         }
         tab_name = tab->GetTableName();
       }
@@ -392,13 +385,13 @@ void Planner::CheckFieldTabName(
       for (const auto &cand_tab : cand_tabs) {
         auto tab = db->GetTable(cand_tab);
         if (tab == nullptr) {
-          throw WSDBException(WSDB_TABLE_MISS, Q(Analyser), Q(CheckFieldTabName), cand_tab);
+          WSDB_THROW(WSDB_TABLE_MISS, cand_tab);
         }
         checkField(tab, field_name);
       }
     }
     if (tab_name.empty()) {
-      throw WSDBException(WSDB_FIELD_MISS, Q(Analyser), Q(CheckFieldTabName), field_name);
+      WSDB_THROW(WSDB_FIELD_MISS, field_name);
     }
   }
 }
@@ -409,7 +402,7 @@ auto Planner::GetAllFields(const std::vector<std::string> &tabs, DatabaseHandle 
   for (const auto &tab_name : tabs) {
     auto tab = db->GetTable(tab_name);
     if (tab == nullptr) {
-      throw WSDBException(WSDB_TABLE_MISS, Q(Analyser), Q(GetAllFields), tab_name);
+      WSDB_THROW(WSDB_TABLE_MISS, tab_name);
     }
     for (int i = 0; i < static_cast<int>(tab->GetSchema().GetFieldCount()); ++i) {
       auto &field = tab->GetSchema().GetFieldAt(i);
@@ -474,10 +467,8 @@ auto Planner::MakeAggregatePlan(std::shared_ptr<AbstractPlan> &child, const std:
         return g.field_.table_id_ == f.field_.table_id_ && g.field_.field_name_ == f.field_.field_name_;
       });
       if (it == group_fields.end()) {
-        throw WSDBException(WSDB_GRAMMAR_ERROR,
-            Q(Analyser),
-            Q(MakeAggregatePlan),
-            fmt::format("field \"{}\" in projection should be in group by", f.field_.field_name_));
+        WSDB_THROW(
+            WSDB_GRAMMAR_ERROR, fmt::format("field \"{}\" in projection should be in group by", f.field_.field_name_));
       }
     }
   }
@@ -490,9 +481,7 @@ auto Planner::MakeAggregatePlan(std::shared_ptr<AbstractPlan> &child, const std:
                g.field_.field_name_ == c.GetLCol().field_.field_name_;
       });
       if (it == group_fields.end()) {
-        throw WSDBException(WSDB_GRAMMAR_ERROR,
-            Q(Analyser),
-            Q(MakeAggregatePlan),
+        WSDB_THROW(WSDB_GRAMMAR_ERROR,
             fmt::format("field \"{}\" in having should be in group by", c.GetLCol().field_.field_name_));
       }
     }

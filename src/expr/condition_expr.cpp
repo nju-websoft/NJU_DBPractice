@@ -33,18 +33,15 @@ auto ConditionExpr::EvalCond(const Condition &condition, const wsdb::Record &rec
 {
   // first get the lhs value according to condition
   auto idx = record.GetSchema()->GetRTFieldIndex(condition.GetLCol());
-  WSDB_ASSERT(ConditionExpr, EvalCond, idx != record.GetSchema()->GetFieldCount(), "Invalid field");
+  WSDB_ASSERT(idx != record.GetSchema()->GetFieldCount(), "Invalid field");
   auto lhs = record.GetValueAt(idx);
-  WSDB_ASSERT(ConditionExpr,
-      EvalCond,
-      condition.GetRhsType() == kValue || condition.GetRhsType() == kColumn,
-      "Invalid condition type");
+  WSDB_ASSERT(condition.GetRhsType() == kValue || condition.GetRhsType() == kColumn, "Invalid condition type");
   ValueSptr rhs;
   if (condition.GetRhsType() == kValue) {
     rhs = condition.GetRVal();
   } else {
     idx = record.GetSchema()->GetRTFieldIndex(condition.GetRCol());
-    WSDB_ASSERT(ConditionExpr, EvalCond, idx != record.GetSchema()->GetFieldCount(), "Invalid field");
+    WSDB_ASSERT(idx != record.GetSchema()->GetFieldCount(), "Invalid field");
     rhs = record.GetValueAt(idx);
   }
   ValueFactory::AlignTypes(lhs, rhs);
@@ -56,7 +53,7 @@ auto ConditionExpr::EvalCond(const Condition &condition, const wsdb::Record &rec
     case OP_GT: return *lhs > *rhs;
     case OP_GE: return *lhs >= *rhs;
     case OP_IN: return std::dynamic_pointer_cast<ArrayValue>(rhs)->Contains(lhs);
-    default: WSDB_FETAL(ConditionExpr, EvalCond, CompOpToString(condition.GetOp()));
+    default: WSDB_FETAL(CompOpToString(condition.GetOp()));
   }
   // should never reach here
 }

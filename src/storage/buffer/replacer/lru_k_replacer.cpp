@@ -27,12 +27,12 @@ namespace wsdb {
 
 LRUKReplacer::LRUKReplacer(size_t k) : max_size_(BUFFER_POOL_SIZE), k_(k) {}
 
-auto LRUKReplacer::Victim(frame_id_t *frame_id) -> bool { WSDB_STUDENT_TODO(L1, f1, LRUKReplacer, Victim()); }
+auto LRUKReplacer::Victim(frame_id_t *frame_id) -> bool { WSDB_STUDENT_TODO(labs(), f1); }
 
-void LRUKReplacer::Pin(frame_id_t frame_id) { WSDB_STUDENT_TODO(L1, f1, LRUKReplacer, Pin()); }
+void LRUKReplacer::Pin(frame_id_t frame_id) { WSDB_STUDENT_TODO(l1, f1); }
 
-void LRUKReplacer::Unpin(frame_id_t frame_id) { WSDB_STUDENT_TODO(L1, f1, LRUKReplacer, Unpin()); }
+void LRUKReplacer::Unpin(frame_id_t frame_id) { WSDB_STUDENT_TODO(l1, f1); }
 
-auto LRUKReplacer::Size() -> size_t { WSDB_STUDENT_TODO(L1, f1, LRUKReplacer, Size()); }
+auto LRUKReplacer::Size() -> size_t { WSDB_STUDENT_TODO(l1, f1); }
 
 }  // namespace wsdb

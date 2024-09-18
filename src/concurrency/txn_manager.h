@@ -50,7 +50,7 @@ public:
   [[nodiscard]] auto GetTxnId() const -> txn_id_t { return txn_id_; }
 
 private:
-  txn_id_t txn_id_;
+  txn_id_t txn_id_{INVALID_TXN_ID};
   TxnState state_{TxnState::INVALID};
   bool     is_explcit_{false};
 };

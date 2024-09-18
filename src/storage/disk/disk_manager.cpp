@@ -84,7 +84,7 @@ void DiskManager::WritePage(file_id_t fid, page_id_t page_id, const char *data)
   lseek(fid, static_cast<off_t>(page_id) * static_cast<off_t>(PAGE_SIZE), SEEK_SET);
   if (write(fid, data, PAGE_SIZE) != PAGE_SIZE) {
     WSDB_THROW(
-        WSDB_PAGE_WRITE_ERROR, fmt::format("fid: {}, page_id: {}", fid, page_id));
+        WSDB_FILE_WRITE_ERROR, fmt::format("fid: {}, page_id: {}", fid, page_id));
   }
 }
 
@@ -94,7 +94,7 @@ void DiskManager::ReadPage(file_id_t fid, page_id_t page_id, char *data)
   lseek(fid, static_cast<off_t>(page_id) * static_cast<off_t>(PAGE_SIZE), SEEK_SET);
   if (read(fid, data, PAGE_SIZE) < 0) {
     WSDB_THROW(
-        WSDB_PAGE_READ_ERROR, fmt::format("fid: {}, page_id: {}", fid, page_id));
+        WSDB_FILE_READ_ERROR, fmt::format("fid: {}, page_id: {}", fid, page_id));
   }
 }
 
@@ -102,7 +102,9 @@ void DiskManager::ReadFile(file_id_t fid, char *data, size_t size, size_t offset
 {
   WSDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), "File not Opened");
   lseek(fid, static_cast<off_t>(offset), type);
-  read(fid, data, size);
+  if(read(fid, data, size) < 0) {
+    WSDB_THROW(WSDB_FILE_READ_ERROR, fmt::format("fid: {}", fid));
+  }
 }
 
 void DiskManager::WriteFile(file_id_t fid, const char *data, size_t size, int type)
@@ -110,7 +112,9 @@ void DiskManager::WriteFile(file_id_t fid, const char *data, size_t size, int ty
   WSDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), "File not Opened");
   WSDB_ASSERT(type == SEEK_CUR || type == SEEK_SET || type == SEEK_END, "Invalid Type");
   lseek(fid, 0, type);
-  write(fid, data, size);
+  if(write(fid, data, size) < 0) {
+    WSDB_THROW(WSDB_FILE_WRITE_ERROR, fmt::format("fid: {}", fid));
+  }
 }
 
 void DiskManager::WriteLog(const std::string &log_file, const std::string &log_string) {}

@@ -49,7 +49,7 @@ void JoinExecutor::Init()
   switch (join_type_) {
     case INNER_JOIN: return InitInnerJoin();
     case OUTER_JOIN: return InitOuterJoin();
-    default: WSDB_FETAL(JoinExecutor, Init(), "Unknown join type");
+    default: WSDB_FETAL("Unknown join type");
   }
 }
 
@@ -58,7 +58,7 @@ void JoinExecutor::Next()
   switch (join_type_) {
     case INNER_JOIN: return NextInnerJoin();
     case OUTER_JOIN: return NextOuterJoin();
-    default: WSDB_FETAL(JoinExecutor, Next(), "Unknown join type");
+    default: WSDB_FETAL("Unknown join type");
   }
 }
 
@@ -67,7 +67,7 @@ auto JoinExecutor::IsEnd() const -> bool
   switch (join_type_) {
     case INNER_JOIN: return IsEndInnerJoin();
     case OUTER_JOIN: return IsEndOuterJoin();
-    default: WSDB_FETAL(JoinExecutor, IsEnd(), "Unknown join type");
+    default: WSDB_FETAL("Unknown join type");
   }
 }
 

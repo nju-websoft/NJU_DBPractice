@@ -28,7 +28,7 @@ BPTreeIndex::BPTreeIndex(
     DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, idx_id_t index_id, RecordSchema *key_schema)
     : Index(disk_manager, buffer_pool_manager, IndexType::BPTREE, index_id, key_schema)
 {
-  throw WSDBException(WSDB_NOT_IMPLEMENTED, Q(BpTreeIndex), Q(BpTreeIndex));
+  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
 }
 void BPTreeIndex::Insert(const Record &key, const RID &rid) {}
 void BPTreeIndex::Delete(const Record &key, const RID &rid) {}

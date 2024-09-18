@@ -34,50 +34,50 @@ BufferPoolManager::BufferPoolManager(DiskManager *disk_manager, wsdb::LogManager
   } else if (REPLACER == "LRUKReplacer") {
     replacer_ = std::make_unique<LRUKReplacer>(replacer_lru_k);
   } else {
-    WSDB_FETAL(BufferPoolManager, BufferPoolManager, "Unknown replacer: " + REPLACER);
+    WSDB_FETAL("Unknown replacer: " + REPLACER);
   }
   // TODO: do some initialization
-  WSDB_STUDENT_TODO(L1, t2, BufferPoolManager, BufferPoolManager());
+  WSDB_STUDENT_TODO(l1, t2);
 }
 
 auto BufferPoolManager::FetchPage(file_id_t fid, page_id_t pid) -> Page *
 {
-  WSDB_STUDENT_TODO(L1, t2, BufferPoolManager, FetchPage());
+  WSDB_STUDENT_TODO(l1, t2);
 }
 
 auto BufferPoolManager::UnpinPage(file_id_t fid, page_id_t pid, bool is_dirty) -> bool
 {
-  WSDB_STUDENT_TODO(L1, t2, BufferPoolManager, UnpinPage());
+  WSDB_STUDENT_TODO(l1, t2);
 }
 
 auto BufferPoolManager::DeletePage(file_id_t fid, page_id_t pid) -> bool
 {
-  WSDB_STUDENT_TODO(L1, t2, BufferPoolManager, DeletePage());
+  WSDB_STUDENT_TODO(l1, t2);
 }
 
 auto BufferPoolManager::DeleteAllPages(file_id_t fid) -> bool
 {
-  WSDB_STUDENT_TODO(L1, t2, BufferPoolManager, DeleteAllPages());
+  WSDB_STUDENT_TODO(l1, t2);
 }
 
 auto BufferPoolManager::FlushPage(file_id_t fid, page_id_t pid) -> bool
 {
-  WSDB_STUDENT_TODO(L1, t2, BufferPoolManager, FlushPage());
+  WSDB_STUDENT_TODO(l1, t2);
 }
 
 auto BufferPoolManager::FlushAllPages(file_id_t fid) -> bool
 {
-  WSDB_STUDENT_TODO(L1, t2, BufferPoolManager, FlushAllPages());
+  WSDB_STUDENT_TODO(l1, t2);
 }
 
 auto BufferPoolManager::GetAvailableFrame() -> frame_id_t
 {
-  WSDB_STUDENT_TODO(L1, t2, BufferPoolManager, GetAvailableFrame());
+  WSDB_STUDENT_TODO(l1, t2);
 }
 
 void BufferPoolManager::UpdateFrame(frame_id_t frame_id, file_id_t fid, page_id_t pid)
 {
-  WSDB_STUDENT_TODO(L1, t2, BufferPoolManager, UpdateFrame());
+  WSDB_STUDENT_TODO(l1, t2);
 }
 
 auto BufferPoolManager::GetFrame(file_id_t fid, page_id_t pid) -> Frame *

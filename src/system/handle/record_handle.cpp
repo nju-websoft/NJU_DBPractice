@@ -46,13 +46,13 @@ auto RecordSchema::GetFields() const -> const std::vector<RTField> & { return fi
 
 auto RecordSchema::GetFieldAt(size_t index) const -> const RTField &
 {
-  WSDB_ASSERT(RecordSchema, GetFieldAt, index < fields_.size(), "Index out of range");
+  WSDB_ASSERT(index < fields_.size(), "Index out of range");
   return fields_[index];
 }
 
 auto RecordSchema::GetFieldOffset(size_t index) const -> size_t
 {
-  WSDB_ASSERT(RecordSchema, GetFieldOffset, index < fields_.size(), "Index out of range");
+  WSDB_ASSERT(index < fields_.size(), "Index out of range");
   return offsets_[index];
 }
 
@@ -111,8 +111,8 @@ Record::Record(const RecordSchema *schema, const std::vector<ValueSptr> &values,
   schema_  = schema;
   data_    = new char[schema_->GetRecordLength()];
   nullmap_ = new char[BITMAP_SIZE(schema_->GetFieldCount())];
-  bzero(data_, schema_->GetRecordLength());
-  bzero(nullmap_, BITMAP_SIZE(schema_->GetFieldCount()));
+  memset(data_, 0, schema_->GetRecordLength());
+  memset(nullmap_, 0, BITMAP_SIZE(schema_->GetFieldCount()));
   size_t cursor = 0;
   for (size_t i = 0; i < schema_->GetFieldCount(); ++i) {
     auto &field = schema_->GetFieldAt(i);
@@ -123,9 +123,7 @@ Record::Record(const RecordSchema *schema, const std::vector<ValueSptr> &values,
         case FieldType::TYPE_BOOL: {
           auto value = std::dynamic_pointer_cast<BoolValue>(values[i]);
           if (value == nullptr)
-            throw WSDBException(WSDB_TYPE_MISSMATCH,
-                Q(Record),
-                Q(Record),
+            WSDB_THROW(WSDB_TYPE_MISSMATCH,
                 fmt::format(
                     "{} != {}", FieldTypeToString(field.field_.field_type_), FieldTypeToString(values[i]->GetType())));
           *reinterpret_cast<bool *>(data_ + cursor) = value->Get();
@@ -135,9 +133,7 @@ Record::Record(const RecordSchema *schema, const std::vector<ValueSptr> &values,
           auto value = std::dynamic_pointer_cast<IntValue>(ValueFactory::CastTo(values[i], FieldType::TYPE_INT));
           // should first try to cast to IntValue
           if (value == nullptr)
-            throw WSDBException(WSDB_TYPE_MISSMATCH,
-                Q(Record),
-                Q(Record),
+            WSDB_THROW(WSDB_TYPE_MISSMATCH,
                 fmt::format(
                     "{} != {}", FieldTypeToString(field.field_.field_type_), FieldTypeToString(values[i]->GetType())));
 
@@ -147,9 +143,7 @@ Record::Record(const RecordSchema *schema, const std::vector<ValueSptr> &values,
         case FieldType::TYPE_FLOAT: {
           auto value = std::dynamic_pointer_cast<FloatValue>(ValueFactory::CastTo(values[i], FieldType::TYPE_FLOAT));
           if (value == nullptr)
-            throw WSDBException(WSDB_TYPE_MISSMATCH,
-                Q(Record),
-                Q(Record),
+            WSDB_THROW(WSDB_TYPE_MISSMATCH,
                 fmt::format(
                     "{} != {}", FieldTypeToString(field.field_.field_type_), FieldTypeToString(values[i]->GetType())));
 
@@ -159,16 +153,12 @@ Record::Record(const RecordSchema *schema, const std::vector<ValueSptr> &values,
         case FieldType::TYPE_STRING: {
           auto value = std::dynamic_pointer_cast<StringValue>(values[i]);
           if (value == nullptr)
-            throw WSDBException(WSDB_TYPE_MISSMATCH,
-                Q(Record),
-                Q(Record),
+            WSDB_THROW(WSDB_TYPE_MISSMATCH,
                 fmt::format(
                     "{} != {}", FieldTypeToString(field.field_.field_type_), FieldTypeToString(values[i]->GetType())));
 
           if (value->Get().size() > field.field_.field_size_) {
-            throw WSDBException(WSDB_STRING_OVERFLOW,
-                Q(Record),
-                Q(Record),
+            WSDB_THROW(WSDB_STRING_OVERFLOW,
                 fmt::format("field:{}, size:{}, requested:{}",
                     field.field_.field_name_,
                     field.field_.field_size_,
@@ -177,7 +167,7 @@ Record::Record(const RecordSchema *schema, const std::vector<ValueSptr> &values,
           std::memcpy(data_ + cursor, value->Get().c_str(), value->Get().size());
           break;
         }
-        default: WSDB_FETAL(Record, Record, "Unsupported field type");
+        default: WSDB_FETAL("Unsupported field type");
       }
     }
     cursor += field.field_.field_size_;
@@ -190,13 +180,13 @@ Record::Record(const RecordSchema *schema, const Record &other) : schema_(schema
   // new can deal with GetRecordLength() == 0
   data_    = new char[schema_->GetRecordLength()];
   nullmap_ = new char[BITMAP_SIZE(schema_->GetFieldCount())];
-  bzero(data_, schema_->GetRecordLength());
-  bzero(nullmap_, BITMAP_SIZE(schema_->GetFieldCount()));
+  memset(data_, 0, schema_->GetRecordLength());
+  memset(nullmap_, 0, BITMAP_SIZE(schema_->GetFieldCount()));
   for (size_t i = 0; i < schema_->GetFieldCount(); ++i) {
     auto &field     = schema_->GetFieldAt(i);
     auto  other_idx = other.schema_->GetRTFieldIndex(field);
     if (other_idx == other.schema_->GetFieldCount()) {
-      WSDB_FETAL(Record, Record, "Field not found in other record");
+      WSDB_FETAL("Field not found in other record");
     }
     auto other_offset = other.schema_->offsets_[other_idx];
     std::memcpy(data_ + schema_->offsets_[i], other.data_ + other_offset, field.field_.field_size_);
@@ -210,18 +200,14 @@ Record::Record(const RecordSchema *schema, const Record &other) : schema_(schema
 Record::Record(const RecordSchema *schema, const wsdb::Record &rec1, const wsdb::Record &rec2)
 {
   // do some simple asserts
-  WSDB_ASSERT(Record,
-      Record,
-      schema->GetFieldCount() == rec1.schema_->GetFieldCount() + rec2.schema_->GetFieldCount(),
-      "Field count mismatch");
-  WSDB_ASSERT(Record,
-      Record,
-      schema->GetRecordLength() == rec1.schema_->GetRecordLength() + rec2.schema_->GetRecordLength(),
+  WSDB_ASSERT(
+      schema->GetFieldCount() == rec1.schema_->GetFieldCount() + rec2.schema_->GetFieldCount(), "Field count mismatch");
+  WSDB_ASSERT(schema->GetRecordLength() == rec1.schema_->GetRecordLength() + rec2.schema_->GetRecordLength(),
       "Record length mismatch");
   schema_  = schema;
   data_    = new char[schema_->GetRecordLength()];
   nullmap_ = new char[BITMAP_SIZE(schema_->GetFieldCount())];
-  bzero(nullmap_, BITMAP_SIZE(schema_->GetFieldCount()));
+  memset(data_, 0, schema_->GetRecordLength());
   memcpy(data_, rec1.data_, rec1.schema_->GetRecordLength());
   memcpy(data_ + rec1.schema_->GetRecordLength(), rec2.data_, rec2.schema_->GetRecordLength());
   // null map should not simply be copied, but should be re-calculated
@@ -244,7 +230,7 @@ Record::Record(const wsdb::RecordSchema *schema)
   data_    = new char[schema_->GetRecordLength()];
   nullmap_ = new char[BITMAP_SIZE(schema_->GetFieldCount())];
   // set nullmap to all 1
-  bzero(data_, schema_->GetRecordLength());
+  memset(data_, 0, schema_->GetRecordLength());
   memset(nullmap_, 0xff, BITMAP_SIZE(schema_->GetFieldCount()));
   rid_ = INVALID_RID;
 }
@@ -334,7 +320,7 @@ auto Record::Hash() const -> size_t
       case FieldType::TYPE_STRING:
         hash ^= std::hash<std::string>{}(std::string(data_ + schema_->offsets_[i], field.field_.field_size_));
         break;
-      default: WSDB_FETAL(Record, Hash, "Unsupported field type to hash");
+      default: WSDB_FETAL("Unsupported field type to hash");
     }
   }
   return hash;
@@ -342,7 +328,7 @@ auto Record::Hash() const -> size_t
 
 auto Record::GetValueAt(size_t index) const -> ValueSptr
 {
-  WSDB_ASSERT(Record, GetValueAt, index < schema_->GetFieldCount(), "Index out of range");
+  WSDB_ASSERT(index < schema_->GetFieldCount(), "Index out of range");
   auto &field = schema_->GetFieldAt(index);
   if (BitMap::GetBit(nullmap_, index)) {
     return ValueFactory::CreateNullValue(field.field_.field_type_);
@@ -356,10 +342,7 @@ auto Record::Compare(const wsdb::Record &lrec, const wsdb::Record &rrec) -> int
   // compare two records,
   //  WSDB_ASSERT(Record, Compare, lrec.GetSchema() == rrec.GetSchema(), "Schema mismatch");
   // more loose assert to support two similar records
-  WSDB_ASSERT(Record,
-      Compare(),
-      lrec.GetSchema()->GetFieldCount() == rrec.GetSchema()->GetFieldCount(),
-      "field count mismatch");
+  WSDB_ASSERT(lrec.GetSchema()->GetFieldCount() == rrec.GetSchema()->GetFieldCount(), "field count mismatch");
   for (size_t i = 0; i < lrec.GetSchema()->GetFieldCount(); ++i) {
     auto lval = lrec.GetValueAt(i);
     auto rval = rrec.GetValueAt(i);

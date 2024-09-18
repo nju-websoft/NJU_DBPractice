@@ -38,10 +38,10 @@ UpdateExecutor::UpdateExecutor(AbstractExecutorUptr child, TableHandle *tbl, std
   out_schema_ = std::make_unique<RecordSchema>(fields);
 }
 
-void UpdateExecutor::Init() { WSDB_FETAL(UpdateExecutor, Init(), "UpdateExecutor does not support Init"); }
+void UpdateExecutor::Init() { WSDB_FETAL("UpdateExecutor does not support Init"); }
 
-void UpdateExecutor::Next() { WSDB_STUDENT_TODO(L2, t1, UpdateExecutor, Next()); }
+void UpdateExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
 
-auto UpdateExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(L2, t1, UpdateExecutor, IsEnd()); }
+auto UpdateExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l2, t1); }
 
 }  // namespace wsdb

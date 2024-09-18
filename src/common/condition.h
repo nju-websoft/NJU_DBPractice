@@ -79,15 +79,13 @@ public:
 
   [[nodiscard]] auto GetRCol() const -> const RTField &
   {
-    WSDB_ASSERT(
-        Condition, GetRCol, rval_type_ == kColumn, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
+    WSDB_ASSERT(rval_type_ == kColumn, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
     return r_col_;
   }
 
   [[nodiscard]] auto GetRVal() const -> ValueSptr
   {
-    WSDB_ASSERT(
-        Condition, GetRVal, rval_type_ == kValue, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
+    WSDB_ASSERT(rval_type_ == kValue, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
     return r_val_;
   }
 
@@ -95,7 +93,7 @@ public:
 
   [[nodiscard]] auto GetSubqueryId() const -> int32_t
   {
-    WSDB_ASSERT(Condition, GetSubqueryId, rval_type_ == kSubquery, "should be subquery");
+    WSDB_ASSERT(rval_type_ == kSubquery, "should be subquery");
     return subquery_id_;
   }
 

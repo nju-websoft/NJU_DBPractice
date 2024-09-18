@@ -99,7 +99,7 @@ TEST(TableHandle, Simple)
     auto record2 = tbl->GetRecord(rid);
     ASSERT_TRUE(*record == *record2);
     tbl->DeleteRecord(rid);
-    ASSERT_THROW(tbl->GetRecord(rid), WSDBException);
+    ASSERT_THROW(tbl->GetRecord(rid), WSDBException_);
   }
   table_manager->CloseTable(TEST_DIR, *tbl);
   table_manager->DropTable(TEST_DIR, table_name);
@@ -158,7 +158,7 @@ TEST(TableHandle, MultiThread)
           rids.erase(std::remove(rids.begin(), rids.end(), rid), rids.end());
           tbl->DeleteRecord(rid);
           wr_lock.unlock();
-          ASSERT_THROW(tbl->GetRecord(rid), WSDBException);
+          ASSERT_THROW(tbl->GetRecord(rid), WSDBException_);
           cnt--;
         }
       });
@@ -274,7 +274,7 @@ TEST(TableHandle, PAX_MultiThread)
           rids.erase(std::remove(rids.begin(), rids.end(), rid), rids.end());
           tbl->DeleteRecord(rid);
           wr_lock.unlock();
-          ASSERT_THROW(tbl->GetRecord(rid), WSDBException);
+          ASSERT_THROW(tbl->GetRecord(rid), WSDBException_);
           cnt--;
         }
       });

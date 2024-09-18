@@ -28,7 +28,7 @@ HashIndex::HashIndex(
     DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, idx_id_t index_id, RecordSchema *key_schema)
     : Index(disk_manager, buffer_pool_manager, IndexType::HASH, index_id, key_schema)
 {
-  throw WSDBException(WSDB_NOT_IMPLEMENTED, Q(HashIndex), Q(HashIndex));
+  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
 }
 void HashIndex::Insert(const Record &key, const RID &rid) {}
 void HashIndex::Delete(const Record &key, const RID &rid) {}

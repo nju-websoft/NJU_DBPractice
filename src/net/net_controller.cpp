@@ -41,7 +41,7 @@ auto NetController::Listen() -> int
 
   server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
   if (server_fd_ < 0) {
-    WSDB_LOG(NetController, Listen(), "ERROR opening socket");
+    WSDB_LOG("ERROR opening socket");
     return -1;
   }
   bzero((char *)&serv_addr, sizeof(serv_addr));
@@ -49,11 +49,11 @@ auto NetController::Listen() -> int
   serv_addr.sin_addr.s_addr = INADDR_ANY;
   serv_addr.sin_port        = htons(listen_port_);
   if (bind(server_fd_, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-    WSDB_LOG(NetController, Listen(), "ERROR on binding");
+    WSDB_LOG("ERROR on binding");
     return -1;
   }
   if (listen(server_fd_, max_client_) < 0) {
-    WSDB_LOG(net, InitNet, "ERROR on listen");
+    WSDB_LOG("ERROR on listen");
     return -1;
   }
   return 0;
@@ -66,7 +66,7 @@ auto NetController::Accept() const -> int
   socklen_t clilen = sizeof(cli_addr);
   client_sock      = accept(server_fd_, (struct sockaddr *)&cli_addr, &clilen);
   if (client_sock < 0) {
-    WSDB_LOG(net, AcceptClient, "ERROR on accept");
+    WSDB_LOG("ERROR on accept");
     return -1;
   }
   return client_sock;
@@ -77,10 +77,10 @@ auto NetController::ReadSQL(int fd) -> std::string
   auto &pkg_ = client_buffer_[fd];
   auto  err  = net::ReadNetPkg(fd, pkg_);
   if (err <= 0) {
-    throw WSDBException(WSDB_CLIENT_DOWN, Q(NetController), Q(ReadSQL));
+    WSDB_THROW(WSDB_CLIENT_DOWN, "");
   }
   if (pkg_.type_ != net::NET_PKG_QUERY) {
-    WSDB_LOG(NetController, ReadSQL, "ERROR: not a query package");
+    WSDB_LOG("ERROR: not a query package");
     return "";
   }
   return {pkg_.buf_, pkg_.len_};
@@ -167,7 +167,7 @@ void NetController::FlushSend(int fd)
 {
   auto err = net::WriteNetPkg(fd, client_buffer_[fd]);
   if (err <= 0) {
-    throw WSDBException(WSDB_CLIENT_DOWN, Q(NetController), Q(FlushSend));
+    WSDB_THROW(WSDB_CLIENT_DOWN, "");
   }
   client_buffer_[fd].len_ = 0;
 }

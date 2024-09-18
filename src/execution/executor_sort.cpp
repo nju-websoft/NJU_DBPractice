@@ -46,7 +46,7 @@ SortExecutor::~SortExecutor()
 {
   if (is_merge_sort_) {
     // TODO: do some clean up, e.g. close the result file
-    WSDB_STUDENT_TODO(L2, f1, SortExecutor, ~SortExecutor());
+    WSDB_STUDENT_TODO(l2, f1);
   }
 }
 
@@ -55,25 +55,25 @@ void SortExecutor::Init()
   // TODO: decide whether to use merge sort according to the cardinality of the child.
   is_merge_sort_ = false;
   if (is_merge_sort_) {
-    WSDB_STUDENT_TODO(L2, f1, SortExecutor, Init());
+    WSDB_STUDENT_TODO(l2, f1);
   }
-  WSDB_STUDENT_TODO(L2, t1, SortExecutor, Init());
+  WSDB_STUDENT_TODO(l2, t1);
 }
 
 void SortExecutor::Next()
 {
   if (is_merge_sort_) {
-    WSDB_STUDENT_TODO(L2, f1, SortExecutor, Next());
+    WSDB_STUDENT_TODO(L2, f1);
   }
-  WSDB_STUDENT_TODO(L2, t1, SortExecutor, Next());
+  WSDB_STUDENT_TODO(L2, t1);
 }
 
 auto SortExecutor::IsEnd() const -> bool
 {
   if (is_merge_sort_) {
-    WSDB_STUDENT_TODO(L2, f1, SortExecutor, IsEnd());
+    WSDB_STUDENT_TODO(L2, f1);
   }
-  WSDB_STUDENT_TODO(L2, t1, SortExecutor, IsEnd());
+  WSDB_STUDENT_TODO(L2, t1);
 }
 
 auto SortExecutor::GetOutSchema() const -> const RecordSchema * { return child_->GetOutSchema(); }
@@ -90,14 +90,11 @@ auto SortExecutor::Compare(const Record &lhs, const Record &rhs) const -> bool
   return is_desc_ ? Record::Compare(*lkey, *rkey) > 0 : lkey->Compare(*lkey, *rkey) < 0;
 }
 
-void SortExecutor::SortBuffer() { WSDB_STUDENT_TODO(L2, t1, SortExecutor, SortBuffer()); }
+void SortExecutor::SortBuffer() { WSDB_STUDENT_TODO(L2, t1); }
 
-void SortExecutor::DumpBufferToFile(size_t file_idx)
-{
-  WSDB_STUDENT_TODO(L2, f1, SortExecutor, DumpBufferToFile(file_idx));
-}
+void SortExecutor::DumpBufferToFile(size_t file_idx) { WSDB_STUDENT_TODO(L2, f1); }
 
-void SortExecutor::LoadMergeResult() { WSDB_STUDENT_TODO(L2, f1, SortExecutor, LoadMergeResult()); }
+void SortExecutor::LoadMergeResult() { WSDB_STUDENT_TODO(L2, f1); }
 
 void SortExecutor::Merge()
 {
@@ -105,7 +102,7 @@ void SortExecutor::Merge()
   // 2. read the first tuple from each file
   // 3. pop the top of the heap and write to file: group 1, file: file_index
   // run until all runs are exhausted, then read tuples from group 1, file 0, write to group 0, file 0
-  WSDB_STUDENT_TODO(L2, f1, SortExecutor, Merge());
+  WSDB_STUDENT_TODO(L2, f1);
 }
 
 }  // namespace wsdb

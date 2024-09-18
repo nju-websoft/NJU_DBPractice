@@ -72,7 +72,7 @@ public:
       input_.open(input);
       if (!input_.is_open()) {
         err_no_ = -1;
-        WSDB_LOG(net, Init, "ERROR opening input file");
+        WSDB_LOG("ERROR opening input file");
       }
       is_interactive_ = false;
     } else {
@@ -84,9 +84,15 @@ public:
       output_file_.open(output);
       if (!output_file_.is_open()) {
         err_no_ = -1;
-        WSDB_LOG(net, Init, "ERROR opening output file");
+        WSDB_LOG("ERROR opening output file");
       }
+      output_.copyfmt(output_file_);
+      output_.clear(output_file_.rdstate());
       output_.rdbuf(output_file_.rdbuf());
+    } else {
+      output_.copyfmt(std::cout);
+      output_.clear(std::cout.rdstate());
+      output_.rdbuf(std::cout.rdbuf());
     }
   }
 
@@ -153,7 +159,7 @@ private:
   {
     sock_fd_ = socket(AF_INET, SOCK_STREAM, 0);
     if ((err_no_ = sock_fd_) < 0) {
-      WSDB_LOG(net, OpenSocket, "ERROR opening socket");
+      WSDB_LOG("ERROR opening socket");
     }
     sockaddr_in serverAddress{};
     serverAddress.sin_family      = AF_INET;
@@ -162,7 +168,7 @@ private:
 
     // sending connection request
     if ((err_no_ = connect(sock_fd_, (struct sockaddr *)&serverAddress, sizeof(serverAddress))) < 0) {
-      WSDB_LOG(net, OpenSocket, "ERROR connecting");
+      WSDB_LOG("ERROR connecting");
     }
   }
 
@@ -174,14 +180,14 @@ private:
     pkg_.len_  = sql.size();
     memcpy(pkg_.buf_, sql.c_str(), sql.size());
     if ((err_no_ = net::WriteNetPkg(sock_fd_, pkg_)) < 0) {
-      WSDB_LOG(net, SendSql, "ERROR writing to socket");
+      WSDB_LOG("ERROR writing to socket");
     }
   }
 
   void Receive()
   {
     if ((err_no_ = net::ReadNetPkg(sock_fd_, pkg_)) < 0) {
-      WSDB_LOG(net, Receive, "ERROR reading from socket");
+      WSDB_LOG("ERROR reading from socket");
     }
   }
 

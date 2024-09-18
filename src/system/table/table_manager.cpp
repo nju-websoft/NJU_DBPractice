@@ -27,8 +27,7 @@ void TableManager::CreateTable(
     const std::string &db_name, const std::string &table_name, const RecordSchema &schema, StorageModel storage_model)
 {
   if (schema.GetRecordLength() > MAX_REC_SIZE || schema.GetRecordLength() < 1) {
-    throw WSDBException(
-        WSDB_RECLEN_ERROR, Q(TableManager), Q(CreateTable), fmt::format("{}", schema.GetRecordLength()));
+    WSDB_THROW(WSDB_RECLEN_ERROR, fmt::format("{}", schema.GetRecordLength()));
   }
 
   // 1. create and open table file

@@ -42,7 +42,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
   std::filesystem::current_path(TEST_DIR);
   try {
     wsdb::DiskManager::CreateFile("test.tbl");
-  } catch (wsdb::WSDBException &e) {
+  } catch (wsdb::WSDBException_ &e) {
     // destroy and recreate the file
     wsdb::DiskManager::DestroyFile("test.tbl");
     wsdb::DiskManager::CreateFile("test.tbl");
@@ -108,7 +108,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
       std::string file_name = "test" + std::to_string(i) + ".tbl";
       try {
         wsdb::DiskManager::CreateFile(file_name);
-      } catch (wsdb::WSDBException &e) {
+      } catch (wsdb::WSDBException_ &e) {
         // destroy and recreate the file
         wsdb::DiskManager::DestroyFile(file_name);
         wsdb::DiskManager::CreateFile(file_name);
@@ -180,7 +180,7 @@ TEST(BufferPoolManagerTest, MultiThread)
   {
     try {
       wsdb::DiskManager::CreateFile("test.tbl");
-    } catch (wsdb::WSDBException &e) {
+    } catch (wsdb::WSDBException_ &e) {
       // destroy and recreate the file
       wsdb::DiskManager::DestroyFile("test.tbl");
       wsdb::DiskManager::CreateFile("test.tbl");
@@ -195,7 +195,7 @@ TEST(BufferPoolManagerTest, MultiThread)
           while (page == nullptr) {
             try {
               page = buffer_pool_manager.FetchPage(fd, j);
-            } catch (wsdb::WSDBException &e) {
+            } catch (wsdb::WSDBException_ &e) {
               if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
               } else {
@@ -232,7 +232,7 @@ TEST(BufferPoolManagerTest, MultiThread)
           while (page == nullptr) {
             try {
               page = buffer_pool_manager.FetchPage(fd, j);
-            } catch (wsdb::WSDBException &e) {
+            } catch (wsdb::WSDBException_ &e) {
               if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
               } else {
@@ -260,7 +260,7 @@ TEST(BufferPoolManagerTest, MultiThread)
           while (page == nullptr) {
             try {
               page = buffer_pool_manager.FetchPage(fd, j);
-            } catch (wsdb::WSDBException &e) {
+            } catch (wsdb::WSDBException_ &e) {
               if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
               } else {
@@ -288,7 +288,7 @@ TEST(BufferPoolManagerTest, MultiThread)
       std::string file_name = "test" + std::to_string(i) + ".tbl";
       try {
         wsdb::DiskManager::CreateFile(file_name);
-      } catch (wsdb::WSDBException &e) {
+      } catch (wsdb::WSDBException_ &e) {
         // destroy and recreate the file
         wsdb::DiskManager::DestroyFile(file_name);
         wsdb::DiskManager::CreateFile(file_name);
@@ -321,7 +321,7 @@ TEST(BufferPoolManagerTest, MultiThread)
             while (page == nullptr) {
               try {
                 page = buffer_pool_manager.FetchPage(fd, rd_pid);
-              } catch (wsdb::WSDBException &e) {
+              } catch (wsdb::WSDBException_ &e) {
                 if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
                   std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 } else {
@@ -359,7 +359,7 @@ TEST(BufferPoolManagerTest, MultiThread)
             while (page == nullptr) {
               try {
                 page = buffer_pool_manager.FetchPage(fd, rd_pid);
-              } catch (wsdb::WSDBException &e) {
+              } catch (wsdb::WSDBException_ &e) {
                 if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
                   std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 } else {

@@ -90,15 +90,15 @@ static std::string WSDBExceptionTypeToString(WSDBExceptionType type)
 /// usage:
 /// throw WSDBException(WSDB_FILE_EXISTS, Q(Diskmanager), Q(CreateFile), file_name)
 
-class WSDBException : public std::exception
+class WSDBException_ : public std::exception
 {
 public:
-  WSDBException() = delete;
-  explicit WSDBException(WSDBExceptionType type, std::string cname = {}, std::string fname = {}, std::string msg = {})
+  WSDBException_() = delete;
+  explicit WSDBException_(WSDBExceptionType type, std::string cname = {}, std::string fname = {}, std::string msg = {})
       : type_(type), cname_(std::move(cname)), fname_(std::move(fname)), msg_(std::move(msg))
   {
     std::string info_str = msg_.empty() ? "" : ": " + msg_;
-    out_ = fmt::format("EXCEPTION <{}::{}>[{}]: {}", cname_, fname_, WSDBExceptionTypeToString(type_), info_str);
+    out_ = fmt::format("EXCEPTION <{}::{}>[{}]{}", cname_, fname_, WSDBExceptionTypeToString(type_), info_str);
   }
 
   WSDBExceptionType type_;
@@ -112,30 +112,34 @@ public:
   // dismiss class and function name
   [[nodiscard]] auto short_what() const -> std::string
   {
-    return fmt::format("EXCEPTION [{}]: {}", WSDBExceptionTypeToString(type_), msg_);
+    std::string info_str = msg_.empty() ? "" : ": " + msg_;
+    return fmt::format("EXCEPTION [{}]{}", WSDBExceptionTypeToString(type_), info_str);
   }
 
 private:
 };
 
-#define WSDB_FETAL(class_, fun_, msg)                                                 \
-  do {                                                                                \
-    std::cerr << fmt::format("Fetal <{}::{}>: {}", #class_, #fun_, msg) << std::endl; \
-    exit(1);                                                                          \
-  } while (0)
+#define WSDB_THROW(type, msg) throw wsdb::WSDBException_(type, fmt::format("{}({})", __FILE__, __LINE__), __func__, msg)
 
-#define WSDB_ASSERT(class_, fun_, expr, msg)                                                        \
-  do {                                                                                              \
-    if (!(expr)) {                                                                                  \
-      std::cerr << fmt::format("Assert <{}::{}>[{}]: {}", #class_, #fun_, #expr, msg) << std::endl; \
-      assert(0);                                                                                    \
-    }                                                                                               \
-  } while (0)
-
-#define WSDB_STUDENT_TODO(lab, q, class_, func_)                                                        \
+#define WSDB_FETAL(msg)                                                                                 \
   do {                                                                                                  \
-    std::cerr << fmt::format("Student TODO [{}.{}]: <{}::{}>", #lab, #q, #class_, #func_) << std::endl; \
+    std::cerr << fmt::format("Fetal <{}({})::{}>: {}", __FILE__, __LINE__, __func__, msg) << std::endl; \
     exit(1);                                                                                            \
+  } while (0)
+
+#define WSDB_ASSERT(expr, msg)                                                                                        \
+  do {                                                                                                                \
+    if (!(expr)) {                                                                                                    \
+      std::cerr << fmt::format("Assert <{}({})::{}>[{}]: {}", __FILE__, __LINE__, __func__, #expr, msg) << std::endl; \
+      assert(0);                                                                                                      \
+    }                                                                                                                 \
+  } while (0)
+
+#define WSDB_STUDENT_TODO(lab, q)                                                                          \
+  do {                                                                                                     \
+    std::cerr << fmt::format("Student TODO [{}.{}]: <{}({})::{}>", #lab, #q, __FILE__, __LINE__, __func__) \
+              << std::endl;                                                                                \
+    exit(1);                                                                                               \
   } while (0)
 
 #define Q(x) #x

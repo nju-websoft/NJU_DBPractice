@@ -37,14 +37,11 @@ auto SortMergeJoinExecutor::Compare(const wsdb::Record &left, const wsdb::Record
   return Record::Compare(*left_key, *right_key);
 }
 
-void SortMergeJoinExecutor::InitInnerJoin() { WSDB_STUDENT_TODO(L3, f1, SortMergeJoinExecutor, InitInnerJoin()); }
+void SortMergeJoinExecutor::InitInnerJoin() { WSDB_STUDENT_TODO(l3, f1); }
 
-void SortMergeJoinExecutor::NextInnerJoin() { WSDB_STUDENT_TODO(L3, f1, SortMergeJoinExecutor, NextInnerJoin()); }
+void SortMergeJoinExecutor::NextInnerJoin() { WSDB_STUDENT_TODO(l3, f1); }
 
-auto SortMergeJoinExecutor::IsEndInnerJoin() const -> bool
-{
-  WSDB_STUDENT_TODO(L3, f1, SortMergeJoinExecutor, IsEndInnerJoin());
-}
+auto SortMergeJoinExecutor::IsEndInnerJoin() const -> bool { WSDB_STUDENT_TODO(l3, f1); }
 
 void SortMergeJoinExecutor::InitOuterJoin() {}
 

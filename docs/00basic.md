@@ -10,13 +10,13 @@ C++ 的异常处理机制提供了一种处理运行时错误的结构化方式�
 
 WSDB的异常处理见文件`common/error.h`，首先在宏`WSDB_ERRORS`中定义了各种异常类型，同学们在实验过程中如果遇到了不在`WSDB_ERRORS`列表中的未知异常，请使用`WSDB_EXCEPTION_EMPTY`，并在报告中写下你遇到的特殊情况。
 
-C++提供了一组标准异常类（如std::exception及其派生类）来处理常见的异常情况，WSDB中基于std::exception自定义了异常类`WSDBExecption`：
+C++提供了一组标准异常类（如std::exception及其派生类）来处理常见的异常情况，WSDB中基于std::exception自定义了异常类`WSDBExecption_`：
 ```c++
-class WSDBException : public std::exception
+class WSDBException_ : public std::exception
 {
 public:
-  WSDBException() = delete;
-  explicit WSDBException(WSDBExceptionType type, std::string cname = {}, std::string fname = {}, std::string msg = {})
+  WSDBException_() = delete;
+  explicit WSDBException_(WSDBExceptionType type, std::string cname = {}, std::string fname = {}, std::string msg = {})
       : type_(type), cname_(std::move(cname)), fname_(std::move(fname)), msg_(std::move(msg))
   {
     std::string info_str = msg_.empty() ? "" : ": " + msg_;
@@ -38,17 +38,20 @@ public:
   }
 }
 ```
-下面具体介绍如何利用`WSDBExecption`类进行异常处理，以异常`WSDB_FILE_EXISTS`为例，假设其发生在`DiskManager`类的`CreateFile`函数中，那么你可以在需要抛出异常的地方插入语句
+下面具体介绍如何利用`WSDBExecption`类进行异常处理，我们提供了异常处理宏以获得更详细的调用信息。以异常`WSDB_FILE_EXISTS`为例，假设其发生在`DiskManager`类的`CreateFile`函数中，那么你可以在需要抛出异常的地方插入语句
 ```c++
-throw WSDBException(WSDB_FILE_EXISTS, Q(DiskManager), Q(CreateFile), fname);
+WSDB_THROW(WSDB_FILE_EXISTS, fname);
 ```
-其中`WSDBException()`的第一个参数是异常类型，第二个参数是异常所在类名，`Q(DiskManager)`表示字符串`DiskManager`，第三个参数是异常所在函数名，第四个参数是可自定义的附加信息，在这里是待创建文件的地址。
+宏展开后为
+```c++
+throw wsdb::WSDBException_(WSDB_FILE_EXISTS, fmt::format("{}({})", "/path to wsdb/src/storage/disk/disk_manager.cpp", 33), __func__, fname)
+```
+其中`WSDBException()`的第一个参数是异常类型，第二个参数是可自定义的附加信息，在这里是待创建文件的地址。
+更多的辅助调试宏定义请参考`common/error.h`以及`common/micro.h`
 
-如果以上异常被抛出，则会在终端显示以下输出信息：
-```c++
-EXCEPTION <DiskManager::CreateFile>[WSDB_FILE_EXISTS]: `fname`
+
 互斥锁是多线程编程中用于保护共享资源的同步原语。通过互斥锁，保证在同一时刻只有一个线程可以访问某个共享资源，从而防止数据竞争问题。
-```
+
 
 C++标准库提供了多种类型的互斥锁机制，常用的包括`std::mutex`和基于它的工具类`std::lock_guard`和`std::scoped_lock`，用于确保线程安全的锁和解锁操作。
 

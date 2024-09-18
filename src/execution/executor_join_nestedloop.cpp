@@ -31,30 +31,27 @@ NestedLoopJoinExecutor::NestedLoopJoinExecutor(
 /// inner join
 void NestedLoopJoinExecutor::InitInnerJoin()
 {
-  WSDB_STUDENT_TODO(L2, f1, NestedLoopJoinExecutor, InitInnerJoin());
-  WSDB_STUDENT_TODO(L3, t1, NestedLoopJoinExecutor, InitInnerJoin());
+  WSDB_STUDENT_TODO(l2, f1);
+  WSDB_STUDENT_TODO(l3, t1);
 }
 
 void NestedLoopJoinExecutor::NextInnerJoin()
 {
-  WSDB_STUDENT_TODO(L2, f1, NestedLoopJoinExecutor, NextInnerJoin());
-  WSDB_STUDENT_TODO(L3, t1, NestedLoopJoinExecutor, NextInnerJoin());
+  WSDB_STUDENT_TODO(l2, f1);
+  WSDB_STUDENT_TODO(l3, t1);
 }
 
 auto NestedLoopJoinExecutor::IsEndInnerJoin() const -> bool
 {
-  WSDB_STUDENT_TODO(L2, f1, NestedLoopJoinExecutor, IsEndInnerJoin());
-  WSDB_STUDENT_TODO(L3, t1, NestedLoopJoinExecutor, IsEndInnerJoin());
+  WSDB_STUDENT_TODO(l2, f1);
+  WSDB_STUDENT_TODO(l3, t1);
 }
 
 /// outer join
-void NestedLoopJoinExecutor::InitOuterJoin() { WSDB_STUDENT_TODO(L3, t2, NestedLoopJoinExecutor, InitOuterJoin()); }
+void NestedLoopJoinExecutor::InitOuterJoin() { WSDB_STUDENT_TODO(l3, t2); }
 
-void NestedLoopJoinExecutor::NextOuterJoin() { WSDB_STUDENT_TODO(L3, t2, NestedLoopJoinExecutor, NextOuterJoin()); }
+void NestedLoopJoinExecutor::NextOuterJoin() { WSDB_STUDENT_TODO(l3, t2); }
 
-auto NestedLoopJoinExecutor::IsEndOuterJoin() const -> bool
-{
-  WSDB_STUDENT_TODO(L3, t2, NestedLoopJoinExecutor, IsEndOuterJoin());
-}
+auto NestedLoopJoinExecutor::IsEndOuterJoin() const -> bool { WSDB_STUDENT_TODO(l3, t2); }
 
 }  // namespace wsdb

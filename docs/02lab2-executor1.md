@@ -39,8 +39,6 @@ flowchart LR
 
 <img title="" src="./02lab2-executor1.assets/valcano.png" alt="valcano" style="zoom:50%;">
 
-上图中，Executor生成的算子树结构应为一个类型为`ProjectionExecutor`的算子`exec_tree`，`exec_tree`的成员变量`child_`是一个类型为`FilterExecutor`的算子，该算子的成员变量`child_`是一个类型为`SeqScanExecutor`的算子。
-
 在WSDB中，每个算子都由`Init`，`Next`，`IsEnd`接口组成，分别用于算子资源的初始化，获取下一条记录，以及判断算子计算是否结束。
 
 要执行上述的算子树，我们只需要将最顶层的算子`exec_tree`传入函数：
@@ -51,13 +49,43 @@ void Executor::Execute(const AbstractExecutorUptr &executor, Context *ctx)
 
 这个函数主要负责对算子进行初始化，然后迭代地调用算子的`Next`接口获取下一条记录，直到算子计算全部结束。
 
-回到之前的例子，在上述算子树的执行过程中，算子的递归调用关系如下：
+```
++----+------+-------+----------+----------+--------+
+| id | name | score | group_id | l1_score | remark |
++----+------+-------+----------+----------+--------+
+| 1  | n1   | 90    | 2        | 91.5     | r1     |
++----+------+-------+----------+----------+--------+
+| 2  | n2   | 83    | 1	       | 89       | r2     |
++----+------+-------+----------+----------+--------+
+| 3  | n3   | 97    | 2        | 92       | r3     |
++----+------+-------+----------+----------+--------+
+```
 
-1. 当调用`ProjectionExecutor`算子的`Next`接口时，该算子会调用其`child_`（即`FilterExecutor`算子）的`Next`接口，然后调用`FilterExecutor`算子的`GetRecord`接口，并根据子算子返回的`child_record`选择其中的部分属性（定义在其成员变量`proj_schema`中）生成自己的`record_`。
+回到之前的例子，假如我们有一个三个记录的表，在上述算子树的执行过程中
 
-2. 调用`FilterExecutor`算子的`Next`接口时，该算子会调用其`child_`（即`SeqScanExecutor`算子）的`Next`接口，然后调用`SeqScanExecutor`算子的`GetRecord`接口，并根据子算子返回的`child_record`是否满足`FilterExecutor`算子的过滤条件（定义在其成员变量`filter_`中）来决定是否将其作为自己的`record_`返回。
+1. `Projection`需要输出一个记录，则通过下层算子`Filter`的`Next`抽取记录。
 
-3. 调用`SeqScanExecutor`算子的`Next`接口时，该算子将调用其成员变量`tab_`（类型为`TableHandle*`）的`GetNextRID`和`GetRecord`接口，获取当前表的下一条记录作为自己的`record_`并返回。`SeqScanExecutor`算子执行的过程即为全表扫描的过程。
+2. `Filter`接到记录抽取请求，并继续向下层请求记录。
+
+3. `Scan`作为最底层算子，接受请求，并返回给`Filter`第一条记录，`Filter`经过检查后发现第一条记录满足过滤条件，于是继续将该条记录传递给`Projection`
+
+4. 至此`Projection`的`Next`接口得到了一个记录，通过投影操作向`Executor`返回请求的字段，作为最终结果
+
+   ```
+   +-------+-------+--------+
+   | n1	| 90	| r1	 |
+   +-------+-------+--------+
+   ```
+
+5. `Executor`继续通过`Projection`的`Next`接口抽取下一条记录，当`Filter`收到`Scan`返回的记录时发现第二条记录无法通过过滤，于是再次通过`Scan`的`Next`抽取第三条记录，经过检查后发现满足过滤条件，于是返回给`Projection`，并由其完成其余投影操作后将结果返回给`Executor`。
+
+   ```
+   +-------+-------+--------+
+   | n3	| 97	| r3	 |
+   +-------+-------+--------+
+   ```
+
+6. `Executor`向`Projection`询问是否还有记录，由于`Projection`是否结束取决于下层的`Filter`是否结束，`Filter`是否结束取决于Scan是否结束，`Scan`发现表中已无更多记录于是将执行结束的信息一步步向上传递，`Executor`收到结束信息后做其余收尾工作。
 
 通过这个例子，你应该已经理解了算子树的构建和基本执行过程，并且也对`ProjectionExecutor`、`FilterExecutor`、`SeqScanExecutor`三个算子接口的实现思路有一定了解。
 
@@ -99,7 +127,7 @@ private:
 - `cursor_`记录当前输出的记录所在的位置
 
 - 以及继承自`AbstractExecutor`的`record_`用于存放生成的记录
-  
+
   ```c++
   void ShowTablesExecutor::Next()
   {
@@ -124,7 +152,7 @@ private:
   cursor_++;
   }
   ```
-  
+
   在`ShowTablesExecutor`的`Next`函数中，首先检查 table 信息是否已全部输出，如果没有则根据 cursor_ 位置获取对应的 table 信息，并生成记录，最后递增 cursor_ 。
 
 需要注意的是，DDL语句以及DML中的增删改语句不需要执行`Init`函数，大部分的基本算子（`Basic`）可能都需要在Init期间做一些资源的初始化。
@@ -221,24 +249,24 @@ def nestedloop_join(left, right, condition):
 1. 实验报告（10%）：实现思路，优化技巧，实验结果，对框架代码和实验的建议，以及在报告中出现的思考等，请尽量避免直接粘贴代码，建议2-4页。
 
 2. 功能分数（90%）：需要通过`wsdb/test/sql`目录下的SQL语句测试。
-   
-   * t1: 顺序通过`wsdb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
-     
-     * `01_prepare_table_dbcourse.sql`: 15 pts
-     * `02_seqscan_limit_projection.sql`: 30 pts
-     * `03_filter_update_delete.sql`: 30 pts
-     * `04_sort_final.sql`: 15 pts
-   
-   * f1: 顺序通过`wsdb/test/sql/lab02/f1`下的SQL测试，由于排序结果集较大，仓库并未包含排序测试的预期输出，请同学们确保测试充分后再提交。
-     
-     * `04_merge_sort.sql`: 10pts
-   
-   * 提示：你可以cd到`wsdb/test/sql/lab02`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，注意：脚本并不负责项目的编译，所以请在运行脚本之前手动编译。
-     
-     ```bash
-     $ bash evaluate.sh <bin directory> <test sql directory>
-     # e.g. bash evaluate.sh /path/to/wsdb/cmake-build-debug/bin t1
-     ```
+
+    * t1: 顺序通过`wsdb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
+
+        * `01_prepare_table_dbcourse.sql`: 15 pts
+        * `02_seqscan_limit_projection.sql`: 30 pts
+        * `03_filter_update_delete.sql`: 30 pts
+        * `04_sort_final.sql`: 15 pts
+
+    * f1: 顺序通过`wsdb/test/sql/lab02/f1`下的SQL测试，由于排序结果集较大，仓库并未包含排序测试的预期输出，请同学们确保测试充分后再提交。
+
+        * `04_merge_sort.sql`: 10pts
+
+    * 提示：你可以cd到`wsdb/test/sql/lab02`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，注意：脚本并不负责项目的编译，所以请在运行脚本之前手动编译。
+
+      ```bash
+      $ bash evaluate.sh <bin directory> <test sql directory>
+      # e.g. bash evaluate.sh /path/to/wsdb/cmake-build-debug/bin t1
+      ```
 
 **请勿抄袭或搬运他人的实验结果，如被发现将取消大实验分数!!!**
 
@@ -256,7 +284,7 @@ def nestedloop_join(left, right, condition):
 1. 实验报告（提交一份PDF，命名格式：lab2\_学号\_姓名.pdf）：请在报告开头写上相关信息。
    
    | 学号     | 姓名 | 邮箱                      | 完成题目 |
-   | -------- | ---- | ------------------------- | -------- |
+      | -------- | ---- | ------------------------- | -------- |
    | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | t1/f1    |
 
 2. 代码：`wsdb/src`文件夹

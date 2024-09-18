@@ -57,7 +57,7 @@ public:
 
   [[nodiscard]] virtual auto GetOutSchema() const -> const RecordSchema *
   {
-    WSDB_ASSERT(AbstractExecutor, GetOutSchema(), out_schema_ != nullptr, "out_schema_ is nullptr");
+    WSDB_ASSERT(out_schema_ != nullptr, "out_schema_ is nullptr");
     return out_schema_.get();
   };
 

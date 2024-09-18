@@ -85,7 +85,7 @@ void DatabaseHandle::Open()
       if (tab_idx_map_.find(table_id) == tab_idx_map_.end())
         tab_idx_map_[table_id] = std::list<idx_id_t>();
       tab_idx_map_[table_id].push_back(idx_hdl->GetIndexId());
-    } catch (WSDBException &e) {
+    } catch (WSDBException_ &e) {
       if (e.type_ != WSDB_NOT_IMPLEMENTED)
         throw;
     }
@@ -102,7 +102,7 @@ void DatabaseHandle::Close()
   // close all tables and indexes in the database
   // close tables
   for (auto &table : tables_) {
-    WSDB_LOG(DatabaseHandle, Close(), "close table");
+    WSDB_LOG("close table");
     tbl_mgr_->CloseTable(db_name_, *table.second);
   }
   // close indexes
@@ -186,12 +186,12 @@ void DatabaseHandle::DropTable(const std::string &tab_name)
 
 void DatabaseHandle::CreateIndex(const std::string &tab_name, const RecordSchema &key_schema, IndexType idx_type)
 {
-  throw WSDBException(WSDB_NOT_IMPLEMENTED, Q(DatabaseHandle), Q(CreateIndex()));
+  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
 }
 
 void DatabaseHandle::DropIndex(const std::string &idx_name)
 {
-  throw WSDBException(WSDB_NOT_IMPLEMENTED, Q(DatabaseHandle), Q(DropIndex()));
+  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
 }
 
 auto DatabaseHandle::GetTable(const std::string &tab_name) -> TableHandle *
@@ -204,25 +204,25 @@ auto DatabaseHandle::GetTable(const std::string &tab_name) -> TableHandle *
 
 auto DatabaseHandle::GetTable(table_id_t tid) -> TableHandle *
 {
-  WSDB_ASSERT(DatabaseHandle, GetTable, tid != INVALID_TABLE_ID, Q(tid));
+  WSDB_ASSERT(tid != INVALID_TABLE_ID, Q(tid));
   return tables_[tid].get();
 }
 
 auto DatabaseHandle::GetIndexNum(table_id_t tid) -> size_t
 {
-  WSDB_ASSERT(DatabaseHandle, GetIndexNum, tid != INVALID_TABLE_ID, Q(tid));
+  WSDB_ASSERT(tid != INVALID_TABLE_ID, Q(tid));
   return tab_idx_map_[tid].size();
 }
 
 auto DatabaseHandle::GetIndex(idx_id_t iid) -> IndexHandle *
 {
-  WSDB_ASSERT(DatabaseHandle, GetIndex, indexes_.find(iid) != indexes_.end(), Q(iid));
+  WSDB_ASSERT(indexes_.find(iid) != indexes_.end(), Q(iid));
   return indexes_[iid].get();
 }
 
 auto DatabaseHandle::GetIndexes(table_id_t tid) -> std::list<IndexHandle *>
 {
-  WSDB_ASSERT(DatabaseHandle, GetIndexes, tid != INVALID_TABLE_ID, Q(tid));
+  WSDB_ASSERT(tid != INVALID_TABLE_ID, Q(tid));
   std::list<IndexHandle *> indexes;
   for (auto &idx_id : tab_idx_map_[tid]) {
     indexes.push_back(indexes_[idx_id].get());

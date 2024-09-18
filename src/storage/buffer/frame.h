@@ -47,7 +47,7 @@ public:
 
   inline void Unpin()
   {
-    WSDB_ASSERT(Frame, Unpin, pin_count_ > 0, "Unpin a frame with pin_count = 0");
+    WSDB_ASSERT(pin_count_ > 0, "Unpin a frame with pin_count = 0");
     pin_count_--;
   }
 

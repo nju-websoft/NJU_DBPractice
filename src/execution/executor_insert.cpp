@@ -31,10 +31,10 @@ InsertExecutor::InsertExecutor(TableHandle *tbl, std::list<IndexHandle *> indexe
   out_schema_ = std::make_unique<RecordSchema>(fields);
 }
 
-void InsertExecutor::Init() { WSDB_FETAL(InsertExecutor, Init(), "InsertExecutor does not support Init"); }
+void InsertExecutor::Init() { WSDB_FETAL("InsertExecutor does not support Init"); }
 
-void InsertExecutor::Next() { WSDB_STUDENT_TODO(L2, t1, InsertExecutor, Next()); }
+void InsertExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
 
-auto InsertExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(L2, t1, InsertExecutor, IsEnd()); }
+auto InsertExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l2, t1); }
 
 }  // namespace wsdb

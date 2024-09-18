@@ -44,9 +44,7 @@ IndexHandle::IndexHandle(DiskManager *disk_manager, BufferPoolManager *buffer_po
       index_ = new HashIndex(disk_manager, buffer_pool_manager, iid, key_schema_.get());
       break;
     }
-    default:
-      throw WSDBException(
-          WSDB_INVALID_ARGUMENT, Q(IndexHandle), Q(IndexHandle), fmt::format("{}", static_cast<int>(index_type)));
+    default: WSDB_FETAL(fmt::format("{}", static_cast<int>(index_type)));
   }
 }
 

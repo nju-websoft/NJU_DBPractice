@@ -25,21 +25,21 @@ namespace wsdb {
 void IndexManager::CreateIndex(const std::string &db_name, const std::string &index_name,
     const wsdb::RecordSchema &schema, wsdb::IndexType index_type)
 {
-  throw WSDBException(WSDB_NOT_IMPLEMENTED, Q(IndexManager), Q(CreateIndex()));
+  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
 }
 
 void IndexManager::DropIndex(const std::string &db_name, const std::string &index_name)
 {
-  throw WSDBException(WSDB_NOT_IMPLEMENTED, Q(IndexManager), Q(DropIndex()));
+  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
 }
 IndexHandleUptr IndexManager::OpenIndex(const std::string &db_name, const std::string &index_name, IndexType index_type)
 {
-  throw WSDBException(WSDB_NOT_IMPLEMENTED, Q(IndexManager), Q(OpenIndex()));
+  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
 }
 
 void IndexManager::CloseIndex(const IndexHandle &index_handle)
 {
-  throw WSDBException(WSDB_NOT_IMPLEMENTED, Q(IndexManager), Q(CloseIndex()));
+  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
 }
 
 }  // namespace wsdb

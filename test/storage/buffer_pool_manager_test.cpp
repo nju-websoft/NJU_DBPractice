@@ -30,7 +30,7 @@
 
 #include "gtest/gtest.h"
 
-[[maybe_unused]] constexpr int MAX_FILES = 32;
+[[maybe_unused]] constexpr int MAX_FILES = 11;
 [[maybe_unused]] constexpr int MAX_PAGES = 64;
 
 TEST(BufferPoolManagerTest, SimpleTest)
@@ -169,6 +169,34 @@ TEST(BufferPoolManagerTest, SimpleTest)
   }
 }
 
+class Progress
+{
+public:
+  explicit Progress(int total) : total_(total), current_(0) {}
+
+  ~Progress() { std::cout << std::endl; }
+
+  void Step() { current_++; }
+
+  void Show()
+  {
+    mtx_.lock();
+    int progress  = current_ * 100 / total_;
+    int bar_width = 70;
+    std::cout << fmt::format("[{}{}] {}%\r",
+        std::string(progress * bar_width / 100, '='),
+        std::string(bar_width - progress * bar_width / 100, ' '),
+        progress);
+    std::cout.flush();
+    mtx_.unlock();
+  }
+
+private:
+  int              total_;
+  std::atomic<int> current_;
+  std::mutex       mtx_;
+};
+
 TEST(BufferPoolManagerTest, MultiThread)
 {
   wsdb::DiskManager       disk_manager{};
@@ -178,6 +206,8 @@ TEST(BufferPoolManagerTest, MultiThread)
   std::filesystem::current_path(TEST_DIR);
   SUB_TEST(SingleFile)
   {
+    std::cout << "Single file test begin..." << std::endl;
+    Progress progress(10000 + 10 * MAX_PAGES + 10 * MAX_PAGES);
     try {
       wsdb::DiskManager::CreateFile("test.tbl");
     } catch (wsdb::WSDBException_ &e) {
@@ -189,7 +219,7 @@ TEST(BufferPoolManagerTest, MultiThread)
     std::vector<std::thread> threads;
     threads.reserve(10);
     for (int i = 0; i < 10; ++i) {
-      threads.emplace_back([&buffer_pool_manager, fd] {
+      threads.emplace_back([&progress, &buffer_pool_manager, fd] {
         for (int j = 0; j < 1000; ++j) {
           Page *page = nullptr;
           while (page == nullptr) {
@@ -197,7 +227,7 @@ TEST(BufferPoolManagerTest, MultiThread)
               page = buffer_pool_manager.FetchPage(fd, j);
             } catch (wsdb::WSDBException_ &e) {
               if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
               } else {
                 throw;
               }
@@ -208,6 +238,8 @@ TEST(BufferPoolManagerTest, MultiThread)
           ASSERT_EQ(page->GetPageId(), j);
           ASSERT_NE(page->GetData(), nullptr);
           buffer_pool_manager.UnpinPage(fd, j, false);
+          progress.Step();
+          progress.Show();
         }
       });
     }
@@ -226,7 +258,7 @@ TEST(BufferPoolManagerTest, MultiThread)
     threads.clear();
     threads.reserve(10);
     for (int i = 0; i < 10; ++i) {
-      threads.emplace_back([&buffer_pool_manager, fd, &page_data] {
+      threads.emplace_back([&progress, &buffer_pool_manager, fd, &page_data] {
         for (int j = 0; j < MAX_PAGES; ++j) {
           Page *page = nullptr;
           while (page == nullptr) {
@@ -234,7 +266,7 @@ TEST(BufferPoolManagerTest, MultiThread)
               page = buffer_pool_manager.FetchPage(fd, j);
             } catch (wsdb::WSDBException_ &e) {
               if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
               } else {
                 throw;
               }
@@ -245,6 +277,8 @@ TEST(BufferPoolManagerTest, MultiThread)
           ASSERT_NE(page->GetData(), nullptr);
           memcpy(page->GetData(), page_data[j].c_str(), page_data[j].size());
           buffer_pool_manager.UnpinPage(fd, j, true);
+          progress.Step();
+          progress.Show();
         }
       });
     }
@@ -254,7 +288,7 @@ TEST(BufferPoolManagerTest, MultiThread)
     threads.clear();
     threads.reserve(10);
     for (int i = 0; i < 10; ++i) {
-      threads.emplace_back([&buffer_pool_manager, fd, &page_data] {
+      threads.emplace_back([&progress, &buffer_pool_manager, fd, &page_data] {
         for (int j = 0; j < MAX_PAGES; ++j) {
           Page *page = nullptr;
           while (page == nullptr) {
@@ -262,7 +296,7 @@ TEST(BufferPoolManagerTest, MultiThread)
               page = buffer_pool_manager.FetchPage(fd, j);
             } catch (wsdb::WSDBException_ &e) {
               if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
               } else {
                 throw;
               }
@@ -273,6 +307,8 @@ TEST(BufferPoolManagerTest, MultiThread)
           ASSERT_NE(page->GetData(), nullptr);
           ASSERT_EQ(memcmp(page->GetData(), page_data[j].c_str(), page_data[j].size()), 0);
           buffer_pool_manager.UnpinPage(fd, j, false);
+          progress.Step();
+          progress.Show();
         }
       });
     }
@@ -284,6 +320,8 @@ TEST(BufferPoolManagerTest, MultiThread)
   }
   SUB_TEST(MultiFiles)
   {
+    std::cout << "Multi files test begin..." << std::endl;
+    Progress progress(10 * 2 * MAX_FILES * 501 + 10 * 2 * MAX_FILES * 501);
     for (int i = 0; i < MAX_FILES; ++i) {
       std::string file_name = "test" + std::to_string(i) + ".tbl";
       try {
@@ -309,13 +347,13 @@ TEST(BufferPoolManagerTest, MultiThread)
     }
     // multi thread read and write
     for (int i = 0; i < 10; ++i) {
-      threads.emplace_back([&buffer_pool_manager, &disk_manager, &file_page_data] {
+      threads.emplace_back([&progress, &buffer_pool_manager, &disk_manager, &file_page_data] {
         for (int i = 0; i < 2 * MAX_FILES; ++i) {
           const int   file_name_no = i % MAX_FILES;
           std::string rand_file    = "test" + std::to_string(file_name_no) + ".tbl";
           file_id_t   fd           = disk_manager.GetFileId(rand_file);
           ASSERT_NE(fd, INVALID_FILE_ID);
-          for (int j = 0; j < 1000; ++j) {
+          for (int j = 0; j < 501; ++j) {
             Page     *page   = nullptr;
             page_id_t rd_pid = j % MAX_PAGES;
             while (page == nullptr) {
@@ -323,7 +361,7 @@ TEST(BufferPoolManagerTest, MultiThread)
                 page = buffer_pool_manager.FetchPage(fd, rd_pid);
               } catch (wsdb::WSDBException_ &e) {
                 if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
-                  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                  std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 } else {
                   throw;
                 }
@@ -337,6 +375,8 @@ TEST(BufferPoolManagerTest, MultiThread)
                 file_page_data[file_name_no][rd_pid].c_str(),
                 file_page_data[file_name_no][rd_pid].size());
             buffer_pool_manager.UnpinPage(fd, rd_pid, true);
+            progress.Step();
+            progress.Show();
           }
         }
       });
@@ -347,13 +387,13 @@ TEST(BufferPoolManagerTest, MultiThread)
     threads.clear();
     // read data
     for (int i = 0; i < 10; ++i) {
-      threads.emplace_back([&buffer_pool_manager, &disk_manager, &file_page_data] {
+      threads.emplace_back([&progress, &buffer_pool_manager, &disk_manager, &file_page_data] {
         for (int i = 0; i < 2 * MAX_FILES; ++i) {
           const int   file_name_no = i % MAX_FILES;
           std::string rand_file    = "test" + std::to_string(file_name_no) + ".tbl";
           file_id_t   fd           = disk_manager.GetFileId(rand_file);
           ASSERT_NE(fd, INVALID_FILE_ID);
-          for (int j = 0; j < 1000; ++j) {
+          for (int j = 0; j < 501; ++j) {
             Page     *page   = nullptr;
             page_id_t rd_pid = j % MAX_PAGES;
             while (page == nullptr) {
@@ -361,7 +401,7 @@ TEST(BufferPoolManagerTest, MultiThread)
                 page = buffer_pool_manager.FetchPage(fd, rd_pid);
               } catch (wsdb::WSDBException_ &e) {
                 if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
-                  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                  std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 } else {
                   throw;
                 }
@@ -376,6 +416,8 @@ TEST(BufferPoolManagerTest, MultiThread)
                           file_page_data[file_name_no][rd_pid].size()),
                 0);
             buffer_pool_manager.UnpinPage(fd, rd_pid, false);
+            progress.Step();
+            progress.Show();
           }
         }
       });

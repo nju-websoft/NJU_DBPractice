@@ -321,7 +321,7 @@ TEST(BufferPoolManagerTest, MultiThread)
   SUB_TEST(MultiFiles)
   {
     std::cout << "Multi files test begin..." << std::endl;
-    Progress progress(10 * 2 * MAX_FILES * 501 + 10 * 2 * MAX_FILES * 501);
+    Progress progress(10 * 2 * MAX_FILES * 1001 + 10 * 2 * MAX_FILES * 1001);
     for (int i = 0; i < MAX_FILES; ++i) {
       std::string file_name = "test" + std::to_string(i) + ".tbl";
       try {
@@ -353,7 +353,7 @@ TEST(BufferPoolManagerTest, MultiThread)
           std::string rand_file    = "test" + std::to_string(file_name_no) + ".tbl";
           file_id_t   fd           = disk_manager.GetFileId(rand_file);
           ASSERT_NE(fd, INVALID_FILE_ID);
-          for (int j = 0; j < 501; ++j) {
+          for (int j = 0; j < 1001; ++j) {
             Page     *page   = nullptr;
             page_id_t rd_pid = j % MAX_PAGES;
             while (page == nullptr) {
@@ -393,7 +393,7 @@ TEST(BufferPoolManagerTest, MultiThread)
           std::string rand_file    = "test" + std::to_string(file_name_no) + ".tbl";
           file_id_t   fd           = disk_manager.GetFileId(rand_file);
           ASSERT_NE(fd, INVALID_FILE_ID);
-          for (int j = 0; j < 501; ++j) {
+          for (int j = 0; j < 1001; ++j) {
             Page     *page   = nullptr;
             page_id_t rd_pid = j % MAX_PAGES;
             while (page == nullptr) {

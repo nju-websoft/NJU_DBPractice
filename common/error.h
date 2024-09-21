@@ -35,6 +35,37 @@
 
 namespace wsdb {
 
+/**
+ * @brief error definitions for WSDB
+ * @a WSDB_EXCEPTION_EMPTY: unreachable abstract class method, undetermined exception, etc.
+ * @a WSDB_FILE_EXISTS: file already exists, used file creation check
+ * @a WSDB_FILE_NOT_EXISTS: file not exists, used for file deletion check
+ * @a WSDB_FILE_NOT_OPEN: file not open, disk manager needs to open file before read/write
+ * @a WSDB_FILE_DELETE_ERROR: unix error when failing to unlink file
+ * @a WSDB_FILE_REOPEN: file already opened, disk manager should not open file twice
+ * @a WSDB_NOT_IMPLEMENTED: method not implemented, used for abstract class method
+ * @a WSDB_NO_FREE_FRAME: buffer pool manager cannot find available frame to load page
+ * @a WSDB_RECORD_EXISTS: record already exists, used for table manager for record insertion
+ * @a WSDB_RECORD_MISS: record not exists, used for table manager for record deletion
+ * @a WSDB_RECLEN_ERROR: record length error, used to check if the record length exceeds MAX_RECORD_SIZE
+ * @a WSDB_PAGE_MISS: used for table manager to check if RID.page is valid
+ * @a WSDB_FILE_READ_ERROR: unix error when failing to read file
+ * @a WSDB_FILE_WRITE_ERROR: unix error when failing to write file
+ * @a WSDB_INVALID_SQL: invalid SQL statement, syntax error
+ * @a WSDB_TXN_ABORTED: transaction aborted, used for transaction manager
+ * @a WSDB_DB_EXISTS: database already exists when attempting to create a new database
+ * @a WSDB_DB_MISS: database not exists when attempting to open a database
+ * @a WSDB_DB_NOT_OPEN: database not open, client should open a specific database before operations
+ * @a WSDB_TABLE_MISS: table handler not exists
+ * @a WSDB_TABLE_EXIST: table already exists when attempting to create a new table
+ * @a WSDB_GRAMMAR_ERROR: SQL grammar error, check semantic error
+ * @a WSDB_FIELD_MISS: field not exists in the schema
+ * @a WSDB_STRING_OVERFLOW: string overflow, used for string size check
+ * @a WSDB_TYPE_MISSMATCH: type mismatch in comparison
+ * @a WSDB_UNSUPPORTED_OP: unsupported operation
+ * @a WSDB_UNEXPECTED_NULL: unexpected null value after adequate check
+ * @a WSDB_CLIENT_DOWN: client down, should close the client connection
+ */
 #define WSDB_ERRORS                  \
   WSDB_ERROR(WSDB_EXCEPTION_EMPTY)   \
   WSDB_ERROR(WSDB_FILE_EXISTS)       \
@@ -43,7 +74,6 @@ namespace wsdb {
   WSDB_ERROR(WSDB_FILE_DELETE_ERROR) \
   WSDB_ERROR(WSDB_FILE_REOPEN)       \
   WSDB_ERROR(WSDB_NOT_IMPLEMENTED)   \
-  WSDB_ERROR(WSDB_INVALID_ARGUMENT)  \
   WSDB_ERROR(WSDB_NO_FREE_FRAME)     \
   WSDB_ERROR(WSDB_RECORD_EXISTS)     \
   WSDB_ERROR(WSDB_RECORD_MISS)       \
@@ -53,16 +83,13 @@ namespace wsdb {
   WSDB_ERROR(WSDB_FILE_WRITE_ERROR)  \
   WSDB_ERROR(WSDB_INVALID_SQL)       \
   WSDB_ERROR(WSDB_TXN_ABORTED)       \
-  WSDB_ERROR(WSDB_DB_BUSY)           \
   WSDB_ERROR(WSDB_DB_EXISTS)         \
   WSDB_ERROR(WSDB_DB_MISS)           \
   WSDB_ERROR(WSDB_DB_NOT_OPEN)       \
   WSDB_ERROR(WSDB_TABLE_MISS)        \
   WSDB_ERROR(WSDB_TABLE_EXIST)       \
   WSDB_ERROR(WSDB_GRAMMAR_ERROR)     \
-  WSDB_ERROR(WSDB_EMPTY_FIELD_DEF)   \
   WSDB_ERROR(WSDB_FIELD_MISS)        \
-  WSDB_ERROR(WSDB_AMBIGUOUS_FIELD)   \
   WSDB_ERROR(WSDB_STRING_OVERFLOW)   \
   WSDB_ERROR(WSDB_TYPE_MISSMATCH)    \
   WSDB_ERROR(WSDB_UNSUPPORTED_OP)    \

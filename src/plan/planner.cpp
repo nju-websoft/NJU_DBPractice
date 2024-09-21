@@ -345,7 +345,7 @@ auto Planner::CreateRecordSchema(const std::vector<std::shared_ptr<ast::Field>> 
     auto tbl       = db->GetTable(tab_name);
     fs.table_id_   = tbl != nullptr ? tbl->GetTableId() : INVALID_TABLE_ID;
     if (fs.field_size_ == 0) {
-      WSDB_THROW(WSDB_EMPTY_FIELD_DEF, "Field size cannot be 0");
+      WSDB_THROW(WSDB_GRAMMAR_ERROR, "Field size cannot be 0");
     }
     rt_fields.push_back({.field_ = fs});
   }
@@ -371,7 +371,7 @@ void Planner::CheckFieldTabName(
       if (tab->HasField(field)) {
         if (!tab_name.empty()) {
           WSDB_THROW(
-              WSDB_AMBIGUOUS_FIELD, fmt::format("field:{}, tab1:{}, tab2:{}", field, tab_name, tab->GetTableName()));
+              WSDB_GRAMMAR_ERROR, fmt::format("Ambiguous field:{}, tab1:{}, tab2:{}", field, tab_name, tab->GetTableName()));
         }
         tab_name = tab->GetTableName();
       }

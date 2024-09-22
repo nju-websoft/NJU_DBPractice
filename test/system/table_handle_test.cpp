@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <vector>
 #include <unordered_set>
+#include <shared_mutex>
 
 #include "gtest/gtest.h"
 using namespace wsdb;
@@ -124,17 +125,19 @@ TEST(TableHandle, MultiThread)
   ASSERT_EQ(tbl->GetSchema().GetRecordLength(), tbl->GetSchema().GetRecordLength());
   std::vector<std::thread> threads;
   std::atomic<int>         cnt(0);
-  std::mutex               wr_lock;
+  std::shared_mutex        rw_lock;
   std::vector<RID>         rids;
   for (int i = 0; i < 10; ++i) {
     threads.emplace_back([&]() {
       for (int i = 0; i < 1000; ++i) {
         auto record = GenRecordUnderSchema(tbl->GetSchema());
-        wr_lock.lock();
+        rw_lock.lock();
         auto rid = tbl->InsertRecord(*record);
         rids.push_back(rid);
-        wr_lock.unlock();
+        rw_lock.unlock();
+        rw_lock.lock_shared();
         auto record2 = tbl->GetRecord(rid);
+        rw_lock.unlock_shared();
         ASSERT_TRUE(*record == *record2);
         cnt++;
       }
@@ -149,32 +152,36 @@ TEST(TableHandle, MultiThread)
     if (t % 2 == 0) {
       threads.emplace_back([&]() {
         for (int i = 0; i < 1000; ++i) {
-          wr_lock.lock();
+          rw_lock.lock();
           if (rids.empty()) {
-            wr_lock.unlock();
+            rw_lock.unlock();
             continue;
           }
           auto rid = rids[rand() % rids.size()];
           rids.erase(std::remove(rids.begin(), rids.end(), rid), rids.end());
           tbl->DeleteRecord(rid);
-          wr_lock.unlock();
+          rw_lock.unlock();
+          rw_lock.lock_shared();
           ASSERT_THROW(tbl->GetRecord(rid), WSDBException_);
+          rw_lock.unlock_shared();
           cnt--;
         }
       });
     } else {
       threads.emplace_back([&]() {
         for (int i = 0; i < 1000; ++i) {
-          wr_lock.lock();
+          rw_lock.lock();
           if (rids.empty()) {
-            wr_lock.unlock();
+            rw_lock.unlock();
             continue;
           }
           auto rid    = rids[rand() % rids.size()];
           auto record = GenRecordUnderSchema(tbl->GetSchema());
           tbl->UpdateRecord(rid, *record);
-          wr_lock.unlock();
+          rw_lock.unlock();
+          rw_lock.lock_shared();
           auto record2 = tbl->GetRecord(rid);
+          rw_lock.unlock_shared();
           ASSERT_TRUE(*record == *record2);
         }
       });
@@ -207,17 +214,19 @@ TEST(TableHandle, PAX_MultiThread)
   ASSERT_EQ(tbl->GetSchema().GetRecordLength(), tbl->GetSchema().GetRecordLength());
   std::vector<std::thread> threads;
   std::atomic<int>         cnt(0);
-  std::mutex               wr_lock;
+  std::shared_mutex        rw_lock;
   std::vector<RID>         rids;
   for (int i = 0; i < 10; ++i) {
     threads.emplace_back([&]() {
       for (int i = 0; i < 1000; ++i) {
         auto record = GenRecordUnderSchema(tbl->GetSchema());
-        wr_lock.lock();
+        rw_lock.lock();
         auto rid = tbl->InsertRecord(*record);
         rids.push_back(rid);
-        wr_lock.unlock();
+        rw_lock.unlock();
+        rw_lock.lock_shared();
         auto record2 = tbl->GetRecord(rid);
+        rw_lock.unlock_shared();
         ASSERT_TRUE(*record == *record2);
         cnt++;
       }
@@ -266,32 +275,36 @@ TEST(TableHandle, PAX_MultiThread)
     if (t % 2 == 0) {
       threads.emplace_back([&]() {
         for (int i = 0; i < 1000; ++i) {
-          wr_lock.lock();
+          rw_lock.lock();
           if (rids.empty()) {
-            wr_lock.unlock();
+            rw_lock.unlock();
             continue;
           }
           auto rid = rids[rand() % rids.size()];
           rids.erase(std::remove(rids.begin(), rids.end(), rid), rids.end());
           tbl->DeleteRecord(rid);
-          wr_lock.unlock();
+          rw_lock.unlock();
+          rw_lock.lock_shared();
           ASSERT_THROW(tbl->GetRecord(rid), WSDBException_);
+          rw_lock.unlock_shared();
           cnt--;
         }
       });
     } else {
       threads.emplace_back([&]() {
         for (int i = 0; i < 1000; ++i) {
-          wr_lock.lock();
+          rw_lock.lock();
           if (rids.empty()) {
-            wr_lock.unlock();
+            rw_lock.unlock();
             continue;
           }
           auto rid    = rids[rand() % rids.size()];
           auto record = GenRecordUnderSchema(tbl->GetSchema());
           tbl->UpdateRecord(rid, *record);
-          wr_lock.unlock();
+          rw_lock.unlock();
+          rw_lock.lock_shared();
           auto record2 = tbl->GetRecord(rid);
+          rw_lock.unlock_shared();
           ASSERT_TRUE(*record == *record2);
         }
       });

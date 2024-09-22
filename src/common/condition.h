@@ -47,6 +47,7 @@ static auto CondRvalTypeToString(CondRvalType type) -> std::string
     case kSubquery: return "Subquery";
     default: return "Unknown";
   }
+  return "Unknown";
 }
 
 class Condition;

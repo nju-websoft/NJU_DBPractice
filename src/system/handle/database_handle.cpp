@@ -204,25 +204,25 @@ auto DatabaseHandle::GetTable(const std::string &tab_name) -> TableHandle *
 
 auto DatabaseHandle::GetTable(table_id_t tid) -> TableHandle *
 {
-  WSDB_ASSERT(tid != INVALID_TABLE_ID, Q(tid));
+  WSDB_ASSERT(tid != INVALID_TABLE_ID, std::to_string(tid));
   return tables_[tid].get();
 }
 
 auto DatabaseHandle::GetIndexNum(table_id_t tid) -> size_t
 {
-  WSDB_ASSERT(tid != INVALID_TABLE_ID, Q(tid));
+  WSDB_ASSERT(tid != INVALID_TABLE_ID, std::to_string(tid));
   return tab_idx_map_[tid].size();
 }
 
 auto DatabaseHandle::GetIndex(idx_id_t iid) -> IndexHandle *
 {
-  WSDB_ASSERT(indexes_.find(iid) != indexes_.end(), Q(iid));
+  WSDB_ASSERT(indexes_.find(iid) != indexes_.end(), std::to_string(iid));
   return indexes_[iid].get();
 }
 
 auto DatabaseHandle::GetIndexes(table_id_t tid) -> std::list<IndexHandle *>
 {
-  WSDB_ASSERT(tid != INVALID_TABLE_ID, Q(tid));
+  WSDB_ASSERT(tid != INVALID_TABLE_ID, std::to_string(tid));
   std::list<IndexHandle *> indexes;
   for (auto &idx_id : tab_idx_map_[tid]) {
     indexes.push_back(indexes_[idx_id].get());

@@ -158,7 +158,7 @@ private:
   do {                                                                                                                \
     if (!(expr)) {                                                                                                    \
       std::cerr << fmt::format("Assert <{}({})::{}>[{}]: {}", __FILE__, __LINE__, __func__, #expr, msg) << std::endl; \
-      assert(0);                                                                                                      \
+      std::abort();                                                                                                   \
     }                                                                                                                 \
   } while (0)
 
@@ -168,8 +168,6 @@ private:
               << std::endl;                                                                                \
     exit(1);                                                                                               \
   } while (0)
-
-#define Q(x) #x
 
 }  // namespace wsdb
 

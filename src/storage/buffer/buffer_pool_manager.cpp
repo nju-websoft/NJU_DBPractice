@@ -36,49 +36,27 @@ BufferPoolManager::BufferPoolManager(DiskManager *disk_manager, wsdb::LogManager
   } else {
     WSDB_FETAL("Unknown replacer: " + REPLACER);
   }
-  // TODO: do some initialization
-  WSDB_STUDENT_TODO(l1, t2);
+  // init free_list_
+  for (frame_id_t i = 0; i < static_cast<int>(BUFFER_POOL_SIZE); i++) {
+    free_list_.push_back(i);
+  }
 }
 
-auto BufferPoolManager::FetchPage(file_id_t fid, page_id_t pid) -> Page *
-{
-  WSDB_STUDENT_TODO(l1, t2);
-}
+auto BufferPoolManager::FetchPage(file_id_t fid, page_id_t pid) -> Page * { WSDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::UnpinPage(file_id_t fid, page_id_t pid, bool is_dirty) -> bool
-{
-  WSDB_STUDENT_TODO(l1, t2);
-}
+auto BufferPoolManager::UnpinPage(file_id_t fid, page_id_t pid, bool is_dirty) -> bool { WSDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::DeletePage(file_id_t fid, page_id_t pid) -> bool
-{
-  WSDB_STUDENT_TODO(l1, t2);
-}
+auto BufferPoolManager::DeletePage(file_id_t fid, page_id_t pid) -> bool { WSDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::DeleteAllPages(file_id_t fid) -> bool
-{
-  WSDB_STUDENT_TODO(l1, t2);
-}
+auto BufferPoolManager::DeleteAllPages(file_id_t fid) -> bool { WSDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::FlushPage(file_id_t fid, page_id_t pid) -> bool
-{
-  WSDB_STUDENT_TODO(l1, t2);
-}
+auto BufferPoolManager::FlushPage(file_id_t fid, page_id_t pid) -> bool { WSDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::FlushAllPages(file_id_t fid) -> bool
-{
-  WSDB_STUDENT_TODO(l1, t2);
-}
+auto BufferPoolManager::FlushAllPages(file_id_t fid) -> bool { WSDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::GetAvailableFrame() -> frame_id_t
-{
-  WSDB_STUDENT_TODO(l1, t2);
-}
+auto BufferPoolManager::GetAvailableFrame() -> frame_id_t { WSDB_STUDENT_TODO(l1, t2); }
 
-void BufferPoolManager::UpdateFrame(frame_id_t frame_id, file_id_t fid, page_id_t pid)
-{
-  WSDB_STUDENT_TODO(l1, t2);
-}
+void BufferPoolManager::UpdateFrame(frame_id_t frame_id, file_id_t fid, page_id_t pid) { WSDB_STUDENT_TODO(l1, t2); }
 
 auto BufferPoolManager::GetFrame(file_id_t fid, page_id_t pid) -> Frame *
 {

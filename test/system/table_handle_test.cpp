@@ -236,6 +236,7 @@ TEST(TableHandle, PAX_MultiThread)
     }
     auto chunk = tbl->GetChunk(rid.PageID(), chunk_schema.get());
     ASSERT_TRUE(chunk != nullptr);
+    ASSERT_EQ(chunk->GetColCount(), chunk_schema->GetFieldCount());
     chunks[rid.PageID()] = std::move(chunk);
   }
   // check chunk data using record scan

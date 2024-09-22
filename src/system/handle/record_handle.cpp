@@ -362,7 +362,10 @@ auto Record::Compare(const wsdb::Record &lrec, const wsdb::Record &rrec) -> int
   return 0;
 }
 
-Chunk::Chunk(const RecordSchema *schema, std::vector<ArrayValueSptr> cols) : schema_(schema), cols_(std::move(cols)) {}
+Chunk::Chunk(const RecordSchema *schema, std::vector<ArrayValueSptr> cols) : schema_(schema), cols_(std::move(cols))
+{
+  WSDB_ASSERT(schema_->GetFieldCount() == cols_.size(), "Field count mismatch");
+}
 
 Chunk::~Chunk() = default;
 
@@ -375,4 +378,6 @@ Chunk &Chunk::operator=(const wsdb::Chunk &chunk) = default;
 Chunk &Chunk::operator=(wsdb::Chunk &&chunk) noexcept = default;
 
 auto Chunk::GetCol(int index) -> ArrayValueSptr { return cols_[index]; }
+
+auto Chunk::GetColCount() -> size_t { return cols_.size(); }
 }  // namespace wsdb

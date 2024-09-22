@@ -197,6 +197,8 @@ public:
 
   auto GetCol(int index) -> ArrayValueSptr;
 
+  auto GetColCount() -> size_t;
+
 private:
   const RecordSchema *schema_;
   std::vector<ArrayValueSptr>          cols_;

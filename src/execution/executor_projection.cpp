@@ -29,6 +29,8 @@ ProjectionExecutor::ProjectionExecutor(AbstractExecutorUptr child, RecordSchemaU
   out_schema_ = std::move(proj_schema);
 }
 
+// hint: record_ = std::make_unique<Record>(out_schema_.get(), *child_record);
+
 void ProjectionExecutor::Init() { WSDB_STUDENT_TODO(l2, t1); }
 
 void ProjectionExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }

@@ -34,18 +34,30 @@ TableHandle::TableHandle(DiskManager *disk_manager, BufferPoolManager *buffer_po
   // set table id for table handle;
   schema_->SetTableId(table_id_);
   if (storage_model_ == PAX_MODEL) {
-    // TODO: calculate offsets of fields
+    field_offset_.resize(schema_->GetFieldCount());
+    // calculate offsets of fields
     WSDB_STUDENT_TODO(l1, f2);
   }
 }
 
-auto TableHandle::GetRecord(const RID &rid) -> RecordUptr { WSDB_STUDENT_TODO(l1, t3); }
+auto TableHandle::GetRecord(const RID &rid) -> RecordUptr
+{
+  auto nullmap = std::make_unique<char[]>(tab_hdr_.nullmap_size_);
+  auto data    = std::make_unique<char[]>(tab_hdr_.rec_size_);
+  WSDB_STUDENT_TODO(l1, t3);
+}
 
 auto TableHandle::GetChunk(page_id_t pid, const RecordSchema *chunk_schema) -> ChunkUptr { WSDB_STUDENT_TODO(l1, f2); }
 
 auto TableHandle::InsertRecord(const Record &record) -> RID { WSDB_STUDENT_TODO(l1, t3); }
 
-void TableHandle::InsertRecord(const RID &rid, const Record &record) { WSDB_STUDENT_TODO(l1, t3); }
+void TableHandle::InsertRecord(const RID &rid, const Record &record)
+{
+  if (rid.PageID() == INVALID_PAGE_ID) {
+    WSDB_THROW(WSDB_PAGE_MISS, fmt::format("Page: {}", rid.PageID()));
+  }
+  WSDB_STUDENT_TODO(l1, t3);
+}
 
 void TableHandle::DeleteRecord(const RID &rid) { WSDB_STUDENT_TODO(l1, t3); }
 

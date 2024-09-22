@@ -25,7 +25,12 @@ namespace wsdb {
 
 SeqScanExecutor::SeqScanExecutor(TableHandle *tab) : AbstractExecutor(Basic), tab_(tab) {}
 
-void SeqScanExecutor::Init() { WSDB_STUDENT_TODO(l2, t1); }
+void SeqScanExecutor::Init()
+{
+  rid_ = tab_->GetFirstRID();
+  
+  WSDB_STUDENT_TODO(l2, t1);
+}
 
 void SeqScanExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
 

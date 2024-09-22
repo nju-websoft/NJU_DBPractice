@@ -40,8 +40,17 @@ UpdateExecutor::UpdateExecutor(AbstractExecutorUptr child, TableHandle *tbl, std
 
 void UpdateExecutor::Init() { WSDB_FETAL("UpdateExecutor does not support Init"); }
 
-void UpdateExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
+void UpdateExecutor::Next()
+{
+  int count = 0;
 
-auto UpdateExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l2, t1); }
+  WSDB_STUDENT_TODO(l2, t1);
+
+  std::vector<ValueSptr> values{ValueFactory::CreateIntValue(count)};
+  record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
+  is_end_ = true;
+}
+
+auto UpdateExecutor::IsEnd() const -> bool { return is_end_; }
 
 }  // namespace wsdb

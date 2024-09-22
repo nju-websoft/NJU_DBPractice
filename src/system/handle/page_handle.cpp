@@ -82,13 +82,14 @@ void PAXPageHandle::WriteSlot(size_t slot_id, const char *null_map, const char *
   WSDB_STUDENT_TODO(l1, f2);
 }
 
-void PAXPageHandle::ReadSlot(size_t slot_id, char *null_map, char *data)
-{
-  WSDB_STUDENT_TODO(l1, f2);
-}
+void PAXPageHandle::ReadSlot(size_t slot_id, char *null_map, char *data) { WSDB_STUDENT_TODO(l1, f2); }
 
 auto PAXPageHandle::ReadChunk(const RecordSchema *chunk_schema) -> ChunkUptr
 {
+  std::vector<ArrayValueSptr> col_arrs;
+  col_arrs.reserve(chunk_schema->GetFieldCount());
+  // read data each field and construct ArrayValue
   WSDB_STUDENT_TODO(l1, f2);
+  return std::make_unique<Chunk>(chunk_schema, std::move(col_arrs));
 }
 }  // namespace wsdb

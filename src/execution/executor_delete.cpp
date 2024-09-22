@@ -32,7 +32,16 @@ DeleteExecutor::DeleteExecutor(AbstractExecutorUptr child, TableHandle *tbl, std
 }
 void DeleteExecutor::Init() { WSDB_FETAL("DeleteExecutor does not support Init"); }
 
-void DeleteExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
+void DeleteExecutor::Next()
+{
+  int count = 0;
 
-auto DeleteExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l2, t1); }
+  WSDB_STUDENT_TODO(l2, t1);
+
+  std::vector<ValueSptr> values{ValueFactory::CreateIntValue(count)};
+  record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
+  is_end_ = true;
+}
+
+auto DeleteExecutor::IsEnd() const -> bool { return is_end_; }
 }  // namespace wsdb

@@ -42,6 +42,7 @@ void UpdateExecutor::Init() { WSDB_FETAL("UpdateExecutor does not support Init")
 
 void UpdateExecutor::Next()
 {
+  // number of updated records
   int count = 0;
 
   WSDB_STUDENT_TODO(l2, t1);

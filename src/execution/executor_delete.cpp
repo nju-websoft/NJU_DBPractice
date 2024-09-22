@@ -34,6 +34,7 @@ void DeleteExecutor::Init() { WSDB_FETAL("DeleteExecutor does not support Init")
 
 void DeleteExecutor::Next()
 {
+  // number of deleted records
   int count = 0;
 
   WSDB_STUDENT_TODO(l2, t1);

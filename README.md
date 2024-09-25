@@ -15,8 +15,9 @@ Six Labs are included in this repository, and the details of each lab are as fol
 * Lab 5 (future): Concurrency, implement SS2PL concurrency control and deadlock detection.
 * Lab 6 (future): Recovery, implement log manager and recovery manager to support WAL/ARIES recovery algorithm.
 
-The project referenced [BusTub](https://github.com/cmu-db/bustub), [Rucbase](https://github.com/ruc-deke/rucbase-lab)
-,and[MiniOB](https://github.com/oceanbase/miniob). Thanks for their great work!
+The project is mostly inspired by [Rucbase](https://github.com/ruc-deke/rucbase-lab)
+, and some components follows the design of
+ [BusTub](https://github.com/cmu-db/bustub),  [MiniOB](https://github.com/oceanbase/miniob). Thanks for their great work!
 
 ## System requirements
 

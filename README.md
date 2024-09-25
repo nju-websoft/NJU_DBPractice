@@ -16,7 +16,7 @@ Six Labs are included in this repository, and the details of each lab are as fol
 * Lab 6 (future): Recovery, implement log manager and recovery manager to support WAL/ARIES recovery algorithm.
 
 The project is mostly inspired by [Rucbase](https://github.com/ruc-deke/rucbase-lab)
-, and some components follows the design of
+, and some components follow the design of
  [BusTub](https://github.com/cmu-db/bustub),  [MiniOB](https://github.com/oceanbase/miniob). Thanks for their great work!
 
 ## System requirements

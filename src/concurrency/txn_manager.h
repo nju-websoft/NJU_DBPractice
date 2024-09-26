@@ -49,10 +49,17 @@ public:
 
   [[nodiscard]] auto GetTxnId() const -> txn_id_t { return txn_id_; }
 
+  [[nodiscard]] auto GetState() const -> TxnState { return state_; }
+
+  void SetState(TxnState state) { state_ = state; }
+
+  [[nodiscard]] auto IsExplicit() const -> bool { return is_explcit_; }
+
 private:
   txn_id_t txn_id_{INVALID_TXN_ID};
   TxnState state_{TxnState::INVALID};
-  bool     is_explcit_{false};
+  // whether the transaction is explicit, i.e. started by begin command.
+  bool is_explcit_{false};
 };
 
 class TxnManager

@@ -218,6 +218,8 @@ private:
       Receive();
       if (pkg_.type_ == net::NET_PKG_OK) {
         break;
+      } else if (pkg_.type_ == net::NET_PKG_RAW_STRING) {
+        output_ << std::string(pkg_.buf_, pkg_.len_) << std::endl;
       } else if (pkg_.type_ == net::NET_PKG_ERROR) {
         // show the error on the screen
         output_ << std::string(pkg_.buf_, pkg_.len_) << std::endl;

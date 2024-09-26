@@ -17,4 +17,4 @@ set(SOURCES
 )
 
 add_library(execution SHARED ${SOURCES})
-target_link_libraries(execution server_common system_handle expr server_net)
+target_link_libraries(execution system_handle expr server_net)

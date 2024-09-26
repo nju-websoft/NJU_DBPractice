@@ -20,6 +20,7 @@
 //
 
 #include "txn_manager.h"
+#include "../common/error.h"
 
 namespace wsdb {
 

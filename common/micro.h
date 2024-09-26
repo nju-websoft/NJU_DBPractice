@@ -46,4 +46,20 @@
 
 #define WSDB_LOG(msg) std::cout << fmt::format("\033[32mLOG <{}::{}>: {}\033[0m\n", __func__, __LINE__, msg)
 
+#define DECLARE_ENUM(EnumName, ...) \
+  enum EnumName                                    \
+  {                                                \
+    ENUM_ENTITIES                                  \
+  };
+
+// Helper macro to generate case statements
+#define ENUM_TO_STRING_BODY(EnumName, ...)                   \
+  inline const char *EnumName##ToString(EnumName value) \
+  {                                                     \
+    switch (value) {                                    \
+      ENUM_ENTITIES                                     \
+      default: return "UNKNOWN";                        \
+    }                                                   \
+  }
+
 #endif  // WSDB_MICRO_H

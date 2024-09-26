@@ -83,7 +83,11 @@ public:
     std::string str;
     for (const auto &rtfield : fields_) {
       auto &field = rtfield.field_;
-      str += fmt::format("{}:{}({}), ", field.field_name_, static_cast<int>(field.field_type_), field.field_size_);
+      str += fmt::format("{}:{}({}), ", field.field_name_, FieldTypeToString(field.field_type_), field.field_size_);
+    }
+    if (!str.empty()) {
+      str.pop_back();
+      str.pop_back();
     }
     return str;
   }
@@ -200,8 +204,8 @@ public:
   auto GetColCount() -> size_t;
 
 private:
-  const RecordSchema *schema_;
-  std::vector<ArrayValueSptr>          cols_;
+  const RecordSchema         *schema_;
+  std::vector<ArrayValueSptr> cols_;
 };
 
 }  // namespace wsdb

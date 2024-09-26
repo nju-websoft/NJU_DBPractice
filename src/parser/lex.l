@@ -55,6 +55,7 @@ single_op ";"|"("|")"|","|"*"|"="|">"|"<"|"."
 {white_space} { /* ignore white space */ }
 {new_line} { /* ignore new line */ }
     /* keywords */
+"EXPLAIN" { return EXPLAIN; }
 "SHOW" { return SHOW; }
 "BEGIN" { return TXN_BEGIN; }
 "COMMIT" { return TXN_COMMIT; }

@@ -52,6 +52,13 @@ struct TreeNode
 struct Help : public TreeNode
 {};
 
+struct Explain : public TreeNode
+{
+  std::shared_ptr<TreeNode> stmt;
+
+  explicit Explain(std::shared_ptr<TreeNode> stmt_) : stmt(std::move(stmt_)) {}
+};
+
 struct ShowTables : public TreeNode
 {};
 

@@ -6,7 +6,6 @@ add_library(system_handle SHARED
         database_handle.cpp
 )
 target_link_libraries(system_handle
-        server_common
         storage_disk
         storage_buffer
         storage_index

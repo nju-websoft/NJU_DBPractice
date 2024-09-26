@@ -83,10 +83,7 @@ void SystemManager::CreateDatabase(const std::string &db_name)
   DiskManager::CreateFile(FILE_NAME(db_name, db_name, DB_SUFFIX));
 }
 
-void SystemManager::DropDatabase(const std::string &db_name)
-{
-  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
-}
+void SystemManager::DropDatabase(const std::string &db_name) { WSDB_THROW(WSDB_NOT_IMPLEMENTED, ""); }
 
 void SystemManager::Recover()
 {
@@ -171,33 +168,29 @@ void SystemManager::ClientHandler(int client_fd)
       txn_manager_->SetTransaction(&txn);
       auto gm_tree = parser_->Parse(sql);
       auto plan    = planner_->PlanAST(gm_tree, context.db_);
-      if (plan != nullptr) {
-        if (!DoDBPlan(plan, &context)) {
-          /// plan is not a db plan
-          plan           = optimizer_->Optimize(plan, context.db_);
-          auto exec_tree = executor_->Translate(plan, context.db_);
-          executor_->Execute(exec_tree, &context);
-        } else {
-          net_controller_->SendOK(client_fd);
-        }
-      } else {
+      if (plan == nullptr || DoDBPlan(plan, &context) || DoExplainPlan(plan, &context)) {
         net_controller_->SendOK(client_fd);
+      } else {
+        /// plan is not a db plan
+        plan           = optimizer_->Optimize(plan, context.db_);
+        auto exec_tree = executor_->Translate(plan, context.db_);
+        executor_->Execute(exec_tree, &context);
+      }
+      // commit transaction if this is a single sql statement
+      if (!txn.IsExplicit()) {
+        txn_manager_->Commit(txn.GetTxnId());
       }
     } catch (WSDBException_ &e) {
       if (e.type_ == WSDB_CLIENT_DOWN) {
         WSDB_LOG(fmt::format("Client {} disconnected", client_fd));
         break;
       } else if (e.type_ == WSDB_TXN_ABORTED) {
-        // TODO: rollback the transaction, txn_manager_->Abort(txn_id, log_manager_);
+        txn_manager_->Abort(txn.GetTxnId());
       } else {
         std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
         net_controller_->SendError(client_fd, e.short_what());
       }
     }
-    // TODO: commit transaction if this is a single sql statement
-    //    if (txn.is_txn_mode_) {
-    //      txn_manager_->Commit(&txn, log_manager_);
-    //    }
   }  // end of client while loop
   net_controller_->Remove(client_fd);
   if (context.db_ != nullptr) {
@@ -227,6 +220,19 @@ bool SystemManager::DoDBPlan(const std::shared_ptr<AbstractPlan> &plan, Context 
         ctx->db_->Open();
       }
     }
+    return true;
+  }
+  return false;
+}
+
+bool SystemManager::DoExplainPlan(const std::shared_ptr<AbstractPlan> &plan, Context *ctx)
+{
+  if (const auto exp = std::dynamic_pointer_cast<ExplainPlan>(plan)) {
+    auto logical_str   = fmt::format("---\nLogical Plan:\n{}", exp->logical_plan_->ToString(0));
+    auto physical_plan = optimizer_->Optimize(exp->logical_plan_, ctx->db_);
+    auto physical_str  = fmt::format("---\nPhysical Plan:\n{}", physical_plan->ToString(0));
+    net_controller_->SendRawString(ctx->client_fd_, logical_str);
+    net_controller_->SendRawString(ctx->client_fd_, physical_str);
     return true;
   }
   return false;

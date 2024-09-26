@@ -51,6 +51,8 @@ public:
 
   void SendOK(int fd);
 
+  void SendRawString(int fd, const std::string &str);
+
   void FlushSend(int fd);
 
   void Remove(int fd);

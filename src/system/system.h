@@ -57,6 +57,8 @@ public:
 private:
   bool DoDBPlan(const std::shared_ptr<AbstractPlan> &plan, Context *ctx);
 
+  bool DoExplainPlan(const std::shared_ptr<AbstractPlan> &plan, Context *ctx);
+
   void SIGINTHandler(int sig);
 
   void ClientHandler(int client_fd);
@@ -85,7 +87,7 @@ private:
   std::unique_ptr<TxnManager>        txn_manager_;
   std::unique_ptr<NetController>     net_controller_;
 
-  bool is_running_{false};  // indicates whether the system is running
+  bool                  is_running_{false};  // indicates whether the system is running
 
   std::unordered_map<std::string, std::unique_ptr<DatabaseHandle>> databases_;
 };

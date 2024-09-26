@@ -38,7 +38,8 @@ enum NetPkgType
   NET_PKG_REC_BODY,
   NET_PKG_REC_END,
   NET_PKG_ERROR,
-  NET_PKG_OK
+  NET_PKG_OK,
+  NET_PKG_RAW_STRING
 };
 
 struct NetPkg

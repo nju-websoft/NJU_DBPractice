@@ -35,6 +35,8 @@ std::shared_ptr<AbstractPlan> Planner::PlanAST(const std::shared_ptr<ast::TreeNo
     return std::make_shared<CreateDBPlan>(cdb->db_name_);
   } else if (const auto odb = std::dynamic_pointer_cast<ast::OpenDatabase>(ast)) {
     return std::make_shared<OpenDBPlan>(odb->db_name_);
+  } else if (const auto exp = std::dynamic_pointer_cast<ast::Explain>(ast)) {
+    return std::make_shared<ExplainPlan>(std::move(PlanAST(exp->stmt, db)));
   }
   if (db == nullptr) {
     WSDB_THROW(WSDB_DB_NOT_OPEN, "");
@@ -370,8 +372,8 @@ void Planner::CheckFieldTabName(
     auto checkField = [&](TableHandle *tab, const std::string &field) -> void {
       if (tab->HasField(field)) {
         if (!tab_name.empty()) {
-          WSDB_THROW(
-              WSDB_GRAMMAR_ERROR, fmt::format("Ambiguous field:{}, tab1:{}, tab2:{}", field, tab_name, tab->GetTableName()));
+          WSDB_THROW(WSDB_GRAMMAR_ERROR,
+              fmt::format("Ambiguous field:{}, tab1:{}, tab2:{}", field, tab_name, tab->GetTableName()));
         }
         tab_name = tab->GetTableName();
       }

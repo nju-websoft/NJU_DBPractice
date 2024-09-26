@@ -27,6 +27,7 @@
 #include <string>
 #include <iostream>
 #include <utility>
+#include "micro.h"
 
 #include "fmt/format.h"
 
@@ -37,8 +38,8 @@ namespace wsdb {
 
 /**
  * @brief error definitions for WSDB
- * @a WSDB_EXCEPTION_EMPTY: unreachable abstract class method, undetermined exception, etc.
- * @a WSDB_FILE_EXISTS: file already exists, used file creation check
+ * @a WSDB_EXCEPTION_EMPTY: unreachable abstract class method, undetermined method, etc.
+ * @a WSDB_FILE_EXISTS: file already exists, used for file creation check
  * @a WSDB_FILE_NOT_EXISTS: file not exists, used for file deletion check
  * @a WSDB_FILE_NOT_OPEN: file not open, disk manager needs to open file before read/write
  * @a WSDB_FILE_DELETE_ERROR: unix error when failing to unlink file
@@ -66,53 +67,43 @@ namespace wsdb {
  * @a WSDB_UNEXPECTED_NULL: unexpected null value after adequate check
  * @a WSDB_CLIENT_DOWN: client down, should close the client connection
  */
-#define WSDB_ERRORS                  \
-  WSDB_ERROR(WSDB_EXCEPTION_EMPTY)   \
-  WSDB_ERROR(WSDB_FILE_EXISTS)       \
-  WSDB_ERROR(WSDB_FILE_NOT_EXISTS)   \
-  WSDB_ERROR(WSDB_FILE_NOT_OPEN)     \
-  WSDB_ERROR(WSDB_FILE_DELETE_ERROR) \
-  WSDB_ERROR(WSDB_FILE_REOPEN)       \
-  WSDB_ERROR(WSDB_NOT_IMPLEMENTED)   \
-  WSDB_ERROR(WSDB_NO_FREE_FRAME)     \
-  WSDB_ERROR(WSDB_RECORD_EXISTS)     \
-  WSDB_ERROR(WSDB_RECORD_MISS)       \
-  WSDB_ERROR(WSDB_RECLEN_ERROR)      \
-  WSDB_ERROR(WSDB_PAGE_MISS)         \
-  WSDB_ERROR(WSDB_FILE_READ_ERROR)   \
-  WSDB_ERROR(WSDB_FILE_WRITE_ERROR)  \
-  WSDB_ERROR(WSDB_INVALID_SQL)       \
-  WSDB_ERROR(WSDB_TXN_ABORTED)       \
-  WSDB_ERROR(WSDB_DB_EXISTS)         \
-  WSDB_ERROR(WSDB_DB_MISS)           \
-  WSDB_ERROR(WSDB_DB_NOT_OPEN)       \
-  WSDB_ERROR(WSDB_TABLE_MISS)        \
-  WSDB_ERROR(WSDB_TABLE_EXIST)       \
-  WSDB_ERROR(WSDB_GRAMMAR_ERROR)     \
-  WSDB_ERROR(WSDB_FIELD_MISS)        \
-  WSDB_ERROR(WSDB_STRING_OVERFLOW)   \
-  WSDB_ERROR(WSDB_TYPE_MISSMATCH)    \
-  WSDB_ERROR(WSDB_UNSUPPORTED_OP)    \
-  WSDB_ERROR(WSDB_UNEXPECTED_NULL)   \
-  WSDB_ERROR(WSDB_CLIENT_DOWN)
-
-enum WSDBExceptionType
-{
-#define WSDB_ERROR(type) type,
-  WSDB_ERRORS
-#undef WSDB_ERROR
-};
-
-static std::string WSDBExceptionTypeToString(WSDBExceptionType type)
-{
-#define WSDB_ERROR(type) \
-  case type: return #type;
-  switch (type) {
-    WSDB_ERRORS
-  }
-#undef WSDB_ERROR
-  return {};
-}
+#define ENUM_ENTITIES          \
+  ENUM(WSDB_EXCEPTION_EMPTY)   \
+  ENUM(WSDB_FILE_EXISTS)       \
+  ENUM(WSDB_FILE_NOT_EXISTS)   \
+  ENUM(WSDB_FILE_NOT_OPEN)     \
+  ENUM(WSDB_FILE_DELETE_ERROR) \
+  ENUM(WSDB_FILE_REOPEN)       \
+  ENUM(WSDB_NOT_IMPLEMENTED)   \
+  ENUM(WSDB_NO_FREE_FRAME)     \
+  ENUM(WSDB_RECORD_EXISTS)     \
+  ENUM(WSDB_RECORD_MISS)       \
+  ENUM(WSDB_RECLEN_ERROR)      \
+  ENUM(WSDB_PAGE_MISS)         \
+  ENUM(WSDB_FILE_READ_ERROR)   \
+  ENUM(WSDB_FILE_WRITE_ERROR)  \
+  ENUM(WSDB_INVALID_SQL)       \
+  ENUM(WSDB_TXN_ABORTED)       \
+  ENUM(WSDB_DB_EXISTS)         \
+  ENUM(WSDB_DB_MISS)           \
+  ENUM(WSDB_DB_NOT_OPEN)       \
+  ENUM(WSDB_TABLE_MISS)        \
+  ENUM(WSDB_TABLE_EXIST)       \
+  ENUM(WSDB_GRAMMAR_ERROR)     \
+  ENUM(WSDB_FIELD_MISS)        \
+  ENUM(WSDB_STRING_OVERFLOW)   \
+  ENUM(WSDB_TYPE_MISSMATCH)    \
+  ENUM(WSDB_UNSUPPORTED_OP)    \
+  ENUM(WSDB_UNEXPECTED_NULL)   \
+  ENUM(WSDB_CLIENT_DOWN)
+#define ENUM(ent) ent,
+DECLARE_ENUM(WSDBExceptionType)
+#undef ENUM
+#define ENUM(ent) \
+  case ent: return #ent;
+ENUM_TO_STRING_BODY(WSDBExceptionType)
+#undef ENUM
+#undef ENUM_ENTITIES
 
 /// usage:
 /// throw WSDBException(WSDB_FILE_EXISTS, Q(Diskmanager), Q(CreateFile), file_name)

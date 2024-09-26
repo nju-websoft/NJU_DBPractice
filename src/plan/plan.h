@@ -31,13 +31,26 @@ class AbstractPlan
 {
 public:
   virtual ~AbstractPlan() = default;
+
+  virtual auto ToString(int level) const -> std::string { WSDB_FETAL("Unimplemented ToString(level) in AbstractPlan"); }
+};
+
+class ExplainPlan : public AbstractPlan
+{
+public:
+  explicit ExplainPlan(std::shared_ptr<AbstractPlan> plan) : logical_plan_(std::move(plan)){}
+
+  std::shared_ptr<AbstractPlan> logical_plan_;
 };
 
 class CreateDBPlan : public AbstractPlan
 {
 public:
   explicit CreateDBPlan(std::string db_name) : db_name_(std::move(db_name)) {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}CreateDBPlan [{}]", std::string(level, '\t'), db_name_);
+  }
   std::string db_name_;
 };
 
@@ -45,7 +58,10 @@ class OpenDBPlan : public AbstractPlan
 {
 public:
   explicit OpenDBPlan(std::string db_name) : db_name_(std::move(db_name)) {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}OpenDBPlan [{}]", std::string(level, '\t'), db_name_);
+  }
   std::string db_name_;
 };
 
@@ -55,6 +71,11 @@ public:
   CreateTablePlan(std::string table_name, RecordSchemaUptr schema, StorageModel storage)
       : table_name_(std::move(table_name)), schema_(std::move(schema)), storage_(storage)
   {}
+
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}CreateTablePlan [{}] <{}>", std::string(level, '\t'), table_name_, schema_->ToString());
+  }
 
   std::string      table_name_;
   RecordSchemaUptr schema_;
@@ -66,6 +87,11 @@ class DropTablePlan : public AbstractPlan
 public:
   explicit DropTablePlan(std::string table_name) : table_name_(std::move(table_name)) {}
 
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}DropTablePlan [{}]", std::string(level, '\t'), table_name_);
+  }
+
   std::string table_name_;
 };
 
@@ -73,12 +99,20 @@ class DescTablePlan : public AbstractPlan
 {
 public:
   explicit DescTablePlan(std::string table_name) : table_name_(std::move(table_name)) {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}DescTablePlan [{}]", std::string(level, '\t'), table_name_);
+  }
   std::string table_name_;
 };
 
 class ShowTablesPlan : public AbstractPlan
-{};
+{
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}ShowTablesPlan", std::string(level, '\t'));
+  }
+};
 
 class InsertPlan : public AbstractPlan
 {
@@ -86,6 +120,16 @@ public:
   InsertPlan(std::string table_name, std::vector<ValueSptr> values)
       : table_name_(std::move(table_name)), values_(std::move(values))
   {}
+  auto ToString(int level) const -> std::string override
+  {
+    std::string value_str;
+    for (const auto &value : values_) {
+      value_str += value->ToString() + ", ";
+    }
+    value_str.back() = ')';
+    value_str        = "(" + value_str;
+    return fmt::format("{}InsertPlan [{}] <{}>", std::string(level, '\t'), table_name_, value_str);
+  }
   std::string            table_name_;
   std::vector<ValueSptr> values_;
 };
@@ -97,7 +141,15 @@ public:
       std::shared_ptr<AbstractPlan> child, std::string table_name, std::vector<std::pair<RTField, ValueSptr>> updates)
       : child_(std::move(child)), table_name_(std::move(table_name)), updates_(std::move(updates))
   {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    std::string value_str;
+    for (const auto &update : updates_) {
+      value_str += update.first.field_.field_name_ + " = " + update.second->ToString() + ", ";
+    }
+    return fmt::format(
+        "{}UpdatePlan [{}] <{}>\n{}", std::string(level, '\t'), table_name_, value_str, child_->ToString(level + 1));
+  }
   std::shared_ptr<AbstractPlan>              child_;
   std::string                                table_name_;
   std::vector<std::pair<RTField, ValueSptr>> updates_;
@@ -109,7 +161,10 @@ public:
   DeletePlan(std::shared_ptr<AbstractPlan> child, std::string table_name)
       : child_(std::move(child)), table_name_(std::move(table_name))
   {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}DeletePlan [{}]\n{}", std::string(level, '\t'), table_name_, child_->ToString(level + 1));
+  }
   std::shared_ptr<AbstractPlan> child_;
   std::string                   table_name_;
 };
@@ -120,7 +175,17 @@ public:
   FilterPlan(std::shared_ptr<AbstractPlan> child, ConditionVec conds)
       : child_(std::move(child)), conds_(std::move(conds))
   {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    std::string cond_str;
+    if (!conds_.empty()) {
+      cond_str += conds_.front().ToString();
+      for (size_t i = 1; i < conds_.size(); i++) {
+        cond_str += " AND " + conds_[i].ToString();
+      }
+    }
+    return fmt::format("{}FilterPlan <{}>\n{}", std::string(level, '\t'), cond_str, child_->ToString(level + 1));
+  }
   std::shared_ptr<AbstractPlan> child_;
   ConditionVec                  conds_;
 };
@@ -129,7 +194,10 @@ class ScanPlan : public AbstractPlan
 {
 public:
   explicit ScanPlan(std::string table_name) : table_name_(std::move(table_name)) {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}ScanPlan [{}]", std::string(level, '\t'), table_name_);
+  }
   std::string table_name_;
 };
 
@@ -139,7 +207,17 @@ public:
   IdxScanPlan(std::string table_name, idx_id_t idxId, ConditionVec conds, int matched_fields)
       : table_name_(std::move(table_name)), idx_id_(idxId), conds_(std::move(conds)), matched_fields_(matched_fields)
   {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    std::string cond_str;
+    if (!conds_.empty()) {
+      cond_str += conds_.front().ToString();
+      for (size_t i = 1; i < conds_.size(); i++) {
+        cond_str += " AND " + conds_[i].ToString();
+      }
+    }
+    return fmt::format("{}IdxScanPlan [{}] <{}>", std::string(level, '\t'), table_name_, cond_str);
+  }
   std::string  table_name_;
   idx_id_t     idx_id_;
   ConditionVec conds_;
@@ -152,7 +230,11 @@ public:
   SortPlan(std::shared_ptr<AbstractPlan> child, RecordSchemaUptr key_schema, bool is_desc)
       : child_(std::move(child)), key_schema_(std::move(key_schema)), is_desc_(is_desc)
   {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format(
+        "{}SortPlan <{}>\n{}", std::string(level, '\t'), key_schema_->ToString(), child_->ToString(level + 1));
+  }
   std::shared_ptr<AbstractPlan> child_;
   RecordSchemaUptr              key_schema_;
   bool                          is_desc_;
@@ -164,7 +246,11 @@ public:
   ProjectPlan(std::shared_ptr<AbstractPlan> child, const std::vector<RTField> &schema)
       : child_(std::move(child)), schema_(std::make_unique<RecordSchema>(schema))
   {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format(
+        "{}ProjectPlan <{}>\n{}", std::string(level, '\t'), schema_->ToString(), child_->ToString(level + 1));
+  }
   std::shared_ptr<AbstractPlan> child_;
   RecordSchemaUptr              schema_;
 };
@@ -176,7 +262,23 @@ public:
       JoinStrategy strategy)
       : left_(std::move(left)), right_(std::move(right)), conds_(std::move(conds)), type_(type), strategy_(strategy)
   {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    std::string cond_str;
+    if (!conds_.empty()) {
+      cond_str += conds_.front().ToString();
+      for (size_t i = 1; i < conds_.size(); i++) {
+        cond_str += " AND " + conds_[i].ToString();
+      }
+    }
+    return fmt::format("{}JoinPlan <conds: {}, type: {}, strategy: {}>\n{}\n{}",
+        std::string(level, '\t'),
+        cond_str,
+        JoinTypeToString(type_),
+        JoinStrategyToString(strategy_),
+        left_->ToString(level + 1),
+        right_->ToString(level + 1));
+  }
   std::shared_ptr<AbstractPlan> left_;
   std::shared_ptr<AbstractPlan> right_;
   ConditionVec                  conds_;
@@ -193,6 +295,34 @@ public:
   AggregatePlan(std::shared_ptr<AbstractPlan> child, std::vector<RTField> group_fields, std::vector<RTField> agg_fields)
       : child_(std::move(child)), group_fields_(std::move(group_fields)), agg_fields(std::move(agg_fields))
   {}
+  auto ToString(int level) const -> std::string override
+  {
+    std::string group_fields_str = "group fields: ";
+    std::string agg_fields_str   = "agg fields: ";
+    for (const auto &field : group_fields_) {
+      group_fields_str += fmt::format("{}, ", field.field_.field_name_);
+    }
+    if (group_fields_.empty())
+      group_fields_str += "No group fields";
+    else {
+      group_fields_str.pop_back();
+      group_fields_str.pop_back();
+    }
+    for (const auto &field : agg_fields) {
+      agg_fields_str += fmt::format("{}({}), ", field.field_.field_name_, AggTypeToString(field.agg_type_));
+    }
+    if (agg_fields.empty())
+      agg_fields_str += "No agg fields";
+    else {
+      agg_fields_str.pop_back();
+      agg_fields_str.pop_back();
+    }
+    return fmt::format("{}AggregatePlan <{}> <{}>\n{}",
+        std::string(level, '\t'),
+        group_fields_str,
+        agg_fields_str,
+        child_->ToString(level + 1));
+  }
   std::shared_ptr<AbstractPlan> child_;
   std::vector<RTField>          group_fields_;
   std::vector<RTField>          agg_fields;
@@ -202,7 +332,13 @@ class LimitPlan : public AbstractPlan
 {
 public:
   LimitPlan(std::shared_ptr<AbstractPlan> child, size_t limit) : child_(std::move(child)), limit_(limit) {}
-
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}LimitPlan <{}>\n{}",
+        std::string(level, '\t'),
+        fmt::format("limit to {}", limit_),
+        child_->ToString(level + 1));
+  }
   std::shared_ptr<AbstractPlan> child_;
   size_t                        limit_;
 };

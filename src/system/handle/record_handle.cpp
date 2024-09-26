@@ -208,6 +208,7 @@ Record::Record(const RecordSchema *schema, const wsdb::Record &rec1, const wsdb:
   data_    = new char[schema_->GetRecordLength()];
   nullmap_ = new char[BITMAP_SIZE(schema_->GetFieldCount())];
   memset(data_, 0, schema_->GetRecordLength());
+  memset(nullmap_, 0, BITMAP_SIZE(schema_->GetFieldCount()));
   memcpy(data_, rec1.data_, rec1.schema_->GetRecordLength());
   memcpy(data_ + rec1.schema_->GetRecordLength(), rec2.data_, rec2.schema_->GetRecordLength());
   // null map should not simply be copied, but should be re-calculated

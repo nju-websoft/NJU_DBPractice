@@ -163,6 +163,15 @@ void NetController::SendOK(int fd)
   FlushSend(fd);
 }
 
+void NetController::SendRawString(int fd, const std::string &str)
+{
+  auto &pkg_ = client_buffer_[fd];
+  pkg_.type_ = net::NET_PKG_RAW_STRING;
+  pkg_.len_  = str.size();
+  memcpy(pkg_.buf_, str.c_str(), pkg_.len_);
+  FlushSend(fd);
+}
+
 void NetController::FlushSend(int fd)
 {
   auto err = net::WriteNetPkg(fd, client_buffer_[fd]);

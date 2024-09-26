@@ -26,6 +26,8 @@
 #include "system/handle/record_handle.h"
 #include "common/condition.h"
 
+#define TAB_STR(level) std::string(2 * level, ' ')
+
 namespace wsdb {
 class AbstractPlan
 {
@@ -38,7 +40,7 @@ public:
 class ExplainPlan : public AbstractPlan
 {
 public:
-  explicit ExplainPlan(std::shared_ptr<AbstractPlan> plan) : logical_plan_(std::move(plan)){}
+  explicit ExplainPlan(std::shared_ptr<AbstractPlan> plan) : logical_plan_(std::move(plan)) {}
 
   std::shared_ptr<AbstractPlan> logical_plan_;
 };
@@ -49,7 +51,7 @@ public:
   explicit CreateDBPlan(std::string db_name) : db_name_(std::move(db_name)) {}
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format("{}CreateDBPlan [{}]", std::string(level, '\t'), db_name_);
+    return fmt::format("{}CreateDBPlan [{}]", TAB_STR(level), db_name_);
   }
   std::string db_name_;
 };
@@ -60,7 +62,7 @@ public:
   explicit OpenDBPlan(std::string db_name) : db_name_(std::move(db_name)) {}
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format("{}OpenDBPlan [{}]", std::string(level, '\t'), db_name_);
+    return fmt::format("{}OpenDBPlan [{}]", TAB_STR(level), db_name_);
   }
   std::string db_name_;
 };
@@ -74,7 +76,7 @@ public:
 
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format("{}CreateTablePlan [{}] <{}>", std::string(level, '\t'), table_name_, schema_->ToString());
+    return fmt::format("{}CreateTablePlan [{}] <{}>", TAB_STR(level), table_name_, schema_->ToString());
   }
 
   std::string      table_name_;
@@ -89,7 +91,7 @@ public:
 
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format("{}DropTablePlan [{}]", std::string(level, '\t'), table_name_);
+    return fmt::format("{}DropTablePlan [{}]", TAB_STR(level), table_name_);
   }
 
   std::string table_name_;
@@ -101,17 +103,14 @@ public:
   explicit DescTablePlan(std::string table_name) : table_name_(std::move(table_name)) {}
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format("{}DescTablePlan [{}]", std::string(level, '\t'), table_name_);
+    return fmt::format("{}DescTablePlan [{}]", TAB_STR(level), table_name_);
   }
   std::string table_name_;
 };
 
 class ShowTablesPlan : public AbstractPlan
 {
-  auto ToString(int level) const -> std::string override
-  {
-    return fmt::format("{}ShowTablesPlan", std::string(level, '\t'));
-  }
+  auto ToString(int level) const -> std::string override { return fmt::format("{}ShowTablesPlan", TAB_STR(level)); }
 };
 
 class InsertPlan : public AbstractPlan
@@ -128,7 +127,7 @@ public:
     }
     value_str.back() = ')';
     value_str        = "(" + value_str;
-    return fmt::format("{}InsertPlan [{}] <{}>", std::string(level, '\t'), table_name_, value_str);
+    return fmt::format("{}InsertPlan [{}] <{}>", TAB_STR(level), table_name_, value_str);
   }
   std::string            table_name_;
   std::vector<ValueSptr> values_;
@@ -145,10 +144,10 @@ public:
   {
     std::string value_str;
     for (const auto &update : updates_) {
-      value_str += update.first.field_.field_name_ + " = " + update.second->ToString() + ", ";
+      value_str += update.first.ToString() + " = " + update.second->ToString() + ", ";
     }
     return fmt::format(
-        "{}UpdatePlan [{}] <{}>\n{}", std::string(level, '\t'), table_name_, value_str, child_->ToString(level + 1));
+        "{}UpdatePlan [{}] <{}>\n{}", TAB_STR(level), table_name_, value_str, child_->ToString(level + 1));
   }
   std::shared_ptr<AbstractPlan>              child_;
   std::string                                table_name_;
@@ -163,7 +162,7 @@ public:
   {}
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format("{}DeletePlan [{}]\n{}", std::string(level, '\t'), table_name_, child_->ToString(level + 1));
+    return fmt::format("{}DeletePlan [{}]\n{}", TAB_STR(level), table_name_, child_->ToString(level + 1));
   }
   std::shared_ptr<AbstractPlan> child_;
   std::string                   table_name_;
@@ -184,7 +183,7 @@ public:
         cond_str += " AND " + conds_[i].ToString();
       }
     }
-    return fmt::format("{}FilterPlan <{}>\n{}", std::string(level, '\t'), cond_str, child_->ToString(level + 1));
+    return fmt::format("{}FilterPlan <{}>\n{}", TAB_STR(level), cond_str, child_->ToString(level + 1));
   }
   std::shared_ptr<AbstractPlan> child_;
   ConditionVec                  conds_;
@@ -196,7 +195,7 @@ public:
   explicit ScanPlan(std::string table_name) : table_name_(std::move(table_name)) {}
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format("{}ScanPlan [{}]", std::string(level, '\t'), table_name_);
+    return fmt::format("{}ScanPlan [{}]", TAB_STR(level), table_name_);
   }
   std::string table_name_;
 };
@@ -216,7 +215,7 @@ public:
         cond_str += " AND " + conds_[i].ToString();
       }
     }
-    return fmt::format("{}IdxScanPlan [{}] <{}>", std::string(level, '\t'), table_name_, cond_str);
+    return fmt::format("{}IdxScanPlan [{}] <{}>", TAB_STR(level), table_name_, cond_str);
   }
   std::string  table_name_;
   idx_id_t     idx_id_;
@@ -232,8 +231,7 @@ public:
   {}
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format(
-        "{}SortPlan <{}>\n{}", std::string(level, '\t'), key_schema_->ToString(), child_->ToString(level + 1));
+    return fmt::format("{}SortPlan <{}>\n{}", TAB_STR(level), key_schema_->ToString(), child_->ToString(level + 1));
   }
   std::shared_ptr<AbstractPlan> child_;
   RecordSchemaUptr              key_schema_;
@@ -248,8 +246,7 @@ public:
   {}
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format(
-        "{}ProjectPlan <{}>\n{}", std::string(level, '\t'), schema_->ToString(), child_->ToString(level + 1));
+    return fmt::format("{}ProjectPlan <{}>\n{}", TAB_STR(level), schema_->ToString(), child_->ToString(level + 1));
   }
   std::shared_ptr<AbstractPlan> child_;
   RecordSchemaUptr              schema_;
@@ -272,7 +269,7 @@ public:
       }
     }
     return fmt::format("{}JoinPlan <conds: {}, type: {}, strategy: {}>\n{}\n{}",
-        std::string(level, '\t'),
+        TAB_STR(level),
         cond_str,
         JoinTypeToString(type_),
         JoinStrategyToString(strategy_),
@@ -300,7 +297,7 @@ public:
     std::string group_fields_str = "group fields: ";
     std::string agg_fields_str   = "agg fields: ";
     for (const auto &field : group_fields_) {
-      group_fields_str += fmt::format("{}, ", field.field_.field_name_);
+      group_fields_str += field.ToString() + ", ";
     }
     if (group_fields_.empty())
       group_fields_str += "No group fields";
@@ -309,7 +306,7 @@ public:
       group_fields_str.pop_back();
     }
     for (const auto &field : agg_fields) {
-      agg_fields_str += fmt::format("{}({}), ", field.field_.field_name_, AggTypeToString(field.agg_type_));
+      agg_fields_str += field.ToString() + ", ";
     }
     if (agg_fields.empty())
       agg_fields_str += "No agg fields";
@@ -317,11 +314,8 @@ public:
       agg_fields_str.pop_back();
       agg_fields_str.pop_back();
     }
-    return fmt::format("{}AggregatePlan <{}> <{}>\n{}",
-        std::string(level, '\t'),
-        group_fields_str,
-        agg_fields_str,
-        child_->ToString(level + 1));
+    return fmt::format(
+        "{}AggregatePlan <{}> <{}>\n{}", TAB_STR(level), group_fields_str, agg_fields_str, child_->ToString(level + 1));
   }
   std::shared_ptr<AbstractPlan> child_;
   std::vector<RTField>          group_fields_;
@@ -334,10 +328,8 @@ public:
   LimitPlan(std::shared_ptr<AbstractPlan> child, size_t limit) : child_(std::move(child)), limit_(limit) {}
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format("{}LimitPlan <{}>\n{}",
-        std::string(level, '\t'),
-        fmt::format("limit to {}", limit_),
-        child_->ToString(level + 1));
+    return fmt::format(
+        "{}LimitPlan <{}>\n{}", TAB_STR(level), fmt::format("limit to {}", limit_), child_->ToString(level + 1));
   }
   std::shared_ptr<AbstractPlan> child_;
   size_t                        limit_;

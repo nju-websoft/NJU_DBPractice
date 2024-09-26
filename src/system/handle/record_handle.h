@@ -82,8 +82,7 @@ public:
   {
     std::string str;
     for (const auto &rtfield : fields_) {
-      auto &field = rtfield.field_;
-      str += fmt::format("{}:{}({}), ", field.field_name_, FieldTypeToString(field.field_type_), field.field_size_);
+      str += rtfield.ToString() + ", ";
     }
     if (!str.empty()) {
       str.pop_back();

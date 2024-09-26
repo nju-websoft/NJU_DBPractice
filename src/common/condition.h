@@ -101,10 +101,10 @@ public:
   auto ToString() const -> std::string
   {
     std::string str;
-    str += fmt::format("{} {} ", l_col_.field_.field_name_, CompOpToString(op_));
+    str += fmt::format("{} {} ", l_col_.ToString(), CompOpToString(op_));
     switch (rval_type_) {
       case kValue: str += r_val_->ToString(); break;
-      case kColumn: str += r_col_.field_.field_name_; break;
+      case kColumn: str += r_col_.ToString(); break;
       case kSubquery: str += fmt::format("subquery {}", subquery_id_); break;
       default: break;
     }

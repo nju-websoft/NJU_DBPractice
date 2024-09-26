@@ -45,6 +45,16 @@ struct FieldSchema
     return table_id_ == rhs.table_id_ && field_name_ == rhs.field_name_ && field_size_ == rhs.field_size_ &&
            field_type_ == rhs.field_type_ && nullable_ == rhs.nullable_;
   }
+
+  auto ToString() const -> std::string
+  {
+    return fmt::format("#{}.{}:{}({}){}",
+        table_id_ == INVALID_TABLE_ID ? "" : std::to_string(table_id_),
+        field_name_,
+        FieldTypeToString(field_type_),
+        field_size_,
+        nullable_ ? "" : "<NOT NULL>");
+  }
 };
 
 // run time field description, used to record the field information in the query and executions
@@ -59,6 +69,14 @@ struct RTField
   auto operator==(const RTField &rhs) const -> bool
   {
     return field_ == rhs.field_ && alias_ == rhs.alias_ && is_agg_ == rhs.is_agg_ && agg_type_ == rhs.agg_type_;
+  }
+
+  auto ToString() const -> std::string
+  {
+    return fmt::format("{}{}{}",
+        field_.ToString(),
+        alias_.empty() ? "" : fmt::format("\"{}\"", alias_),
+        is_agg_ ? fmt::format("[{}]", AggTypeToString(agg_type_)) : "");
   }
 };
 

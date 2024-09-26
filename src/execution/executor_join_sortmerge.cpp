@@ -43,9 +43,9 @@ void SortMergeJoinExecutor::NextInnerJoin() { WSDB_STUDENT_TODO(l3, f1); }
 
 auto SortMergeJoinExecutor::IsEndInnerJoin() const -> bool { WSDB_STUDENT_TODO(l3, f1); }
 
-void SortMergeJoinExecutor::InitOuterJoin() {}
+void SortMergeJoinExecutor::InitOuterJoin() {WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");}
 
-void SortMergeJoinExecutor::NextOuterJoin() {}
+void SortMergeJoinExecutor::NextOuterJoin() {WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");}
 
 auto SortMergeJoinExecutor::IsEndOuterJoin() const -> bool { return false; }
 }  // namespace wsdb

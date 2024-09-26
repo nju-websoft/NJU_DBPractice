@@ -47,7 +47,7 @@ WSDB_THROW(WSDB_FILE_EXISTS, fname);
 throw wsdb::WSDBException_(WSDB_FILE_EXISTS, fmt::format("{}({})", "/path to wsdb/src/storage/disk/disk_manager.cpp", 33), __func__, fname)
 ```
 其中`WSDBException()`的第一个参数是异常类型，第二个参数是可自定义的附加信息，在这里是待创建文件的地址。
-更多的辅助调试宏定义请参考`common/error.h`以及`common/micro.h`
+更多的辅助调试宏定义请参考`common/error.h`以及`common/micro.h`。我们非常建议充分使用`WSDB_ASSERT`宏来进行一些必要的断言，这能帮助你更快地发现错误。
 
 
 互斥锁是多线程编程中用于保护共享资源的同步原语。通过互斥锁，保证在同一时刻只有一个线程可以访问某个共享资源，从而防止数据竞争问题。
@@ -297,6 +297,98 @@ $ ./client -h
 
 `-h`查看所有可选参数，当指定输入文件时，客户端进入非交互模式，执行完文件中的所有SQL指令后自动退出
 
+下面通过一些SQL实例带大家熟悉WSDB的客户端操作，按照顺序输入如下内容
+
+```sql
+CREATE DATABASE test;
+OPEN DATABASE test;
+CREATE TABLE t1 (i1 INT, s1 CHAR(10));
+CREATE TABLE t2 (i2 INT, s2 CHAR(10));
+SHOW TABLES;
+```
+```sql
+wsdb> CREATE DATABASE test;
+wsdb> OPEN DATABASE test;
+wsdb> CREATE TABLE t1 (i1 INT, s1 CHAR(10));
+
++--------------+--------------+--------------+--------------+--------------+--------------+
+| Database     | Table        | FieldNum     | RecordLength | StorageModel | IndexNum     | 
+|              |              |              |              |              |              | 
++--------------+--------------+--------------+--------------+--------------+--------------+
+| test         | t1           | 2            | 14           | NARY_MODEL   | 0            | 
++--------------+--------------+--------------+--------------+--------------+--------------+
+Total tuple(s): 1
+wsdb> CREATE TABLE t2 (i2 INT, s2 CHAR(10));
+
++--------------+--------------+--------------+--------------+--------------+--------------+
+| Database     | Table        | FieldNum     | RecordLength | StorageModel | IndexNum     | 
+|              |              |              |              |              |              | 
++--------------+--------------+--------------+--------------+--------------+--------------+
+| test         | t2           | 2            | 14           | NARY_MODEL   | 0            | 
++--------------+--------------+--------------+--------------+--------------+--------------+
+Total tuple(s): 1
+wsdb> SHOW TABLES;
+
++--------------+--------------+--------------+--------------+--------------+--------------+
+| Database     | Table        | FieldNum     | RecordLength | StorageModel | IndexNum     | 
+|              |              |              |              |              |              | 
++--------------+--------------+--------------+--------------+--------------+--------------+
+| test         | t2           | 2            | 14           | NARY_MODEL   | 0            | 
++--------------+--------------+--------------+--------------+--------------+--------------+
+| test         | t1           | 2            | 14           | NARY_MODEL   | 0            | 
++--------------+--------------+--------------+--------------+--------------+--------------+
+Total tuple(s): 2
+```
+你可以看到客户端返回了表格信息，关于字段的含义随着实验的进行会逐渐明了。
+
+```sql
+DESC t1;
+```
+```sql
+wsdb> desc t1;
+
++--------------+--------------+--------------+
+| Field        | Type         | Null         | 
++--------------+--------------+--------------+
+| i1           | TYPE_INT (4) | YES          | 
+|              |              |              | 
++--------------+--------------+--------------+
+| s1           | TYPE_STRING  | YES          | 
+|              | (10)         |              | 
++--------------+--------------+--------------+
+Total tuple(s): 2
+```
+DESC 语句可以查看表的字段信息，包括字段名、字段类型和是否允许为空。
+  
+```sql
+explain SELECT i1, COUNT(t2.i2) FROM t1 OUTER JOIN t2 WHERE i1=i2 GROUP BY i1 HAVING i1 > 1 AND AVG(i2) > 5 USING SORT_MERGE_JOIN;
+```
+```sql
+wsdb> explain SELECT i1, COUNT(t2.i2) FROM t1 OUTER JOIN t2 WHERE i1=i2 GROUP BY i1 HAVING i1 > 1 AND AVG(i2) > 5 USING SORT_MERGE_JOIN;
+---
+Logical Plan:
+ProjectPlan <#6.i1:TYPE_INT(4), #7.i2:TYPE_INT(4)[COUNT]>
+  FilterPlan <#6.i1:TYPE_INT(4) > 1 AND #7.i2:TYPE_INT(4)[AVG] > 5>
+    AggregatePlan <group fields: #6.i1:TYPE_INT(4)> <agg fields: #7.i2:TYPE_INT(4)[COUNT], #7.i2:TYPE_INT(4)[AVG]>
+      JoinPlan <conds: #6.i1:TYPE_INT(4) = #7.i2:TYPE_INT(4), type: OUTER_JOIN, strategy: SORT_MERGE>
+        ScanPlan [t1]
+        ScanPlan [t2]
+---
+Physical Plan:
+ProjectPlan <#6.i1:TYPE_INT(4), #7.i2:TYPE_INT(4)[COUNT]>
+  FilterPlan <#6.i1:TYPE_INT(4) > 1 AND #7.i2:TYPE_INT(4)[AVG] > 5>
+    AggregatePlan <group fields: #6.i1:TYPE_INT(4)> <agg fields: #7.i2:TYPE_INT(4)[COUNT], #7.i2:TYPE_INT(4)[AVG]>
+      JoinPlan <conds: #6.i1:TYPE_INT(4) = #7.i2:TYPE_INT(4), type: OUTER_JOIN, strategy: SORT_MERGE>
+        SortPlan <#6.i1:TYPE_INT(4)>
+          ScanPlan [t1]
+        SortPlan <#7.i2:TYPE_INT(4)>
+          ScanPlan [t2]
+```
+explain 语句可以查看查询计划，包括逻辑计划和物理计划。逻辑计划描述了查询的逻辑执行顺序，物理计划描述了查询的物理执行顺序。关于SQL语句如何执行以及查询计划为何是以树形式呈现的，你会在完成实验二和实验三后有更深入的了解。
+最后通过`exit；`退出客户端，`Ctrl+C`退出服务端。
+
+
+
 ## WSDB代码和格式规范
 
 项目根目录下的.clang-tidy文件在配置成功后能够对整个项目进行代码格式化，关于如何使用加载.clang-tidy，请参考你使用的IDE的官方文档或者询问GPT。
@@ -308,7 +400,7 @@ $ ./client -h
 WSDB仍然处于发展初期，测试不甚完备，希望同学们发现除作业之外的框架代码出现bug后通过github
 issue或者课程qq群积极反馈，对于能提供完备bug复现方法或者测试样例的同学我们会给予奖励并加入项目的贡献者列表，同时也非常欢迎对DBMS感兴趣的同学加入到WSDB的后续开发中。为了之后的同学能有愉快的学习体验，请同学们尽量不要将代码答案直接上传到公开平台上，你可以分享自己的解题思路或者优化策略，这对学弟学妹会有更大的帮助。WSDB虽然是一个玩具数据库，但仍然有不小的代码量，我们会努力完善实验手册，争取让大家0基础上手。对于实在无法解决的问题或者实验手册中没覆盖到的你不清楚的知识点，请尽管询问群内大佬或者私信助教。最后祝同学们在WSDB中玩得愉快～～
 
-# 附录：环境配置
+# 附录：IDE配置
 
 ## 如何快速优雅地编译运行WSDB
 
@@ -366,4 +458,4 @@ issue或者课程qq群积极反馈，对于能提供完备bug复现方法或者�
 
 <img src="./00basic.assets/image-20240802100605925.png" alt="image-20240802100605925" style="zoom:50%;" />
 
-也可直接点击相应按钮来调试或运行
+也可直接点击相应按钮来调试或运行。

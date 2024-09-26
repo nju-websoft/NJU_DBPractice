@@ -250,18 +250,18 @@ def nestedloop_join(left, right, condition):
 
 2. 功能分数（90%）：需要通过`wsdb/test/sql`目录下的SQL语句测试。
 
-    * t1: 顺序通过`wsdb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
+    * t1: <u>**顺序**</u>通过`wsdb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
 
         * `01_prepare_table_dbcourse.sql`: 15 pts
         * `02_seqscan_limit_projection.sql`: 30 pts
         * `03_filter_update_delete.sql`: 30 pts
         * `04_sort_final.sql`: 15 pts
 
-    * f1: 顺序通过`wsdb/test/sql/lab02/f1`下的SQL测试，由于排序结果集较大，仓库并未包含排序测试的预期输出，请同学们确保测试充分后再提交。
+    * f1: <u>**顺序**</u>通过`wsdb/test/sql/lab02/f1`下的SQL测试，请先解压`expected.tar.gz`。（提示，该测试需要的时间可能较长，如若20分钟之内不能得到测试结果，可能是实现不够高效或实现有误）
 
         * `04_merge_sort.sql`: 10pts
 
-    * 提示：你可以cd到`wsdb/test/sql/lab02`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，注意：脚本并不负责项目的编译，所以请在运行脚本之前手动编译。
+    * 提示：你可以cd到`wsdb/test/sql/lab02`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，**注意：脚本并不负责项目的编译，所以请在运行脚本之前手动编译。**
 
       ```bash
       $ bash evaluate.sh <bin directory> <test sql directory>

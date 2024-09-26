@@ -187,7 +187,7 @@ void SystemManager::ClientHandler(int client_fd)
       } else if (e.type_ == WSDB_TXN_ABORTED) {
         txn_manager_->Abort(txn.GetTxnId());
       } else {
-        std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
+        WSDB_LOG_ERROR(e.what());
         net_controller_->SendError(client_fd, e.short_what());
       }
     }

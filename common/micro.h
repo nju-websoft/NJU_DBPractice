@@ -24,7 +24,18 @@
 
 #include <memory>
 #include <filesystem>
+#include <ctime>
 #include "fmt/format.h"
+
+inline auto GetHourMinuteSecond() -> const std::string
+{
+  time_t     now = time(0);
+  struct tm  tstruct;
+  char       buf[80];
+  tstruct = *localtime(&now);
+  strftime(buf, sizeof(buf), "%X", &tstruct);
+  return buf;
+}
 
 #define DISABLE_COPY_AND_ASSIGN(classname)          \
   classname(const classname &)            = delete; \
@@ -44,7 +55,8 @@
 #define FILE_NAME(db_name, obj_name, suffix) (fmt::format("{}/{}{}", db_name, obj_name, suffix))
 #define OBJNAME_FROM_FILENAME(filename) (std::filesystem::path(filename).stem().string())
 
-#define WSDB_LOG(msg) std::cout << fmt::format("\033[32mLOG <{}::{}>: {}\033[0m\n", __func__, __LINE__, msg)
+#define WSDB_LOG(msg) std::cout << fmt::format("\033[32m[{}]LOG <{}::{}>: {}\033[0m\n", GetHourMinuteSecond(), __func__, __LINE__, msg)
+#define WSDB_LOG_ERROR(msg) std::cerr << fmt::format("\033[31m[{}]ERROR <{}::{}>: {}\033[0m\n", GetHourMinuteSecond(), __func__, __LINE__, msg)
 
 #define DECLARE_ENUM(EnumName, ...) \
   enum EnumName                                    \

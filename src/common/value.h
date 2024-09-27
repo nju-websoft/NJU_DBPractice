@@ -22,6 +22,7 @@
 #ifndef WSDB_VALUE_H
 #define WSDB_VALUE_H
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include "types.h"

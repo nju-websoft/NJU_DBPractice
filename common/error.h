@@ -96,11 +96,10 @@ namespace wsdb {
   ENUM(WSDB_UNSUPPORTED_OP)    \
   ENUM(WSDB_UNEXPECTED_NULL)   \
   ENUM(WSDB_CLIENT_DOWN)
-#define ENUM(ent) ent,
+#define ENUM(ent) ENUMENTRY(ent)
 DECLARE_ENUM(WSDBExceptionType)
 #undef ENUM
-#define ENUM(ent) \
-  case ent: return #ent;
+#define ENUM(ent) ENUM2STRING(ent)
 ENUM_TO_STRING_BODY(WSDBExceptionType)
 #undef ENUM
 #undef ENUM_ENTITIES

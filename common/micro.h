@@ -25,13 +25,14 @@
 #include <memory>
 #include <filesystem>
 #include <ctime>
+#include <unordered_map>
 #include "fmt/format.h"
 
 inline auto GetHourMinuteSecond() -> const std::string
 {
-  time_t     now = time(0);
-  struct tm  tstruct;
-  char       buf[80];
+  time_t    now = time(0);
+  struct tm tstruct;
+  char      buf[80];
   tstruct = *localtime(&now);
   strftime(buf, sizeof(buf), "%X", &tstruct);
   return buf;
@@ -55,17 +56,19 @@ inline auto GetHourMinuteSecond() -> const std::string
 #define FILE_NAME(db_name, obj_name, suffix) (fmt::format("{}/{}{}", db_name, obj_name, suffix))
 #define OBJNAME_FROM_FILENAME(filename) (std::filesystem::path(filename).stem().string())
 
-#define WSDB_LOG(msg) std::cout << fmt::format("\033[32m[{}]LOG <{}::{}>: {}\033[0m\n", GetHourMinuteSecond(), __func__, __LINE__, msg)
-#define WSDB_LOG_ERROR(msg) std::cerr << fmt::format("\033[31m[{}]ERROR <{}::{}>: {}\033[0m\n", GetHourMinuteSecond(), __func__, __LINE__, msg)
+#define WSDB_LOG(msg) \
+  std::cout << fmt::format("\033[32m[{}]LOG <{}::{}>: {}\033[0m\n", GetHourMinuteSecond(), __func__, __LINE__, msg)
+#define WSDB_LOG_ERROR(msg) \
+  std::cerr << fmt::format("\033[31m[{}]ERROR <{}::{}>: {}\033[0m\n", GetHourMinuteSecond(), __func__, __LINE__, msg)
 
 #define DECLARE_ENUM(EnumName, ...) \
-  enum EnumName                                    \
-  {                                                \
-    ENUM_ENTITIES                                  \
+  enum EnumName                     \
+  {                                 \
+    ENUM_ENTITIES                   \
   };
 
 // Helper macro to generate case statements
-#define ENUM_TO_STRING_BODY(EnumName, ...)                   \
+#define ENUM_TO_STRING_BODY(EnumName, ...)              \
   inline const char *EnumName##ToString(EnumName value) \
   {                                                     \
     switch (value) {                                    \
@@ -73,5 +76,21 @@ inline auto GetHourMinuteSecond() -> const std::string
       default: return "UNKNOWN";                        \
     }                                                   \
   }
+
+#define STRING_TO_ENUM_BODY(EnumName, ...)                                 \
+  inline EnumName StringTo##EnumName(const std::string &value)             \
+  {                                                                        \
+    std::unordered_map<std::string, EnumName> enum_map = {ENUM_ENTITIES};  \
+    if (enum_map.find(value) != enum_map.end()) {                          \
+      return enum_map[value];                                              \
+    }                                                                      \
+    WSDB_LOG_ERROR(fmt::format("Unknown {} value: {}", #EnumName, value)); \
+    std::abort();                                                          \
+  }
+
+#define ENUMENTRY(x) x,
+#define ENUM2STRING(x) \
+  case x: return #x;
+#define STRING2ENUM(x) {#x, x},
 
 #endif  // WSDB_MICRO_H

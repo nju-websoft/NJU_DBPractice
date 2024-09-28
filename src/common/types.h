@@ -48,11 +48,10 @@ constexpr int32_t INVALID_FILE_ID  = -1;
 #define ENUM_ENTITIES \
   ENUM(NARY_MODEL)    \
   ENUM(PAX_MODEL)
-#define ENUM(ent) ent,
+#define ENUM(ent) ENUMENTRY(ent)
 DECLARE_ENUM(StorageModel)
 #undef ENUM
-#define ENUM(ent) \
-  case ent: return #ent;
+#define ENUM(ent) ENUM2STRING(ent)
 ENUM_TO_STRING_BODY(StorageModel)
 #undef ENUM
 #undef ENUM_ENTITIES
@@ -64,11 +63,10 @@ ENUM_TO_STRING_BODY(StorageModel)
   ENUM(TYPE_FLOAT)    \
   ENUM(TYPE_STRING)   \
   ENUM(TYPE_ARRAY)
-#define ENUM(ent) ent,
+#define ENUM(ent) ENUMENTRY(ent)
 DECLARE_ENUM(FieldType)
 #undef ENUM
-#define ENUM(ent) \
-  case ent: return #ent;
+#define ENUM(ent) ENUM2STRING(ent)
 ENUM_TO_STRING_BODY(FieldType)
 #undef ENUM
 #undef ENUM_ENTITIES
@@ -81,7 +79,7 @@ ENUM_TO_STRING_BODY(FieldType)
   ENUM(AGG_AVG)       \
   ENUM(AGG_MAX)       \
   ENUM(AGG_MIN)
-#define ENUM(ent) ent,
+#define ENUM(ent) ENUMENTRY(ent)
 DECLARE_ENUM(AggType)
 #undef ENUM
 #undef ENUM_ENTITIES
@@ -101,11 +99,10 @@ inline auto AggTypeToString(AggType type) -> const char *
 #define ENUM_ENTITIES \
   ENUM(INNER_JOIN)    \
   ENUM(OUTER_JOIN)
-#define ENUM(ent) ent,
+#define ENUM(ent) ENUMENTRY(ent)
 DECLARE_ENUM(JoinType)
 #undef ENUM
-#define ENUM(ent) \
-  case ent: return #ent;
+#define ENUM(ent) ENUM2STRING(ent)
 ENUM_TO_STRING_BODY(JoinType)
 #undef ENUM
 #undef ENUM_ENTITIES
@@ -113,11 +110,10 @@ ENUM_TO_STRING_BODY(JoinType)
 #define ENUM_ENTITIES \
   ENUM(NESTED_LOOP)   \
   ENUM(SORT_MERGE)
-#define ENUM(ent) ent,
+#define ENUM(ent) ENUMENTRY(ent)
 DECLARE_ENUM(JoinStrategy)
 #undef ENUM
-#define ENUM(ent) \
-  case ent: return #ent;
+#define ENUM(ent) ENUM2STRING(ent)
 ENUM_TO_STRING_BODY(JoinStrategy)
 #undef ENUM
 #undef ENUM_ENTITIES
@@ -125,11 +121,10 @@ ENUM_TO_STRING_BODY(JoinStrategy)
 #define ENUM_ENTITIES \
   ENUM(OrderBy_ASC)   \
   ENUM(OrderBy_DESC)
-#define ENUM(ent) ent,
+#define ENUM(ent) ENUMENTRY(ent)
 DECLARE_ENUM(OrderByDir)
 #undef ENUM
-#define ENUM(ent) \
-  case ent: return #ent;
+#define ENUM(ent) ENUM2STRING(ent)
 ENUM_TO_STRING_BODY(OrderByDir)
 #undef ENUM
 #undef ENUM_ENTITIES
@@ -143,7 +138,7 @@ ENUM_TO_STRING_BODY(OrderByDir)
   ENUM(OP_GE)         \
   ENUM(OP_IN)         \
   ENUM(OP_RNG)
-#define ENUM(ent) ent,
+#define ENUM(ent) ENUMENTRY(ent)
 DECLARE_ENUM(CompOp)
 #undef ENUM
 #undef ENUM_ENTITIES

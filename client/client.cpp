@@ -124,6 +124,7 @@ public:
         }
         add_history(line);
         sql += line;
+        sql += '\n';
         free(line);
         if (sql == "exit;") {
           SendSql(sql);
@@ -134,12 +135,17 @@ public:
           sql.clear();
         }
       } else {
-        auto sql = GetUserInput();
-        if (sql.empty()) {
-          if (input_.eof()) {
+        std::string line;
+        while (std::getline(input_, line)) {
+          trim(line);
+          sql += line;
+          if (line.find(';') != std::string::npos) {
             break;
           }
-          continue;
+          sql += '\n';
+        }
+        if (sql.empty()) {
+          break;
         }
         if (sql == "exit;") {
           SendSql(sql);
@@ -147,6 +153,7 @@ public:
         }
         SendSql(sql);
         DoReceive();
+        sql.clear();
       }
     }
     CloseSocket();
@@ -189,25 +196,6 @@ private:
     if ((err_no_ = net::ReadNetPkg(sock_fd_, pkg_)) < 0) {
       WSDB_LOG("ERROR reading from socket");
     }
-  }
-
-  auto GetUserInput() -> std::string
-  {
-    // get until ';' is met, trim out the leading and trailing spaces and \n
-    std::string sql;
-    std::string line;
-    // FIXME: getline can't deal with arrow key
-    while (std::getline(input_, line)) {
-      // read from the input file
-      trim(line);
-      sql += line + " ";
-      if (line.find(';') != std::string::npos) {
-        break;
-      }
-      if (is_interactive_)
-        std::cout << " ... ";
-    }
-    return sql.substr(0, sql.find(';') + 1);
   }
 
   void DoReceive()

@@ -52,7 +52,8 @@ SortExecutor::~SortExecutor()
 
 void SortExecutor::Init()
 {
-  // TODO: decide whether to use merge sort according to the cardinality of the child.
+  // TODO: decide whether to use merge sort according to the cardinality of the child. 
+  // leave is_merge_sort_ as false if you just want to use in-memory sort
   is_merge_sort_ = false;
   if (is_merge_sort_) {
     WSDB_STUDENT_TODO(l2, f1);
@@ -76,18 +77,20 @@ auto SortExecutor::IsEnd() const -> bool
   WSDB_STUDENT_TODO(L2, t1);
 }
 
-auto SortExecutor::GetOutSchema() const -> const RecordSchema * { return child_->GetOutSchema(); }
-
-auto SortExecutor::GetSortFileName(size_t file_group, size_t file_idx) const -> std::string
-{
-  return fmt::format("{}_{}_{}", merge_result_file_, file_group, file_idx);
-}
-
 auto SortExecutor::Compare(const Record &lhs, const Record &rhs) const -> bool
 {
   auto lkey = std::make_unique<Record>(key_schema_.get(), lhs);
   auto rkey = std::make_unique<Record>(key_schema_.get(), rhs);
   return is_desc_ ? Record::Compare(*lkey, *rkey) > 0 : lkey->Compare(*lkey, *rkey) < 0;
+}
+
+auto SortExecutor::GetOutSchema() const -> const RecordSchema * { return child_->GetOutSchema(); }
+
+/// methods below are only used for merge sort
+
+auto SortExecutor::GetSortFileName(size_t file_group, size_t file_idx) const -> std::string
+{
+  return fmt::format("{}_{}_{}", merge_result_file_, file_group, file_idx);
 }
 
 void SortExecutor::SortBuffer() { WSDB_STUDENT_TODO(L2, t1); }
@@ -101,7 +104,7 @@ void SortExecutor::Merge()
   // 1. create a heap according to is_desc_
   // 2. read the first tuple from each file
   // 3. pop the top of the heap and write to file: group 1, file: file_index
-  // run until all runs are exhausted, then read tuples from group 1, file 0, write to group 0, file 0
+  // run until all runs are exhausted, then read tuples from group 1, file 0, write to group 0, file 0 ...
   WSDB_STUDENT_TODO(L2, f1);
 }
 

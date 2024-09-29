@@ -21,7 +21,7 @@
 
 /**
  * @brief Sort the records returned by the child executor
- * 
+ *
  */
 
 #ifndef WSDB_EXECUTOR_SORT_H
@@ -49,6 +49,7 @@ public:
   [[nodiscard]] auto GetOutSchema() const -> const RecordSchema * override;
 
 private:
+  /// @brief  Sort heap node for merge sort algorithm, ignore it in l2.t1
   class SortHeapNode
   {
   public:
@@ -56,9 +57,7 @@ private:
 
     SortHeapNode(std::shared_ptr<std::ifstream> file_handle, const RecordSchema *schema, size_t rec_idx)
         : file_handle_(std::move(file_handle)), schema_(schema), rec_idx_(rec_idx), record_(nullptr)
-    {
-      WSDB_STUDENT_TODO(l2, f1);
-    }
+    {}
 
     SortHeapNode(const SortHeapNode &other)
     {
@@ -93,7 +92,13 @@ private:
      * @param max_rec_num
      * @return true if the record is loaded successfully, false if the file is end or idx exceeds the max record number
      */
-    auto LoadNextRecord(size_t max_rec_num) -> bool { WSDB_STUDENT_TODO(l2, f1); }
+    auto LoadNextRecord(size_t max_rec_num) -> bool
+    {
+      WSDB_ASSERT(file_handle_ != nullptr, "file_handle_ is nullptr");
+      WSDB_ASSERT(file_handle_->is_open(), "file_handle_ is not open");
+
+      WSDB_STUDENT_TODO(l2, f1);
+    }
 
     [[nodiscard]] auto GetRecord() const -> const RecordUptr & { return record_; }
 

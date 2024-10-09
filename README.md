@@ -21,7 +21,7 @@ The project is mostly inspired by [Rucbase](https://github.com/ruc-deke/rucbase-
 
 ## System requirements
 
-We only tested WSDB on MacOS 14.5 and Ubuntu 20.04, but if it also works on other systems, please let us know by issuing
+We tested WSDB on MacOS and Ubuntu, but if it also works on other systems, please let us know by issuing
 or pulling requests.
 
 ## How to build
@@ -53,7 +53,7 @@ $ mkdir build && cd build
 ```
 
 ```shell
-cmake .. && make -j8
+$ cmake .. && make -j8
 ```
 
 About how to change cmake configurations, please refer to their guide.

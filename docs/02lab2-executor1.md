@@ -268,7 +268,7 @@ def nestedloop_join(left, right, condition):
       # e.g. bash evaluate.sh /path/to/wsdb/cmake-build-debug/bin t1
       ```
 
-**请勿抄袭或搬运他人的实验结果，如被发现将取消大实验分数!!!**
+**重要：请勿尝试抄袭代码或搬运他人实验结果，我们会严格审查，如被发现将取消大实验分数，情节严重可能会对课程总评产生影响!!!**
 
 3. 测试方法：编译`wsdb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
    
@@ -289,7 +289,7 @@ def nestedloop_join(left, right, condition):
 
 2. 代码：`wsdb/src`文件夹
 
-*提交示例：请将以上两部分内容打包并命名为lab2\_学号\_姓名.zip（例如lab2_123456_张三.zip）并上传至教学立方，请确保解压后目录树如下：*
+*提交示例：请将以上两部分内容打包并命名为lab2\_学号\_姓名.zip（例如lab2_123456_张三.zip）并上传至提交平台，请确保解压后目录树如下：*
 
 ```
 ├── lab2_123456_张三.pdf

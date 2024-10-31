@@ -74,7 +74,7 @@ public:
   /**
    * Get the number of elements in the replacer that can be victimized.
    * 1. grant the latch
-   * 2. return the size of the LRU list
+   * 2. return the number of evictable frames
    * @return the number of elements in the replacer that can be victimized
    */
   auto Size() -> size_t override;

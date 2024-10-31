@@ -46,7 +46,7 @@ public:
    * Victimize a frame according to the LRU policy.
    * 1. grant the latch
    * 2. if there is no frame in the LRU list return false
-   * 3. get the frame id from the back of the LRU list
+   * 3. get the first (least recently used) evictable frame in the LRU list
    * 4. update the LRU list and hash map
    * @param frame_id
    * @return true if a victim frame was found, false otherwise

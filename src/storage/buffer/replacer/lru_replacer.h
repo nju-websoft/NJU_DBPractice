@@ -56,8 +56,7 @@ public:
   /**
    * Pin a frame, indicating that it should not be victimized until it is unpinned.
    * 1. grant the latch
-   * 2. if the frame is not in the LRU hash map return
-   * 3. update the LRU list and hash map
+   * 2. update the LRU list and hash map
    * @param frame_id
    */
   void Pin(frame_id_t frame_id) override;

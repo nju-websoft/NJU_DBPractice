@@ -14,6 +14,10 @@ set(CMAKE_CXX_FLAGS "-Wall -O3 -fPIC")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -O0 -g -fPIC")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -O0 -g -fPIC")
 
+if(CMAKE_HOST_APPLE) 
+    set(BISON_EXECUTABLE "/opt/homebrew/opt/bison/bin/bison")
+endif()
+
 
 include_directories(src)
 include_directories(third_party/fmt/include)

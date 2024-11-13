@@ -1,5 +1,5 @@
-find_package(BISON REQUIRED)
-find_package(FLEX REQUIRED)
+find_package(BISON 3.8 REQUIRED)
+find_package(FLEX 2.6 REQUIRED)
 
 bison_target(yacc yacc.y ${CMAKE_CURRENT_SOURCE_DIR}/yacc.tab.cpp
         DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/yacc.tab.h)

@@ -46,10 +46,11 @@ For MacOS:
 $ sudo brew install clang cmake flex bison readline
 ```
 
-NOTE: Flex and Bison versions will be checked in `src/parser/CMakeLists.txt`, you can modify the minimum version to fit your environment to check if it compiles.
+NOTE: Flex and Bison versions will be checked in `src/parser/CMakeLists.txt`, you can modify the minimum version to fit your environment and check if it compiles.
 
 We recommend flex >= 2.6 and bison >=3.8. If your package manager does not provide the latest version and your version fails to compile `wsdb`, please install them manually. you can check the version by running `flex --version` and `bison --version`.
 
+Low versions of the compiler and cmake may also cause problems, such as missing libraries, error finding include headers, etc. So please make sure you have the latest version of them.
 
 Then change directory into the repository foot and run
 

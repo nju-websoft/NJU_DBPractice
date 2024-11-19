@@ -84,7 +84,7 @@ auto TableHandle::CreateNewPageHandle() -> PageHandleUptr
   tab_hdr_.page_num_++;
   auto page   = buffer_pool_manager_->FetchPage(table_id_, page_id);
   auto pg_hdl = WrapPageHandle(page);
-  pg_hdl->SetNextPageId(tab_hdr_.first_free_page_);
+  page->SetNextFreePageId(tab_hdr_.first_free_page_);
   tab_hdr_.first_free_page_ = page_id;
   return pg_hdl;
 }

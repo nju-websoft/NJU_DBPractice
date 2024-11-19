@@ -49,17 +49,12 @@ public:
 
   virtual ~PageHandle() = default;
 
-  void SetNextPageId(page_id_t next_pid) { next_pid_ = next_pid; }
-
   [[nodiscard]] auto GetPage() -> Page * { return page_; }
-
-  [[nodiscard]] auto GetNextPageId() const -> page_id_t { return next_pid_; }
 
   [[nodiscard]] auto GetBitmap() -> char * { return bitmap_; }
 
 protected:
   const TableHeader *tab_hdr_{nullptr};
-  page_id_t          next_pid_{INVALID_PAGE_ID};
   Page              *page_{nullptr};
   char              *bitmap_;
   char              *slots_mem_{nullptr};

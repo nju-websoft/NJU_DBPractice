@@ -41,12 +41,12 @@ public:
   Page() = default;
   DISABLE_COPY_MOVE_AND_ASSIGN(Page)
 
-  [[nodiscard]] auto GetTableId() const -> table_id_t { return tid_; }
+  [[nodiscard]] auto GetFileId() const -> file_id_t { return fid_; }
   [[nodiscard]] auto GetPageId() const -> page_id_t { return pid_; }
 
-  void SetTablePageId(table_id_t tid, page_id_t pid)
+  void SetFilePageId(file_id_t fid, page_id_t pid)
   {
-    tid_ = tid;
+    fid_ = fid;
     pid_ = pid;
   }
 
@@ -88,17 +88,17 @@ public:
     *reinterpret_cast<size_t *>(data_ + PAGE_RECORD_NUM_OFFSET) = record_num;
   }
 
-  auto Clear() -> void
+  void Clear()
   {
-    tid_ = INVALID_TABLE_ID;
+    fid_ = INVALID_FILE_ID;
     pid_ = INVALID_PAGE_ID;
     memset(data_, 0, PAGE_SIZE);
   }
 
 private:
-  table_id_t tid_{INVALID_TABLE_ID};
-  page_id_t  pid_{INVALID_PAGE_ID};
-  char       data_[PAGE_SIZE]{};
+  file_id_t fid_{INVALID_FILE_ID};
+  page_id_t pid_{INVALID_PAGE_ID};
+  char      data_[PAGE_SIZE]{};
 };
 
 #endif  // WSDB_PAGE_H

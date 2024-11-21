@@ -52,7 +52,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
     auto  fd   = disk_manager.OpenFile("test.tbl");
     Page *page = buffer_pool_manager.FetchPage(fd, 0);
     ASSERT_NE(page, nullptr);
-    ASSERT_EQ(page->GetTableId(), fd);
+    ASSERT_EQ(page->GetFileId(), fd);
     ASSERT_EQ(page->GetPageId(), 0);
     ASSERT_NE(page->GetData(), nullptr);
     buffer_pool_manager.UnpinPage(fd, 0, true);
@@ -64,7 +64,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
     for (int i = 0; i < MAX_PAGES; ++i) {
       page = buffer_pool_manager.FetchPage(fd, i);
       ASSERT_NE(page, nullptr);
-      ASSERT_EQ(page->GetTableId(), fd);
+      ASSERT_EQ(page->GetFileId(), fd);
       ASSERT_EQ(page->GetPageId(), i);
       ASSERT_NE(page->GetData(), nullptr);
       buffer_pool_manager.UnpinPage(fd, i, false);
@@ -82,7 +82,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
       page_data[i] = std::to_string(i);
       page         = buffer_pool_manager.FetchPage(fd, i);
       ASSERT_NE(page, nullptr);
-      ASSERT_EQ(page->GetTableId(), fd);
+      ASSERT_EQ(page->GetFileId(), fd);
       ASSERT_EQ(page->GetPageId(), i);
       ASSERT_NE(page->GetData(), nullptr);
       memcpy(page->GetData(), page_data[i].c_str(), page_data[i].size());
@@ -91,7 +91,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
     for (int i = 0; i < MAX_PAGES; ++i) {
       page = buffer_pool_manager.FetchPage(fd, i);
       ASSERT_NE(page, nullptr);
-      ASSERT_EQ(page->GetTableId(), fd);
+      ASSERT_EQ(page->GetFileId(), fd);
       ASSERT_EQ(page->GetPageId(), i);
       ASSERT_NE(page->GetData(), nullptr);
       ASSERT_EQ(memcmp(page->GetData(), page_data[i].c_str(), page_data[i].size()), 0);
@@ -117,7 +117,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
       for (int j = 0; j < MAX_PAGES; ++j) {
         auto page = buffer_pool_manager.FetchPage(fd, j);
         ASSERT_NE(page, nullptr);
-        ASSERT_EQ(page->GetTableId(), fd);
+        ASSERT_EQ(page->GetFileId(), fd);
         ASSERT_EQ(page->GetPageId(), j);
         ASSERT_NE(page->GetData(), nullptr);
         buffer_pool_manager.UnpinPage(fd, j, false);
@@ -138,7 +138,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
       for (int j = 0; j < MAX_PAGES; ++j) {
         auto page = buffer_pool_manager.FetchPage(fd, j);
         ASSERT_NE(page, nullptr);
-        ASSERT_EQ(page->GetTableId(), fd);
+        ASSERT_EQ(page->GetFileId(), fd);
         ASSERT_EQ(page->GetPageId(), j);
         ASSERT_NE(page->GetData(), nullptr);
         memcpy(page->GetData(), file_page_data[i][j].c_str(), file_page_data[i][j].size());
@@ -151,7 +151,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
       for (int j = 0; j < MAX_PAGES; ++j) {
         auto page = buffer_pool_manager.FetchPage(fd, j);
         ASSERT_NE(page, nullptr);
-        ASSERT_EQ(page->GetTableId(), fd);
+        ASSERT_EQ(page->GetFileId(), fd);
         ASSERT_EQ(page->GetPageId(), j);
         ASSERT_NE(page->GetData(), nullptr);
         ASSERT_EQ(memcmp(page->GetData(), file_page_data[i][j].c_str(), file_page_data[i][j].size()), 0);
@@ -234,7 +234,7 @@ TEST(BufferPoolManagerTest, MultiThread)
             }
           }
           ASSERT_NE(page, nullptr);
-          ASSERT_EQ(page->GetTableId(), fd);
+          ASSERT_EQ(page->GetFileId(), fd);
           ASSERT_EQ(page->GetPageId(), j);
           ASSERT_NE(page->GetData(), nullptr);
           buffer_pool_manager.UnpinPage(fd, j, false);
@@ -272,7 +272,7 @@ TEST(BufferPoolManagerTest, MultiThread)
               }
             }
           }
-          ASSERT_EQ(page->GetTableId(), fd);
+          ASSERT_EQ(page->GetFileId(), fd);
           ASSERT_EQ(page->GetPageId(), j);
           ASSERT_NE(page->GetData(), nullptr);
           memcpy(page->GetData(), page_data[j].c_str(), page_data[j].size());
@@ -302,7 +302,7 @@ TEST(BufferPoolManagerTest, MultiThread)
               }
             }
           }
-          ASSERT_EQ(page->GetTableId(), fd);
+          ASSERT_EQ(page->GetFileId(), fd);
           ASSERT_EQ(page->GetPageId(), j);
           ASSERT_NE(page->GetData(), nullptr);
           ASSERT_EQ(memcmp(page->GetData(), page_data[j].c_str(), page_data[j].size()), 0);
@@ -368,7 +368,7 @@ TEST(BufferPoolManagerTest, MultiThread)
               }
             }
             ASSERT_NE(page, nullptr);
-            ASSERT_EQ(page->GetTableId(), fd);
+            ASSERT_EQ(page->GetFileId(), fd);
             ASSERT_EQ(page->GetPageId(), rd_pid);
             ASSERT_NE(page->GetData(), nullptr);
             memcpy(page->GetData(),
@@ -408,7 +408,7 @@ TEST(BufferPoolManagerTest, MultiThread)
               }
             }
             ASSERT_NE(page, nullptr);
-            ASSERT_EQ(page->GetTableId(), fd);
+            ASSERT_EQ(page->GetFileId(), fd);
             ASSERT_EQ(page->GetPageId(), rd_pid);
             ASSERT_NE(page->GetData(), nullptr);
             ASSERT_EQ(memcmp(page->GetData(),

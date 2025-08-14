@@ -23,7 +23,7 @@
 #define WSDB_CONDITION_EXPR_H
 
 #include "common/condition.h"
-#include "system/handle/record_handle.h"
+#include "common/record.h"
 
 namespace wsdb {
 

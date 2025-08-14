@@ -48,6 +48,7 @@ private:
   TableHandle                               *tbl_;
   std::list<IndexHandle *>                   indexes_;
   std::vector<std::pair<RTField, ValueSptr>> updates_;
+  std::vector<std::pair<std::unique_ptr<Record>, std::unique_ptr<Record>>> updates_to_perform_;
   bool                                       is_end_;
 };
 }  // namespace wsdb

@@ -25,7 +25,7 @@
 
 namespace wsdb {
 
-std::shared_ptr<AbstractPlan> Planner::PlanAST(const std::shared_ptr<ast::TreeNode> &ast, DatabaseHandle *db)
+auto Planner::PlanAST(const std::shared_ptr<ast::TreeNode> &ast, DatabaseHandle *db) -> std::shared_ptr<AbstractPlan>
 {
 
   /// database related
@@ -36,7 +36,7 @@ std::shared_ptr<AbstractPlan> Planner::PlanAST(const std::shared_ptr<ast::TreeNo
   } else if (const auto odb = std::dynamic_pointer_cast<ast::OpenDatabase>(ast)) {
     return std::make_shared<OpenDBPlan>(odb->db_name_);
   } else if (const auto exp = std::dynamic_pointer_cast<ast::Explain>(ast)) {
-    return std::make_shared<ExplainPlan>(std::move(PlanAST(exp->stmt, db)));
+    return std::make_shared<ExplainPlan>(PlanAST(exp->stmt, db));
   }
   if (db == nullptr) {
     WSDB_THROW(WSDB_DB_NOT_OPEN, "");
@@ -101,10 +101,12 @@ std::shared_ptr<AbstractPlan> Planner::PlanAST(const std::shared_ptr<ast::TreeNo
   }
   /// index related
   if (const auto cidx = std::dynamic_pointer_cast<ast::CreateIndex>(ast)) {
-
+    auto schema = CreateIndexKeySchema(cidx->tab_name_, cidx->col_names_, db);
+    return std::make_shared<CreateIndexPlan>(cidx->index_name_, cidx->tab_name_, std::move(schema), cidx->index_type_);
   } else if (const auto didx = std::dynamic_pointer_cast<ast::DropIndex>(ast)) {
-
+    return std::make_shared<DropIndexPlan>(didx->tab_name_, didx->index_name_);
   } else if (const auto sidx = std::dynamic_pointer_cast<ast::ShowIndexes>(ast)) {
+    return std::make_shared<ShowIndexesPlan>(sidx->tab_name_);
   }
   /// transaction related
   if (const auto txnbeg = std::dynamic_pointer_cast<ast::TxnBegin>(ast)) {
@@ -116,7 +118,7 @@ std::shared_ptr<AbstractPlan> Planner::PlanAST(const std::shared_ptr<ast::TreeNo
   } else if (const auto txnback = std::dynamic_pointer_cast<ast::TxnRollback>(ast)) {
 
   } else {
-    WSDB_FETAL("Invalid AST node");
+    WSDB_FATAL("Invalid AST node");
   }
   // never reach here
   return nullptr;
@@ -187,6 +189,10 @@ auto Planner::AnalyseSelect(const std::shared_ptr<ast::SelectStmt> &sel, wsdb::D
   if (sub_plan != nullptr) {
     /// select with sub query
     auto plan = std::move(sub_plan);
+    if(!where.empty()){
+      // if there are conditions, we need to add a filter plan
+      plan = std::make_shared<FilterPlan>(plan, where);
+    }
     if (is_agg) {
       plan = MakeAggregatePlan(plan, group_fields, sel_fields, having);
     }
@@ -262,7 +268,7 @@ auto Planner::TransformValue(const std::shared_ptr<ast::Value> &val) -> ValueSpt
     // handle carefully in executors
     return ValueFactory::CreateNullValue(TYPE_INT);
   } else {
-    WSDB_FETAL("Invalid value type");
+    WSDB_FATAL("Invalid value type");
   }
 }
 
@@ -320,9 +326,11 @@ auto Planner::MakeConditionVec(const std::vector<std::shared_ptr<ast::BinaryExpr
       conds.emplace_back(e->op_, l_rt, r_rt);
     } else if (const auto val = std::dynamic_pointer_cast<ast::Value>(rhs)) {
       auto v = TransformValue(val);
+      v      = ValueFactory::CastTo(v, l_rt.field_.field_type_);
       conds.emplace_back(e->op_, l_rt, v);
     } else if (const auto sel = std::dynamic_pointer_cast<ast::SelectStmt>(rhs)) {
       // TODO: subquery in condition
+      WSDB_THROW(WSDB_NOT_IMPLEMENTED, "Subquery in condition is not implemented yet");
     } else {
       WSDB_THROW(WSDB_GRAMMAR_ERROR, "Invalid right hand side");
     }
@@ -338,7 +346,7 @@ auto Planner::CreateRecordSchema(const std::vector<std::shared_ptr<ast::Field>> 
   for (const auto &f : fields) {
     const auto col_def = std::dynamic_pointer_cast<ast::ColDef>(f);
     if (col_def == nullptr) {
-      WSDB_FETAL("Invalid field definition");
+      WSDB_FATAL("Invalid field definition");
     }
     FieldSchema fs;
     fs.field_name_ = col_def->col_name_;
@@ -350,6 +358,26 @@ auto Planner::CreateRecordSchema(const std::vector<std::shared_ptr<ast::Field>> 
       WSDB_THROW(WSDB_GRAMMAR_ERROR, "Field size cannot be 0");
     }
     rt_fields.push_back({.field_ = fs});
+  }
+  return std::make_unique<RecordSchema>(rt_fields);
+}
+
+auto Planner::CreateIndexKeySchema(
+    const std::string &table_name, const std::vector<std::string> &col_names, DatabaseHandle *db) -> RecordSchemaUptr
+{
+  std::vector<RTField> rt_fields;
+  rt_fields.reserve(col_names.size());
+  auto tab = db->GetTable(table_name);
+  if (tab == nullptr) {
+    WSDB_THROW(WSDB_TABLE_MISS, table_name);
+  }
+  std::string dummy_table_name = table_name;
+  for (const auto &col_name : col_names) {
+    CheckFieldTabName(dummy_table_name, col_name, db, {dummy_table_name});
+    WSDB_ASSERT(
+        dummy_table_name == table_name, fmt::format("Table name mismatch: {}, {}", dummy_table_name, table_name));
+    auto fs = tab->GetSchema().GetFieldByName(tab->GetTableId(), col_name);
+    rt_fields.push_back(fs);
   }
   return std::make_unique<RecordSchema>(rt_fields);
 }
@@ -418,22 +446,34 @@ auto Planner::GetConditionsForJoin(
     const std::string &left, const std::string &right, ConditionVec &conds, DatabaseHandle *db) -> ConditionVec
 {
   ConditionVec ret;
+  auto         left_table_id  = db->GetTable(left)->GetTableId();
+  auto         right_table_id = db->GetTable(right)->GetTableId();
+
   // move the condition of the join to ret, should check if the rhs is column
   for (const auto &c : conds) {
-    if (c.GetLCol().field_.table_id_ == db->GetTable(left)->GetTableId()) {
-      if (c.GetRhsType() == kColumn) {
-        if (c.GetRCol().field_.table_id_ == db->GetTable(right)->GetTableId() &&
-            c.GetLCol().field_.table_id_ != c.GetRCol().field_.table_id_) {
-          ret.push_back(c);
-        }
+    if (c.GetRhsType() == kColumn) {
+      auto left_col_table_id  = c.GetLCol().field_.table_id_;
+      auto right_col_table_id = c.GetRCol().field_.table_id_;
+      if (left_col_table_id == left_table_id && right_col_table_id == right_table_id &&
+          left_col_table_id == right_col_table_id) {
+        ret.push_back(c);
+      }
+      // Case 1: left column belongs to left table, right column belongs to right table
+      else if (left_col_table_id == left_table_id && right_col_table_id == right_table_id) {
+        ret.push_back(c);
+      }
+      // Case 2: left column belongs to right table, right column belongs to left table
+      // Use GetReversedCondition to swap the columns and reverse the operator
+      else if (left_col_table_id == right_table_id && right_col_table_id == left_table_id) {
+        ret.push_back(c.GetReversedCondition());
       }
     }
   }
   return ret;
 }
 
-auto Planner::GetConditionsForTable(
-    const std::string &tab_name, const ConditionVec &conds, DatabaseHandle *db) -> ConditionVec
+auto Planner::GetConditionsForTable(const std::string &tab_name, const ConditionVec &conds, DatabaseHandle *db)
+    -> ConditionVec
 {
   std::vector<Condition> ret;
   for (const auto &c : conds) {
@@ -446,8 +486,8 @@ auto Planner::GetConditionsForTable(
   return ret;
 }
 
-auto Planner::MakeFilterScanPlan(
-    const std::string &tab_name, const ConditionVec &conds) -> std::shared_ptr<AbstractPlan>
+auto Planner::MakeFilterScanPlan(const std::string &tab_name, const ConditionVec &conds)
+    -> std::shared_ptr<AbstractPlan>
 {
   auto scan_plan = std::make_shared<ScanPlan>(tab_name);
   if (conds.empty()) {

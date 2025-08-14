@@ -45,7 +45,6 @@ private:
   StorageModel     storage_;
   DatabaseHandle  *db_;
 
-private:
   bool is_end_;
 };
 
@@ -64,7 +63,6 @@ private:
   std::string     tab_name_;
   DatabaseHandle *db_;
 
-private:
   bool is_end_;
 };
 
@@ -80,10 +78,8 @@ public:
   [[nodiscard]] auto IsEnd() const -> bool override;
 
 private:
-  TableHandle    *tab_hdl_;
-
-private:
-  bool is_end_;
+  TableHandle *tab_hdl_;
+  
   size_t cursor_;
 };
 
@@ -100,8 +96,68 @@ public:
 
 private:
   DatabaseHandle *db_;
+  bool   is_end_;
+  size_t cursor_;
+};
+
+class CreateIndexExecutor : public AbstractExecutor
+{
+public:
+  CreateIndexExecutor(const std::string &index_name, const std::string &table_name, RecordSchemaUptr key_schema,
+      IndexType index_type, DatabaseHandle *db);
+  void Init() override;
+
+  void Next() override;
+
+  [[nodiscard]] auto IsEnd() const -> bool override;
 
 private:
+  std::string      index_name_;
+  std::string      table_name_;
+  RecordSchemaUptr key_schema_;
+  IndexType        index_type_;
+  DatabaseHandle  *db_;
+
+  bool is_end_;
+};
+
+class DropIndexExecutor : public AbstractExecutor
+{
+public:
+  DropIndexExecutor(std::string table_name, std::string index_name, DatabaseHandle *db);
+
+  void Init() override;
+
+  void Next() override;
+
+  [[nodiscard]] auto IsEnd() const -> bool override;
+
+private:
+  std::string     table_name_;
+  std::string     index_name_;
+  DatabaseHandle *db_;
+
+  bool is_end_;
+};
+
+class ShowIndexesExecutor : public AbstractExecutor
+{
+public:
+  explicit ShowIndexesExecutor(DatabaseHandle *db);
+  explicit ShowIndexesExecutor(const std::string &table_name, DatabaseHandle *db);
+
+  void Init() override;
+
+  void Next() override;
+
+  [[nodiscard]] auto IsEnd() const -> bool override;
+
+private:
+  // if table name is empty, show all indexes in the database
+  std::string table_name_;
+  DatabaseHandle *db_;
+
+  std::vector<IndexHandle*> indexes_to_show_;
   bool   is_end_;
   size_t cursor_;
 };

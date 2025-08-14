@@ -53,7 +53,7 @@ auto ConditionExpr::EvalCond(const Condition &condition, const wsdb::Record &rec
     case OP_GT: return *lhs > *rhs;
     case OP_GE: return *lhs >= *rhs;
     case OP_IN: return std::dynamic_pointer_cast<ArrayValue>(rhs)->Contains(lhs);
-    default: WSDB_FETAL(CompOpToString(condition.GetOp()));
+    default: WSDB_FATAL(CompOpToString(condition.GetOp()));
   }
   // should never reach here
 }

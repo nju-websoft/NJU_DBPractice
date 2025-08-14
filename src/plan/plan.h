@@ -23,7 +23,7 @@
 #define WSDB_PLAN_H
 #include <utility>
 
-#include "system/handle/record_handle.h"
+#include "common/record.h"
 #include "common/condition.h"
 
 #define TAB_STR(level) std::string(2 * level, ' ')
@@ -34,7 +34,7 @@ class AbstractPlan
 public:
   virtual ~AbstractPlan() = default;
 
-  virtual auto ToString(int level) const -> std::string { WSDB_FETAL("Unimplemented ToString(level) in AbstractPlan"); }
+  virtual auto ToString(int level) const -> std::string { WSDB_FATAL("Unimplemented ToString(level) in AbstractPlan"); }
 };
 
 class ExplainPlan : public AbstractPlan
@@ -111,6 +111,60 @@ public:
 class ShowTablesPlan : public AbstractPlan
 {
   auto ToString(int level) const -> std::string override { return fmt::format("{}ShowTablesPlan", TAB_STR(level)); }
+};
+
+class CreateIndexPlan : public AbstractPlan
+{
+public:
+  CreateIndexPlan(std::string index_name, std::string table_name, RecordSchemaUptr key_schema, IndexType index_type)
+      : index_type_(index_type),
+        index_name_(std::move(index_name)),
+        table_name_(std::move(table_name)),
+        key_schema_(std::move(key_schema))
+  {}
+
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}CreateIndexPlan [{}] <{}> [{}] [{}]",
+        TAB_STR(level),
+        index_name_,
+        IndexTypeToString(index_type_),
+        table_name_,
+        key_schema_->ToString());
+  }
+  IndexType        index_type_;
+  std::string      index_name_;
+  std::string      table_name_;
+  RecordSchemaUptr key_schema_;
+};
+
+class DropIndexPlan : public AbstractPlan
+{
+public:
+  DropIndexPlan(std::string table_name, std::string index_name)
+      : table_name_(std::move(table_name)), index_name_(std::move(index_name))
+  {}
+  auto ToString(int level) const -> std::string override
+  {
+    return fmt::format("{}DropIndexPlan [{}] <{}>", TAB_STR(level), table_name_, index_name_);
+  }
+  std::string table_name_;
+  std::string index_name_;
+};
+
+class ShowIndexesPlan : public AbstractPlan
+{
+public:
+  ShowIndexesPlan() : table_name_("") {}  // Show all indexes
+  explicit ShowIndexesPlan(std::string table_name) : table_name_(std::move(table_name)) {}
+  auto ToString(int level) const -> std::string override
+  {
+    if (table_name_.empty()) {
+      return fmt::format("{}ShowIndexesPlan [ALL]", TAB_STR(level));
+    }
+    return fmt::format("{}ShowIndexesPlan [{}]", TAB_STR(level), table_name_);
+  }
+  std::string table_name_;
 };
 
 class InsertPlan : public AbstractPlan
@@ -203,8 +257,8 @@ public:
 class IdxScanPlan : public AbstractPlan
 {
 public:
-  IdxScanPlan(std::string table_name, idx_id_t idxId, ConditionVec conds, int matched_fields)
-      : table_name_(std::move(table_name)), idx_id_(idxId), conds_(std::move(conds)), matched_fields_(matched_fields)
+  IdxScanPlan(std::string table_name, idx_id_t idxId, ConditionVec conds, bool is_ascending)
+      : table_name_(std::move(table_name)), idx_id_(idxId), conds_(std::move(conds)), is_ascending_(is_ascending)
   {}
   auto ToString(int level) const -> std::string override
   {
@@ -215,12 +269,17 @@ public:
         cond_str += " AND " + conds_[i].ToString();
       }
     }
-    return fmt::format("{}IdxScanPlan [{}] <{}>", TAB_STR(level), table_name_, cond_str);
+    return fmt::format("{}IdxScanPlan [{}] <{}> <{}> <{}>",
+        TAB_STR(level),
+        table_name_,
+        idx_id_,
+        cond_str,
+        is_ascending_ ? "ASC" : "DESC");
   }
   std::string  table_name_;
   idx_id_t     idx_id_;
   ConditionVec conds_;
-  int          matched_fields_;
+  bool         is_ascending_{true};  // Default to ascending order
 };
 
 class SortPlan : public AbstractPlan
@@ -231,7 +290,11 @@ public:
   {}
   auto ToString(int level) const -> std::string override
   {
-    return fmt::format("{}SortPlan <{}>\n{}", TAB_STR(level), key_schema_->ToString(), child_->ToString(level + 1));
+    return fmt::format("{}SortPlan <{}> [{}]\n{}",
+        TAB_STR(level),
+        key_schema_->ToString(),
+        is_desc_ ? "DESC" : "ASC",
+        child_->ToString(level + 1));
   }
   std::shared_ptr<AbstractPlan> child_;
   RecordSchemaUptr              key_schema_;
@@ -281,9 +344,10 @@ public:
   ConditionVec                  conds_;
   JoinType                      type_;
   JoinStrategy                  strategy_;
-  // below is available when strategy == SortMerge
+  // below is available when strategy == SortMerge or HashJoin
   RecordSchemaUptr left_key_schema_;
   RecordSchemaUptr right_key_schema_;
+  CompOp           join_op_{OP_EQ};  // used in SortMergeJoin and HashJoin
 };
 
 class AggregatePlan : public AbstractPlan

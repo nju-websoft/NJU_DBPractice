@@ -1,4 +1,3 @@
-
 /*------------------------------------------------------------------------------
  - Copyright (c) 2024. Websoft research group, Nanjing University.
  -
@@ -21,6 +20,7 @@
 //
 
 #include "executor_update.h"
+#include <fmt/format.h>
 
 namespace wsdb {
 
@@ -38,19 +38,16 @@ UpdateExecutor::UpdateExecutor(AbstractExecutorUptr child, TableHandle *tbl, std
   out_schema_ = std::make_unique<RecordSchema>(fields);
 }
 
-void UpdateExecutor::Init() { WSDB_FETAL("UpdateExecutor does not support Init"); }
-
-void UpdateExecutor::Next()
+void UpdateExecutor::Init()
 {
-  // number of updated records
-  int count = 0;
-
+  // You can skip step 2 in lab02
+  // 1: Collect all old and new records first
+  // 2: [WSDB_STUDENT_TODO(l4, t2)] Validate ALL updates against index unique constraints BEFORE applying any
+  // 3: Do updates
   WSDB_STUDENT_TODO(l2, t1);
-
-  std::vector<ValueSptr> values{ValueFactory::CreateIntValue(count)};
-  record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
-  is_end_ = true;
 }
+
+void UpdateExecutor::Next() { is_end_ = true; }
 
 auto UpdateExecutor::IsEnd() const -> bool { return is_end_; }
 

@@ -138,21 +138,26 @@ struct DescTable : public TreeNode
 
 struct CreateIndex : public TreeNode
 {
+  std::string              index_name_;
   std::string              tab_name_;
   std::vector<std::string> col_names_;
+  IndexType                index_type_;
 
-  CreateIndex(std::string tab_name, std::vector<std::string> col_names)
-      : tab_name_(std::move(tab_name)), col_names_(std::move(col_names))
+  CreateIndex(std::string index_name, std::string tab_name, std::vector<std::string> col_names, IndexType index_type)
+      : index_name_(std::move(index_name)),
+        tab_name_(std::move(tab_name)),
+        col_names_(std::move(col_names)),
+        index_type_(index_type)
   {}
 };
 
 struct DropIndex : public TreeNode
 {
-  std::string              tab_name_;
-  std::vector<std::string> col_names_;
+  std::string tab_name_;
+  std::string index_name_;
 
-  DropIndex(std::string tab_name, std::vector<std::string> col_names)
-      : tab_name_(std::move(tab_name)), col_names_(std::move(col_names))
+  DropIndex(std::string tab_name, std::string index_name)
+      : tab_name_(std::move(tab_name)), index_name_(std::move(index_name))
   {}
 };
 
@@ -276,6 +281,17 @@ struct InsertStmt : public TreeNode
   {}
 };
 
+struct BulkInsertStmt : public TreeNode
+{
+  std::string tab_name;
+  std::string file_name;
+  char        delim;
+
+  BulkInsertStmt(std::string tab_name_, std::string file_name_, char delim_)
+      : tab_name(std::move(tab_name_)), file_name(std::move(file_name_)), delim(delim_)
+  {}
+};
+
 struct DeleteStmt : public TreeNode
 {
   std::string                              tab_name;
@@ -323,26 +339,26 @@ struct SelectStmt : public TreeNode
   std::vector<std::shared_ptr<BinaryExpr>> conds;
   JoinStrategy                             join_strategy;
 
-  bool                     has_sort;
-  std::shared_ptr<OrderBy> order;
+  bool has_sort;
 
   bool                                     has_groupby;
   std::shared_ptr<GroupBy>                 groupby;
   std::vector<std::shared_ptr<BinaryExpr>> having;
 
+  std::shared_ptr<OrderBy> order;
   int limit;
 
   SelectStmt(std::vector<std::shared_ptr<Col>> cols_, std::vector<std::shared_ptr<TreeNode>> tabs_,
-      std::vector<std::shared_ptr<BinaryExpr>> conds_, std::shared_ptr<OrderBy> order_,
-      std::shared_ptr<GroupBy> groupby_, std::vector<std::shared_ptr<BinaryExpr>> having_, JoinStrategy join_st_,
+      std::vector<std::shared_ptr<BinaryExpr>> conds_, std::shared_ptr<GroupBy> groupby_,
+      std::vector<std::shared_ptr<BinaryExpr>> having_, JoinStrategy join_st_, std::shared_ptr<OrderBy> order_,
       int limit_)
       : cols(std::move(cols_)),
         tabs(std::move(tabs_)),
         conds(std::move(conds_)),
         join_strategy(join_st_),
-        order(std::move(order_)),
         groupby(std::move(groupby_)),
         having(std::move(having_)),
+        order(std::move(order_)),
         limit(limit_)
   {
     has_sort    = (bool)order;
@@ -359,6 +375,7 @@ struct SemValue
   bool                     sv_bool;
   OrderByDir               sv_orderby_dir;
   JoinStrategy             sv_join_strategy;
+  IndexType                sv_index_type;
   std::vector<std::string> sv_strs;
 
   std::shared_ptr<TreeNode> sv_node;

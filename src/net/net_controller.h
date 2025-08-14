@@ -23,7 +23,7 @@
 #define WSDB_NET_CONTROLLER_H
 #include <unordered_map>
 
-#include "system/handle/record_handle.h"
+#include "common/record.h"
 #include "../common/net/net.h"
 
 namespace wsdb {

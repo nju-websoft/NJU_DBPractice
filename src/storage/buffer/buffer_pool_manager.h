@@ -34,6 +34,9 @@
 #include "common/page.h"
 
 namespace wsdb {
+
+class ReadPageGuard;
+class WritePageGuard;
 struct fid_pid_t
 {
   file_id_t fid;
@@ -128,10 +131,26 @@ public:
    */
   auto FlushAllPages(file_id_t fid) -> bool;
 
-  /**
+ /**
    * Get the frame, used for test
    */
-  auto GetFrame(file_id_t fid, page_id_t pid) -> Frame *;
+ auto GetFrame(file_id_t fid, page_id_t pid) -> Frame*;
+
+  /**
+   * Fetch a page and return a ReadPageGuard for read-only access
+   * @param fid File ID
+   * @param pid Page ID
+   * @return ReadPageGuard for the page
+   */
+  auto FetchPageRead(file_id_t fid, page_id_t pid) -> ReadPageGuard;
+
+  /**
+   * Fetch a page and return a WritePageGuard for read-write access
+   * @param fid File ID
+   * @param pid Page ID
+   * @return WritePageGuard for the page
+   */
+  auto FetchPageWrite(file_id_t fid, page_id_t pid) -> WritePageGuard;
 
 private:
   /// sub procedures used by public APIs, should not be locked by latch

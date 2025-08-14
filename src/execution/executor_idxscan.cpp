@@ -20,17 +20,24 @@
 //
 
 #include "executor_idxscan.h"
+#include "common/value.h"
+#include "expr/condition_expr.h"
+#include <algorithm>
 
 namespace wsdb {
 
-IdxScanExecutor::IdxScanExecutor(TableHandle *tbl, IndexHandle *idx, ConditionVec conds, int cmp_field_num)
-    : AbstractExecutor(Basic), tbl_(tbl), idx_(idx), conds_(std::move(conds)), cmp_field_num_(cmp_field_num)
+IdxScanExecutor::IdxScanExecutor(TableHandle *tbl, IndexHandle *idx, ConditionVec conds, bool is_ascending)
+    : AbstractExecutor(Basic), tbl_(tbl), idx_(idx), conds_(std::move(conds)), is_ascending_(is_ascending)
 {
-  // TODO: generate low key and high key using conds, conds has been rearranged to match the index key prefix
+  WSDB_STUDENT_TODO(l4, t2);
 }
-// TODO(ziqi): implement the following functions to support index scan
-void IdxScanExecutor::Init() {}
-void IdxScanExecutor::Next() {}
-auto IdxScanExecutor::IsEnd() const -> bool { return false; }
+
+void IdxScanExecutor::Init() { WSDB_STUDENT_TODO(l4, t2); }
+
+void IdxScanExecutor::Next() { WSDB_STUDENT_TODO(l4, t2); }
+
+auto IdxScanExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l4, t2); }
+
+auto IdxScanExecutor::GetOutSchema() const -> const RecordSchema * { return &tbl_->GetSchema(); }
 
 }  // namespace wsdb

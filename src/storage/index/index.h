@@ -22,7 +22,7 @@
 #ifndef WSDB_INDEX_H
 #define WSDB_INDEX_H
 
-#include "index_bp_tree.h"
+#include "index_bptree.h"
 #include "index_hash.h"
 
 #endif  // WSDB_INDEX_H

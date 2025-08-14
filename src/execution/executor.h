@@ -32,9 +32,9 @@ class Executor
 public:
   Executor() = default;
 
-  static auto Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHandle *db) -> AbstractExecutorUptr;
+  auto Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHandle *db) -> AbstractExecutorUptr;
 
-  static void Execute(const AbstractExecutorUptr &executor, Context *ctx);
+  void Execute(const AbstractExecutorUptr &executor, Context *ctx);
 };
 }  // namespace wsdb
 

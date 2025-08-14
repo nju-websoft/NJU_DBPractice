@@ -34,6 +34,8 @@
 #define PAGE_RECORD_NUM_OFFSET (PAGE_NEXT_FREE_PAGE_ID_OFFSET + sizeof(page_id_t))
 #define PAGE_HEADER_SIZE (PAGE_RECORD_NUM_OFFSET + sizeof(size_t))
 
+#define PageContentPtr(data) (data + PAGE_HEADER_SIZE)
+
 class Page
 {
 

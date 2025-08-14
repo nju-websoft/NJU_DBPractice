@@ -27,7 +27,7 @@ namespace wsdb {
 
 LRUKReplacer::LRUKReplacer(size_t k) : max_size_(BUFFER_POOL_SIZE), k_(k) {}
 
-auto LRUKReplacer::Victim(frame_id_t *frame_id) -> bool { WSDB_STUDENT_TODO(labs(), f1); }
+auto LRUKReplacer::Victim(frame_id_t *frame_id) -> bool { WSDB_STUDENT_TODO(l1, f1); }
 
 void LRUKReplacer::Pin(frame_id_t frame_id) { WSDB_STUDENT_TODO(l1, f1); }
 

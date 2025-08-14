@@ -23,29 +23,25 @@
 
 namespace wsdb {
 SortMergeJoinExecutor::SortMergeJoinExecutor(JoinType join_type, AbstractExecutorUptr left, AbstractExecutorUptr right,
-    RecordSchemaUptr left_key_schema, RecordSchemaUptr right_key_schema)
+    RecordSchemaUptr left_key_schema, RecordSchemaUptr right_key_schema, CompOp join_op)
     // condition vec is not used in sort merge join, it has been converted to key schemas
     : JoinExecutor(join_type, std::move(left), std::move(right), {}),
       left_key_schema_(std::move(left_key_schema)),
-      right_key_schema_(std::move(right_key_schema))
+      right_key_schema_(std::move(right_key_schema)),
+      join_op_(join_op)
 {}
 
-auto SortMergeJoinExecutor::Compare(const wsdb::Record &left, const wsdb::Record &right) const -> int
-{
-  auto left_key  = std::make_unique<Record>(left_key_schema_.get(), left);
-  auto right_key = std::make_unique<Record>(right_key_schema_.get(), right);
-  return Record::Compare(*left_key, *right_key);
-}
+void SortMergeJoinExecutor::InitInnerJoin() { WSDB_STUDENT_TODO(l3, f2); }
 
-void SortMergeJoinExecutor::InitInnerJoin() { WSDB_STUDENT_TODO(l3, f1); }
+void SortMergeJoinExecutor::NextInnerJoin() { WSDB_STUDENT_TODO(l3, f2); }
 
-void SortMergeJoinExecutor::NextInnerJoin() { WSDB_STUDENT_TODO(l3, f1); }
+auto SortMergeJoinExecutor::IsEndInnerJoin() const -> bool { WSDB_STUDENT_TODO(l3, f2); }
 
-auto SortMergeJoinExecutor::IsEndInnerJoin() const -> bool { WSDB_STUDENT_TODO(l3, f1); }
+void SortMergeJoinExecutor::InitOuterJoin() { WSDB_STUDENT_TODO(l3, f2); }
 
-void SortMergeJoinExecutor::InitOuterJoin() {WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");}
+void SortMergeJoinExecutor::NextOuterJoin() { WSDB_STUDENT_TODO(l3, f2); }
 
-void SortMergeJoinExecutor::NextOuterJoin() {WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");}
+auto SortMergeJoinExecutor::IsEndOuterJoin() const -> bool { WSDB_STUDENT_TODO(l3, f2); }
 
-auto SortMergeJoinExecutor::IsEndOuterJoin() const -> bool { return false; }
+
 }  // namespace wsdb

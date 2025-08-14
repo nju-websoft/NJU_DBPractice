@@ -32,7 +32,7 @@ using namespace ast;
 %define parse.error verbose
 
 // keywords
-%token EXPLAIN SHOW TABLES CREATE TABLE DROP DESC INSERT INTO VALUES DELETE FROM OPEN DATABASE ON ASC AS ORDER GROUP BY SUM AVG MAX MIN COUNT IN STATIC_CHECKPOINT USING NESTED_LOOP_JOIN SORT_MERGE_JOIN
+%token EXPLAIN SHOW TABLES CREATE TABLE DROP DESC INSERT INTO VALUES DELETE FROM OPEN DATABASE ON ASC AS ORDER GROUP BY SUM AVG MAX MIN COUNT IN STATIC_CHECKPOINT USING LOOP MERGE INDEX_BPTREE HASH_KWD
 WHERE HAVING UPDATE SET SELECT INT CHAR FLOAT BOOL INDEX AND JOIN INNER OUTER EXIT HELP TXN_BEGIN TXN_COMMIT TXN_ABORT TXN_ROLLBACK ORDER_BY ENABLE_NESTLOOP ENABLE_SORTMERGE STORAGE PAX NARY LIMIT
 // non-keywords
 %token LEQ NEQ GEQ T_EOF
@@ -66,6 +66,7 @@ WHERE HAVING UPDATE SET SELECT INT CHAR FLOAT BOOL INDEX AND JOIN INNER OUTER EX
 %type <sv_conds> whereClause optWhereClause havingClause optHavingClause
 %type <sv_groupby> optGroupByClause
 %type <sv_join_strategy> optUsingJoinClause
+%type <sv_index_type> optUsingIndexClause
 %type <sv_orderby>  order_clause opt_order_clause
 %type <sv_orderby_dir> opt_asc_desc
 
@@ -150,9 +151,13 @@ dbStmt:
     ;
 
 indexStmt:
-        SHOW INDEX FROM tbName
+        SHOW INDEX ON tbName
     {
         $$ = std::make_shared<ShowIndexes>($4);
+    }
+    |   SHOW INDEX
+    {
+        $$ = std::make_shared<ShowIndexes>("");
     }
 
 ddl:
@@ -168,13 +173,13 @@ ddl:
     {
         $$ = std::make_shared<DescTable>($2);
     }
-    |   CREATE INDEX tbName '(' colNameList ')'
+    |   CREATE INDEX tbName ON tbName '(' colNameList ')' optUsingIndexClause
     {
-        $$ = std::make_shared<CreateIndex>($3, $5);
+        $$ = std::make_shared<CreateIndex>($3, $5, $7, $9);
     }
-    |   DROP INDEX tbName '(' colNameList ')'
+    |   DROP INDEX tbName ON tbName
     {
-        $$ = std::make_shared<DropIndex>($3, $5);
+        $$ = std::make_shared<DropIndex>($5, $3);
     }
     ;
 
@@ -206,7 +211,7 @@ dml:
     ;
 
 selectStmt:
-        SELECT selector FROM tableList optWhereClause opt_order_clause optGroupByClause optHavingClause optUsingJoinClause optLimit
+        SELECT selector FROM tableList optWhereClause optGroupByClause optHavingClause optUsingJoinClause opt_order_clause optLimit
     {
         $$ = std::make_shared<SelectStmt>($2, $4, $5, $6, $7, $8, $9, $10);
     }
@@ -349,12 +354,19 @@ optWhereClause:
     }
     ;
 
+optUsingIndexClause:
+    /* epsilon */ { $$ = BPTREE; }
+    | USING INDEX_BPTREE { $$ = BPTREE; }
+    | USING HASH_KWD { $$ = HASH; }
+
 optUsingJoinClause:
     /* epsilon */ {$$ = NESTED_LOOP;}
-    |   USING NESTED_LOOP_JOIN
+    |   USING LOOP
     {   $$ = NESTED_LOOP;  }
-    |   USING SORT_MERGE_JOIN
-    {   $$ = SORT_MERGE;}
+    |   USING MERGE
+    {   $$ = SORT_MERGE;  }
+    |   USING HASH_KWD
+    {   $$ = HASH_JOIN;  }
 
 conditionAgg:
         aggCol op value

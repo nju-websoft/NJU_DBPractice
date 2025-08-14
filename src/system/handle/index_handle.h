@@ -28,7 +28,7 @@ class IndexHandle
 {
 public:
   IndexHandle(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, table_id_t tid, idx_id_t iid,
-      IndexType index_type);
+      IndexType index_type, RecordSchemaUptr key_schema, std::string index_name);
 
   ~IndexHandle();
 
@@ -53,27 +53,60 @@ public:
 
   [[nodiscard]] auto GetTableId() const -> table_id_t { return table_id_; }
 
-  [[nodiscard]] auto GetIndexId() const -> idx_id_t { return index_id_; }
+  [[nodiscard]] auto GetIndexId() const -> idx_id_t { return index_->GetIndexId(); }
 
   [[nodiscard]] auto GetIndexType() const -> IndexType { return index_->GetIndexType(); }
 
-  auto GetIndex() const -> Index * { return index_; }
+  auto GetIndex() const -> Index* { return index_.get(); }
 
-  auto GetIndexName() const -> const std::string
-  {
-    auto file_name = disk_manager_->GetFileName(index_id_);
-    return file_name.substr(0, file_name.size() - IDX_SUFFIX.size());
-  }
+  auto GetIndexName() const -> const std::string & { return index_name_; }
 
-  auto GetKeySchema() const -> const RecordSchema & { return *key_schema_; }
+  auto GetKeySchema() const -> const RecordSchema & { return *index_->GetKeySchema(); }
+
+  // Additional search operations
+  /**
+   * @brief Search for records matching the given key.
+   *
+   * @param key key has the same schema as the index key schema
+   * @return std::vector<RID>
+   */
+  auto Search(const Record &key) -> std::vector<RID> { return index_->Search(key); }
+
+  /**
+   * @brief Search for records within a range defined by low_key and high_key.
+   *
+   * @param low_key The lower bound key (inclusive).
+   * @param high_key The upper bound key (inclusive).
+   * @return std::vector<RID> A vector of RIDs that match the search criteria.
+   */
+  auto SearchRange(const Record &low_key, const Record &high_key) -> std::vector<RID>;
+
+  auto CheckRecordExists(const Record &record) -> bool;
+
+  // Iterator operations
+  auto Begin() -> std::unique_ptr<Index::IIterator> { return index_->Begin(); }
+
+  auto Begin(const Record &key) -> std::unique_ptr<Index::IIterator> { return index_->Begin(key); }
+
+  auto End() -> std::unique_ptr<Index::IIterator> { return index_->End(); }
+
+  // Index statistics
+  auto GetHeight() -> int { return index_->GetHeight(); }
+
+  auto Size() -> size_t { return index_->Size(); }
+
+  auto IsEmpty() -> bool { return index_->IsEmpty(); }
+
+  // Maintenance operations
+  void Clear() { index_->Clear(); }
+
+  auto PrintIndexStats() -> std::string;
 
 private:
-  DiskManager       *disk_manager_;
-  BufferPoolManager *buffer_pool_manager_;
-  table_id_t         table_id_;
-  idx_id_t           index_id_;
-  Index             *index_;
-  RecordSchemaUptr   key_schema_;
+  table_id_t             table_id_;
+  std::unique_ptr<Index> index_;
+  std::string            index_name_;
+  RecordSchemaUptr       key_schema_holder_;
 };
 
 DEFINE_UNIQUE_PTR(IndexHandle);

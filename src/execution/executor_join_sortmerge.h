@@ -21,20 +21,21 @@
 
 /**
  * @brief Join the two ordered tables by sort-merge join
- * 
+ *
  */
 
 #ifndef WSDB_EXECUTOR_JOIN_SORTMERGE_H
 #define WSDB_EXECUTOR_JOIN_SORTMERGE_H
 
 #include "executor_join.h"
+#include "common/types.h"
 
 namespace wsdb {
 class SortMergeJoinExecutor : public JoinExecutor
 {
 public:
   SortMergeJoinExecutor(JoinType join_type, AbstractExecutorUptr left, AbstractExecutorUptr right,
-      RecordSchemaUptr left_key_schema, RecordSchemaUptr right_key_schema);
+      RecordSchemaUptr left_key_schema, RecordSchemaUptr right_key_schema, CompOp join_op = OP_EQ);
 
 private:
   void InitInnerJoin() override;
@@ -49,17 +50,37 @@ private:
 
   [[nodiscard]] auto IsEndOuterJoin() const -> bool override;
 
+  /**
+   * lexical compare used in equality join
+   */
   [[nodiscard]] auto Compare(const Record &left, const Record &right) const -> int;
+
+  // Tip: you can define these Helper methods for different join types
+  // void InitInequalityJoinLessFamily();
+  // void InitInequalityJoinGreaterFamily();
+  // void NextInequalityJoinLessFamily();
+  // void NextInequalityJoinGreaterFamily();
+  // void InitEqualityJoin();
+  // void NextEqualityJoin();
 
 private:
   RecordSchemaUptr left_key_schema_;
   RecordSchemaUptr right_key_schema_;
+  CompOp           join_op_;  // Join operation type (OP_EQ, OP_LT, OP_GT, OP_LE, OP_GE)
 
   // temporarily store record from the left executor
   RecordUptr left_rec_;
-  // buffer to store equal values in right executor
-  size_t                               right_idx_{0};
+  // buffer to store matching values in right executor (for all join types)
+  size_t right_idx_{0};
+  // TODO: this right buffer can be optimized into an outer memory structure
   std::vector<std::shared_ptr<Record>> right_buffer_;
+  // for outer join, indicates whether a valid right value is found, if not, we need to generate all null values for the
+  // right.
+  bool need_gen_null_{false};
+
+  // For inequality joins: track right iterator position
+  RecordUptr right_rec_;
+  bool       right_exhausted_{false};
 };
 }  // namespace wsdb
 

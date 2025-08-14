@@ -34,7 +34,7 @@ void DiskManager::CreateFile(const std::string &fname)
   }
   std::ofstream file(fname);
   if (!file) {
-    WSDB_FETAL("Create file failed");
+    WSDB_FATAL("Create file failed");
   }
   file.close();
 }
@@ -107,11 +107,11 @@ void DiskManager::ReadFile(file_id_t fid, char *data, size_t size, size_t offset
   }
 }
 
-void DiskManager::WriteFile(file_id_t fid, const char *data, size_t size, int type)
+void DiskManager::WriteFile(file_id_t fid, const char *data, size_t size, int type, int off)
 {
   WSDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), "File not Opened");
   WSDB_ASSERT(type == SEEK_CUR || type == SEEK_SET || type == SEEK_END, "Invalid Type");
-  lseek(fid, 0, type);
+  lseek(fid, off, type);
   if(write(fid, data, size) < 0) {
     WSDB_THROW(WSDB_FILE_WRITE_ERROR, fmt::format("fid: {}", fid));
   }

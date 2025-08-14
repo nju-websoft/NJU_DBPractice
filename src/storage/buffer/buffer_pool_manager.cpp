@@ -19,6 +19,7 @@
 // Created by ziqi on 2024/7/17.
 //
 #include "buffer_pool_manager.h"
+#include "page_guard.h"
 #include "replacer/lru_replacer.h"
 #include "replacer/lru_k_replacer.h"
 
@@ -34,7 +35,7 @@ BufferPoolManager::BufferPoolManager(DiskManager *disk_manager, wsdb::LogManager
   } else if (REPLACER == "LRUKReplacer") {
     replacer_ = std::make_unique<LRUKReplacer>(replacer_lru_k);
   } else {
-    WSDB_FETAL("Unknown replacer: " + REPLACER);
+    WSDB_FATAL("Unknown replacer: " + REPLACER);
   }
   // init free_list_
   for (frame_id_t i = 0; i < static_cast<int>(BUFFER_POOL_SIZE); i++) {
@@ -62,6 +63,18 @@ auto BufferPoolManager::GetFrame(file_id_t fid, page_id_t pid) -> Frame *
 {
   const auto it = page_frame_lookup_.find({fid, pid});
   return it == page_frame_lookup_.end() ? nullptr : &frames_[it->second];
+}
+
+auto BufferPoolManager::FetchPageRead(file_id_t fid, page_id_t pid) -> ReadPageGuard
+{
+  Page *page = FetchPage(fid, pid);
+  return {this, page, fid, pid};
+}
+
+auto BufferPoolManager::FetchPageWrite(file_id_t fid, page_id_t pid) -> WritePageGuard
+{
+  Page *page = FetchPage(fid, pid);
+  return {this, page, fid, pid};
 }
 
 }  // namespace wsdb

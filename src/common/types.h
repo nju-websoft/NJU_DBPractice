@@ -40,6 +40,7 @@ typedef size_t timestamp_t;
 constexpr int32_t INVALID_PAGE_ID  = -1;
 constexpr int32_t INVALID_SLOT_ID  = -1;
 constexpr int32_t INVALID_TABLE_ID = -1;
+constexpr int32_t INVALID_IDX_ID   = -1;
 constexpr int32_t INVALID_FRAME_ID = -1;
 constexpr int32_t INVALID_TXN_ID   = -1;
 constexpr int32_t INVALID_FILE_ID  = -1;
@@ -109,7 +110,8 @@ ENUM_TO_STRING_BODY(JoinType)
 
 #define ENUM_ENTITIES \
   ENUM(NESTED_LOOP)   \
-  ENUM(SORT_MERGE)
+  ENUM(SORT_MERGE)    \
+  ENUM(HASH_JOIN)
 #define ENUM(ent) ENUMENTRY(ent)
 DECLARE_ENUM(JoinStrategy)
 #undef ENUM
@@ -155,5 +157,17 @@ inline auto CompOpToString(CompOp op) -> const char *{
     default: return "UNKNOWN";
   }
 }
+
+#define ENUM_ENTITIES \
+  ENUM(NONE)          \
+  ENUM(BPTREE)        \
+  ENUM(HASH)
+#define ENUM(ent) ENUMENTRY(ent)
+DECLARE_ENUM(IndexType)
+#undef ENUM
+#define ENUM(ent) ENUM2STRING(ent)
+ENUM_TO_STRING_BODY(IndexType)
+#undef ENUM
+#undef ENUM_ENTITIES
 
 #endif  // WSDB_TYPES_H

@@ -1,5 +1,6 @@
 set(SOURCES
         buffer_pool_manager.cpp
+        page_guard.cpp
         replacer/lru_replacer.cpp
         replacer/lru_k_replacer.cpp
         replacer/replacer.cpp

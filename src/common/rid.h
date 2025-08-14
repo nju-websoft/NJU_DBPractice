@@ -46,6 +46,11 @@ public:
 
   auto operator!=(const RID &other) const -> bool { return !(*this == other); }
 
+  auto ToString() const -> std::string
+  {
+    return fmt::format("RID(page_id: {}, slot_id: {})", page_id_, slot_id_);
+  }
+
   // Hash code for this RID
   [[nodiscard]] auto GetHash() const -> size_t { return page_id_ << 16 | slot_id_; }
 

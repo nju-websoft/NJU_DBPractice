@@ -24,16 +24,9 @@
 
 #include "storage/buffer/buffer_pool_manager.h"
 #include "storage/disk/disk_manager.h"
-#include "system/handle/record_handle.h"
+#include "common/record.h"
 
 namespace wsdb {
-
-enum class IndexType
-{
-  NONE,
-  BPTREE,
-  HASH,
-};
 
 class Index
 {
@@ -41,7 +34,7 @@ public:
   Index() = delete;
 
   Index(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, IndexType index_type, idx_id_t index_id,
-      RecordSchema *key_schema)
+      const RecordSchema *key_schema)
       : disk_manager_(disk_manager),
         buffer_pool_manager_(buffer_pool_manager),
         index_type_(index_type),
@@ -53,16 +46,46 @@ public:
 
   virtual void Insert(const Record &key, const RID &rid) = 0;
 
-  virtual void Delete(const Record &key, const RID &rid) = 0;
+  virtual auto Delete(const Record &key) -> bool = 0;
+
+  // Search operations
+  virtual auto Search(const Record &key) -> std::vector<RID> = 0;
+
+  virtual auto SearchRange(const Record &low_key, const Record &high_key) -> std::vector<RID> = 0;
+
+  // Iterator interface for range scans
+  class IIterator
+  {
+  public:
+    virtual ~IIterator()            = default;
+    virtual auto IsValid() -> bool  = 0;
+    virtual void Next()             = 0;
+    virtual auto GetKey() -> Record = 0;
+    virtual auto GetRID() -> RID    = 0;
+  };
+
+  virtual auto Begin() -> std::unique_ptr<IIterator>                  = 0;
+  virtual auto Begin(const Record &key) -> std::unique_ptr<IIterator> = 0;
+  virtual auto End() -> std::unique_ptr<IIterator>                    = 0;
+
+  // Maintenance operations
+  virtual void Clear()           = 0;
+  virtual auto IsEmpty() -> bool = 0;
+  virtual auto Size() -> size_t  = 0;
+
+  // Index statistics and metadata
+  virtual auto GetHeight() -> int = 0;
+  virtual auto GetKeySchema() -> const RecordSchema * { return key_schema_; }
+  virtual auto GetIndexId() -> idx_id_t { return index_id_; }
 
   [[nodiscard]] auto GetIndexType() const -> IndexType { return index_type_; }
 
-private:
+protected:
   DiskManager       *disk_manager_;
   BufferPoolManager *buffer_pool_manager_;
   IndexType          index_type_;
   idx_id_t           index_id_;
-  RecordSchema      *key_schema_;
+  const RecordSchema      *key_schema_;
 };
 
 }  // namespace wsdb

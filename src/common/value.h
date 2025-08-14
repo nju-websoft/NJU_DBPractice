@@ -22,9 +22,9 @@
 #ifndef WSDB_VALUE_H
 #define WSDB_VALUE_H
 
-#include <algorithm>
 #include <string>
 #include <vector>
+#include <limits>
 #include "types.h"
 #include "../../common/error.h"
 #include "../../common/micro.h"
@@ -128,7 +128,7 @@ public:
     return *lval < *rval ? lval : rval;
   }
 
-  [[nodiscard]] virtual auto ToString() const -> std::string { WSDB_FETAL("never reach here"); }
+  [[nodiscard]] virtual auto ToString() const -> std::string { WSDB_FATAL("never reach here"); }
 
   static void CheckBasic(const Value &lval, const Value &rval)
   {
@@ -574,7 +574,7 @@ public:
       case FieldType::TYPE_INT: return ValueFactory::CreateIntValue(*reinterpret_cast<const int32_t *>(data));
       case FieldType::TYPE_FLOAT: return ValueFactory::CreateFloatValue(*reinterpret_cast<const float *>(data));
       case FieldType::TYPE_STRING: return ValueFactory::CreateStringValue(data, size);
-      default: WSDB_FETAL("Unsupported field type");
+      default: WSDB_FATAL("Unsupported field type");
     }
   }
 
@@ -586,7 +586,7 @@ public:
       case FieldType::TYPE_BOOL: return std::make_shared<BoolValue>(false, true);
       case FieldType::TYPE_STRING: return std::make_shared<StringValue>("", 0, true);
       case FieldType::TYPE_ARRAY: return std::make_shared<ArrayValue>(std::vector<ValueSptr>(), true);
-      default: WSDB_FETAL("Unknown FieldType");
+      default: WSDB_FATAL("Unknown FieldType");
     }
   }
 
@@ -631,6 +631,39 @@ public:
     } else {
       WSDB_THROW(WSDB_TYPE_MISSMATCH,
           fmt::format("Type mismatch {} != {}", FieldTypeToString(value->GetType()), FieldTypeToString(type)));
+    }
+  }
+
+  static auto CreateMinValueForType(FieldType type) -> ValueSptr
+  {
+    switch (type) {
+      case TYPE_INT:
+        return CreateIntValue(std::numeric_limits<int32_t>::min());
+      case TYPE_FLOAT:
+        return CreateFloatValue(-std::numeric_limits<float>::max());
+      case TYPE_BOOL:
+        return CreateBoolValue(false);
+      case TYPE_STRING:
+        return CreateStringValue("", 0);
+      default:
+        WSDB_THROW(WSDB_TYPE_MISSMATCH, "Unsupported field type for min value");
+    }
+  }
+
+  static auto CreateMaxValueForType(FieldType type) -> ValueSptr
+  {
+    switch (type) {
+      case TYPE_INT:
+        return CreateIntValue(std::numeric_limits<int32_t>::max());
+      case TYPE_FLOAT:
+        return CreateFloatValue(std::numeric_limits<float>::max());
+      case TYPE_BOOL:
+        return CreateBoolValue(true);
+      case TYPE_STRING:
+        // Create a large string for max comparison
+        return CreateStringValue("\xFF\xFF\xFF\xFF", 4);
+      default:
+        WSDB_THROW(WSDB_TYPE_MISSMATCH, "Unsupported field type for max value");
     }
   }
 };

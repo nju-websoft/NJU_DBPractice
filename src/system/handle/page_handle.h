@@ -24,7 +24,7 @@
 
 #include "common/meta.h"
 #include "common/page.h"
-#include "record_handle.h"
+#include "common/record.h"
 
 namespace wsdb {
 class PageHandle

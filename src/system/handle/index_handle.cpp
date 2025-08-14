@@ -20,39 +20,71 @@
 //
 
 #include "index_handle.h"
+#include "../../../common/error.h"
 
 namespace wsdb {
 IndexHandle::IndexHandle(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, table_id_t tid,
-    idx_id_t iid, IndexType index_type)
-    : disk_manager_(disk_manager),
-      buffer_pool_manager_(buffer_pool_manager),
-      table_id_(tid),
-      index_id_(iid),
-      index_(nullptr)
+    idx_id_t iid, IndexType index_type, RecordSchemaUptr key_schema, std::string index_name)
+    : table_id_(tid),
+      index_(nullptr),
+      index_name_(std::move(index_name)),
+      key_schema_holder_(std::move(key_schema))
 {
-  // FIXME: index information should be parsed here, not just pass the index id into the index
-  // TODO(ziqi): parse index information from FILE_HEADER_PAGE here, including index key schema, index specific
-  // information, etc.
   switch (index_type) {
     case IndexType::BPTREE: {
-      // bpt_param = ParseBPTreeIndex();
-      index_ = new BPTreeIndex(disk_manager, buffer_pool_manager, iid, key_schema_.get());
+      index_ = std::make_unique<BPTreeIndex>(disk_manager, buffer_pool_manager, iid, key_schema_holder_.get());
       break;
     }
     case IndexType::HASH: {
-      // hash_param = ParseHashIndex();
-      index_ = new HashIndex(disk_manager, buffer_pool_manager, iid, key_schema_.get());
+      index_ = std::make_unique<HashIndex>(disk_manager, buffer_pool_manager, iid, key_schema_holder_.get());
       break;
     }
-    default: WSDB_FETAL(fmt::format("{}", static_cast<int>(index_type)));
+    default: WSDB_FATAL(fmt::format("{}", static_cast<int>(index_type)));
   }
 }
 
-void IndexHandle::InsertRecord(const Record &rec) {}
+void IndexHandle::InsertRecord(const Record &rec)
+{
+  WSDB_STUDENT_TODO(l4, t2);
+}
 
-void IndexHandle::DeleteRecord(const Record &rec) {}
+void IndexHandle::DeleteRecord(const Record &rec)
+{
+  WSDB_STUDENT_TODO(l4, t2);
+}
 
-void IndexHandle::UpdateRecord(const Record &old_rec, const Record &new_rec) {}
+void IndexHandle::UpdateRecord(const Record &old_rec, const Record &new_rec)
+{
+  WSDB_STUDENT_TODO(l4, t2);
+}
 
-IndexHandle::~IndexHandle() { delete index_; }
+auto IndexHandle::SearchRange(const Record &low_key, const Record &high_key) -> std::vector<RID>
+{
+  WSDB_STUDENT_TODO(l4, t2);
+  return {};
+}
+
+auto IndexHandle::CheckRecordExists(const Record &record) -> bool
+{
+  WSDB_STUDENT_TODO(l4, t2);
+  return false;
+}
+
+auto IndexHandle::PrintIndexStats() -> std::string
+{
+  if (index_ == nullptr) {
+    return "Index not initialized";
+  }
+
+  std::string stats;
+  stats += fmt::format("Index Type: {}\n", static_cast<int>(index_->GetIndexType()));
+  stats += fmt::format("Index ID: {}\n", index_->GetIndexId());
+  stats += fmt::format("Size: {}\n", index_->Size());
+  stats += fmt::format("Height: {}\n", index_->GetHeight());
+  stats += fmt::format("Empty: {}\n", index_->IsEmpty() ? "Yes" : "No");
+
+  return stats;
+}
+
+IndexHandle::~IndexHandle() = default;
 }  // namespace wsdb

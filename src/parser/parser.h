@@ -33,7 +33,7 @@ public:
 
   DISABLE_COPY_MOVE_AND_ASSIGN(Parser)
 
-  [[nodiscard]] static auto Parse(const std::string &sql) -> std::shared_ptr<ast::TreeNode>;
+  [[nodiscard]] auto Parse(const std::string &sql) -> std::shared_ptr<ast::TreeNode>;
 };
 }  // namespace wsdb
 

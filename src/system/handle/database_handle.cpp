@@ -63,32 +63,38 @@ void DatabaseHandle::Open()
   size_t index_num = 0;
   disk_manager_->ReadFile(db_fd, reinterpret_cast<char *>(&index_num), sizeof(size_t), 0, SEEK_CUR);
   for (size_t i = 0; i < index_num; ++i) {
+    // read table name, index name, and index type
+    std::string table_name;
+    std::string index_name;
     // read index name length
+    size_t table_name_len = 0;
+    disk_manager_->ReadFile(db_fd, reinterpret_cast<char *>(&table_name_len), sizeof(size_t), 0, SEEK_CUR);
+    // read table name
+    char *table_name_mem           = new char[table_name_len + 1];
+    table_name_mem[table_name_len] = '\0';
+    disk_manager_->ReadFile(db_fd, table_name_mem, table_name_len, 0, SEEK_CUR);
+    table_name            = std::string(table_name_mem);
     size_t index_name_len = 0;
     disk_manager_->ReadFile(db_fd, reinterpret_cast<char *>(&index_name_len), sizeof(size_t), 0, SEEK_CUR);
     // read index name
     char *index_name_mem           = new char[index_name_len + 1];
     index_name_mem[index_name_len] = '\0';
     disk_manager_->ReadFile(db_fd, index_name_mem, index_name_len, 0, SEEK_CUR);
-    std::string index_name(index_name_mem);
+    index_name = std::string(index_name_mem);
+    delete[] table_name_mem;
     delete[] index_name_mem;
     // read index type
     IndexType index_type;
     disk_manager_->ReadFile(db_fd, reinterpret_cast<char *>(&index_type), sizeof(IndexType), 0, SEEK_CUR);
     // create index handle
-    // TODO: remove try catch below if IndexManager and indexes are implemented
-    try {
-      auto idx_hdl                    = idx_mgr_->OpenIndex(db_name_, index_name, index_type);
-      indexes_[idx_hdl->GetIndexId()] = std::move(idx_hdl);
-      // update tab_idx_map_
-      auto table_id = indexes_[idx_hdl->GetIndexId()]->GetTableId();
-      if (tab_idx_map_.find(table_id) == tab_idx_map_.end())
-        tab_idx_map_[table_id] = std::list<idx_id_t>();
-      tab_idx_map_[table_id].push_back(idx_hdl->GetIndexId());
-    } catch (WSDBException_ &e) {
-      if (e.type_ != WSDB_NOT_IMPLEMENTED)
-        throw;
-    }
+    auto idx_hdl  = idx_mgr_->OpenIndex(db_name_, index_name, table_name, index_type);
+    auto iid      = idx_hdl->GetIndexId();
+    indexes_[iid] = std::move(idx_hdl);
+    // update tab_idx_map_
+    auto table_id = indexes_[iid]->GetTableId();
+    if (tab_idx_map_.find(table_id) == tab_idx_map_.end())
+      tab_idx_map_[table_id] = std::list<idx_id_t>();
+    tab_idx_map_[table_id].push_back(iid);
   }
   disk_manager_->CloseFile(db_fd);
 }
@@ -145,6 +151,16 @@ void DatabaseHandle::FlushMeta()
   size_t index_num = indexes_.size();
   disk_manager_->WriteFile(db_fd, reinterpret_cast<const char *>(&index_num), sizeof(size_t), SEEK_CUR);
   for (auto &index : indexes_) {
+    // write table name length
+    WSDB_ASSERT(tab_idx_map_.find(index.second->GetTableId()) != tab_idx_map_.end(),
+        fmt::format("Index {} does not belong to any table", index.second->GetIndexName()));
+    WSDB_ASSERT(tables_.find(index.second->GetTableId()) != tables_.end(),
+        fmt::format("Table {} does not exist for index {}", index.second->GetTableId(), index.second->GetIndexName()));
+    auto   table_name     = tables_[index.second->GetTableId()]->GetTableName();
+    size_t table_name_len = table_name.size();
+    disk_manager_->WriteFile(db_fd, reinterpret_cast<const char *>(&table_name_len), sizeof(size_t), SEEK_CUR);
+    // write table name
+    disk_manager_->WriteFile(db_fd, table_name.c_str(), table_name_len, SEEK_CUR);
     // write index name length
     size_t index_name_len = index.second->GetIndexName().size();
     disk_manager_->WriteFile(db_fd, reinterpret_cast<const char *>(&index_name_len), sizeof(size_t), SEEK_CUR);
@@ -177,21 +193,73 @@ void DatabaseHandle::DropTable(const std::string &tab_name)
   for (auto &idx_id : tab_idx_map_[tid]) {
     auto index = indexes_[idx_id].get();
     idx_mgr_->CloseIndex(*index);
-    idx_mgr_->DropIndex(db_name_, index->GetIndexName());
+    idx_mgr_->DropIndex(db_name_, index->GetIndexName(), tab_name);
     indexes_.erase(idx_id);
   }
   tab_idx_map_.erase(tid);
   FlushMeta();
 }
 
-void DatabaseHandle::CreateIndex(const std::string &tab_name, const RecordSchema &key_schema, IndexType idx_type)
+void DatabaseHandle::CreateIndex(
+    const std::string &idx_name, const std::string &tab_name, const RecordSchema &key_schema, IndexType idx_type)
 {
-  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
+  auto table_id = tbl_mgr_->GetTableId(db_name_, tab_name);
+
+  idx_mgr_->CreateIndex(db_name_, idx_name, tab_name, key_schema, idx_type);
+  auto idx_hdl = idx_mgr_->OpenIndex(db_name_, idx_name, tab_name, idx_type);
+  // now insert records of the table into the index
+  auto table = tables_[table_id].get();
+  WSDB_ASSERT(table != nullptr, fmt::format("Table {} does not exist", tab_name));
+  WSDB_ASSERT(table->GetTableId() == table_id,
+      fmt::format("Table ID mismatch: expected {}, got {}", table_id, table->GetTableId()));
+  WSDB_ASSERT(table->GetTableName() == tab_name,
+      fmt::format("Table name mismatch: expected {}, got {}", tab_name, table->GetTableName()));
+  // insert all records into the index
+  auto tab_hdl = tables_[table_id].get();
+  try {
+    for (auto rid = tab_hdl->GetFirstRID(); rid != INVALID_RID; rid = tab_hdl->GetNextRID(rid)) {
+      auto rec = tab_hdl->GetRecord(rid);
+      idx_hdl->InsertRecord(*rec);
+    }
+    // catch WSDB_INDEX_FAIL
+  } catch (const WSDBException_ &e) {
+    if (e.type_ == WSDB_INDEX_FAIL) {
+      // Handle index failure (e.g., log it, clean up, etc.) close the index file and remove it
+      idx_mgr_->CloseIndex(*idx_hdl);
+      idx_mgr_->DropIndex(db_name_, idx_name, tab_name);
+      WSDB_THROW(WSDB_INDEX_FAIL,
+          fmt::format("Failed to create index {} on table {}: {}", idx_name, tab_name, e.short_what()));
+    } else {
+      throw;
+    }
+  }
+  auto index_id = idx_hdl->GetIndexId();
+  indexes_[index_id] = std::move(idx_hdl);
+  tab_idx_map_[table_id].push_back(index_id);
+
+  FlushMeta();
 }
 
-void DatabaseHandle::DropIndex(const std::string &idx_name)
+void DatabaseHandle::DropIndex(const std::string &idx_name, const std::string &tab_name)
 {
-  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "");
+  auto table_id = tbl_mgr_->GetTableId(db_name_, tab_name);
+  if (table_id == INVALID_TABLE_ID) {
+    WSDB_THROW(WSDB_TABLE_MISS, fmt::format("Table {} does not exist", tab_name));
+  }
+  auto idx_id = idx_mgr_->GetIndexId(db_name_, idx_name, tab_name);
+  if (idx_id == INVALID_IDX_ID) {
+    WSDB_THROW(WSDB_INDEX_MISS, fmt::format("Index {} does not exist on table {}", idx_name, tab_name));
+  }
+  auto index = indexes_[idx_id].get();
+  WSDB_ASSERT(index->GetTableId() == table_id, fmt::format("Index {} does not belong to table {}", idx_name, tab_name));
+  WSDB_ASSERT(index->GetIndexName() == idx_name,
+      fmt::format("Index name mismatch: expected {}, got {}", idx_name, index->GetIndexName()));
+  idx_mgr_->CloseIndex(*index);
+  idx_mgr_->DropIndex(db_name_, idx_name, tab_name);
+  indexes_.erase(idx_id);
+  tab_idx_map_[table_id].remove(idx_id);
+
+  FlushMeta();
 }
 
 auto DatabaseHandle::GetTable(const std::string &tab_name) -> TableHandle *

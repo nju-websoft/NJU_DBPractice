@@ -46,9 +46,9 @@ public:
 
   void DropTable(const std::string &tab_name);
 
-  void CreateIndex(const std::string &tab_name, const RecordSchema &key_schema, IndexType idx_type);
+  void CreateIndex(const std::string &idx_name, const std::string &tab_name, const RecordSchema &key_schema, IndexType idx_type);
 
-  void DropIndex(const std::string &idx_name);
+  void DropIndex(const std::string &idx_name, const std::string &tab_name);
 
   [[nodiscard]] auto GetName() const -> std::string { return db_name_; }
 

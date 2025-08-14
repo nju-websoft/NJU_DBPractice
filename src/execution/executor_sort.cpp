@@ -38,7 +38,7 @@ SortExecutor::SortExecutor(AbstractExecutorUptr child, RecordSchemaUptr key_sche
       tmp_file_num_(0),
       merge_result_file_(fmt::format("sort_result_{}", sort_result_fresh_id_++))
 {
-  // comment the line below after testing
+  // For debugging, you can uncomment this line for more frequent sort and merge
   //  max_rec_num_ = 10;
 }
 
@@ -64,17 +64,17 @@ void SortExecutor::Init()
 void SortExecutor::Next()
 {
   if (is_merge_sort_) {
-    WSDB_STUDENT_TODO(L2, f1);
+    WSDB_STUDENT_TODO(l2, f1);
   }
-  WSDB_STUDENT_TODO(L2, t1);
+  WSDB_STUDENT_TODO(l2, t1);
 }
 
 auto SortExecutor::IsEnd() const -> bool
 {
   if (is_merge_sort_) {
-    WSDB_STUDENT_TODO(L2, f1);
+    WSDB_STUDENT_TODO(l2, f1);
   }
-  WSDB_STUDENT_TODO(L2, t1);
+  WSDB_STUDENT_TODO(l2, t1);
 }
 
 auto SortExecutor::Compare(const Record &lhs, const Record &rhs) const -> bool
@@ -93,15 +93,18 @@ auto SortExecutor::GetSortFileName(size_t file_group, size_t file_idx) const -> 
   return fmt::format("{}_{}_{}", merge_result_file_, file_group, file_idx);
 }
 
-void SortExecutor::SortBuffer() { WSDB_STUDENT_TODO(L2, t1); }
+// sort the records according to the key schema in the buffer
+void SortExecutor::SortBuffer() { WSDB_STUDENT_TODO(l2, t1); }
 
-void SortExecutor::DumpBufferToFile(size_t file_idx) { WSDB_STUDENT_TODO(L2, f1); }
+// dump the sorted buffer to the file denoted by file_idx
+void SortExecutor::DumpBufferToFile(size_t file_idx) { WSDB_STUDENT_TODO(l2, f1); }
 
-void SortExecutor::LoadMergeResult() { WSDB_STUDENT_TODO(L2, f1); }
+// load sort result from merge_result_file_handle_ into buffer
+void SortExecutor::LoadMergeResult() { WSDB_STUDENT_TODO(l2, f1); }
 
 void SortExecutor::Merge()
 {
-  // 1. create a heap according to is_desc_
+  // 1. create a heap according to is_desc_, you can use SortHeapNode as the element in the heap
   // 2. read the first tuple from each file
   // 3. pop the top of the heap and write to file: group 1, file: file_index
   // run until all runs are exhausted, then read tuples from group 1, file 0, write to group 0, file 0 ...

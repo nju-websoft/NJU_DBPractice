@@ -75,7 +75,7 @@ public:
    * @param size
    * @param pos ios::beg, ios::cur, ios::end
    */
-  void WriteFile(file_id_t fid, const char *data, size_t size, int type);
+  void WriteFile(file_id_t fid, const char *data, size_t size, int type, int off = 0);
 
   void WriteLog(const std::string &log_file, const std::string &log_string);
 

@@ -29,6 +29,7 @@
 #include "executor_idxscan.h"
 #include "executor_insert.h"
 #include "executor_join_nestedloop.h"
+#include "executor_join_hash.h"
 #include "executor_join_sortmerge.h"
 #include "executor_limit.h"
 #include "executor_projection.h"

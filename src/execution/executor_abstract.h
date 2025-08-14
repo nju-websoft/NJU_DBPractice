@@ -24,7 +24,7 @@
 
 #include "../../common/error.h"
 #include "../../common/micro.h"
-#include "system/handle/record_handle.h"
+#include "common/record.h"
 
 namespace wsdb {
 

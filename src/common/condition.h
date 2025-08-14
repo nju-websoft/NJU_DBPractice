@@ -90,6 +90,12 @@ public:
     return r_val_;
   }
 
+  void SetRVal(ValueSptr &r_val)
+  {
+    WSDB_ASSERT(rval_type_ == kValue, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
+    r_val_ = r_val;
+  }
+
   [[nodiscard]] auto GetOp() const -> CompOp { return op_; }
 
   [[nodiscard]] auto GetSubqueryId() const -> int32_t
@@ -109,6 +115,22 @@ public:
       default: break;
     }
     return str;
+  }
+
+  auto GetReversedCondition() const -> Condition{
+    WSDB_ASSERT(rval_type_ == kColumn, "Only column condition can be reversed");
+    CompOp reversed_op;
+    switch (op_) {
+      case OP_EQ: reversed_op = OP_EQ; break;
+      case OP_NE: reversed_op = OP_NE; break;
+      case OP_LT: reversed_op = OP_GT; break;
+      case OP_GT: reversed_op = OP_LT; break;
+      case OP_LE: reversed_op = OP_GE; break;
+      case OP_GE: reversed_op = OP_LE; break;
+      default:
+        WSDB_THROW(WSDB_UNSUPPORTED_OP, fmt::format("Cannot reverse condition with operator: {}", CompOpToString(op_)));
+    }
+    return Condition(reversed_op, r_col_, l_col_);
   }
 
 private:

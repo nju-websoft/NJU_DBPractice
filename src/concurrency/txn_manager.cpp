@@ -24,7 +24,16 @@
 
 namespace wsdb {
 
-void TxnManager::Begin(txn_id_t txn_id) {}
+void TxnManager::Begin(txn_id_t txn_id)
+{
+  WSDB_ASSERT(txn_id != INVALID_TXN_ID, "Invalid txn_id");
+  WSDB_ASSERT(tid_to_ts_.find(txn_id) == tid_to_ts_.end(), "txn_id already exists");
+  // create a new transaction and set its state to growing
+  std::lock_guard<std::mutex> lock(latch_);
+  auto                        txn = std::make_unique<Transaction>(txn_id);
+  txn->SetState(TxnState::GROWING);
+  tid_to_ts_.emplace(txn_id, std::move(txn));
+}
 
 void TxnManager::Commit(txn_id_t txn_id) {}
 

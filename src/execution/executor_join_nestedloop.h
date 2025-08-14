@@ -51,7 +51,6 @@ private:
   [[nodiscard]] auto IsEndOuterJoin() const -> bool override;
 
 private:
-  // temporarily store record from the left executor
   RecordUptr left_rec_ = nullptr;
   // for outer join, indicates whether a valid right value is found
   bool need_gen_null_{false};

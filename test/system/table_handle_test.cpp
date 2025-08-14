@@ -61,7 +61,7 @@ auto GenRecordUnderSchema(const RecordSchema &schema) -> RecordUptr
 TEST(TableHandle, Simple)
 {
   auto        disk_manager        = std::make_unique<DiskManager>();
-  auto        buffer_pool_manager = std::make_unique<BufferPoolManager>(disk_manager.get(), nullptr);
+  auto        buffer_pool_manager = std::make_unique<BufferPoolManager>(disk_manager.get(), nullptr, REPLACER_LRU_K);
   auto        table_manager       = std::make_unique<TableManager>(disk_manager.get(), buffer_pool_manager.get());
   std::string table_name          = "table_handle_simple";
   if (!std::filesystem::exists(TEST_DIR))

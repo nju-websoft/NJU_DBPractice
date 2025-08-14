@@ -34,7 +34,6 @@ TableHandle::TableHandle(DiskManager *disk_manager, BufferPoolManager *buffer_po
   // set table id for table handle;
   schema_->SetTableId(table_id_);
   if (storage_model_ == PAX_MODEL) {
-    field_offset_.resize(schema_->GetFieldCount());
     // calculate offsets of fields
     WSDB_STUDENT_TODO(l1, f2);
   }
@@ -94,7 +93,7 @@ auto TableHandle::WrapPageHandle(Page *page) -> PageHandleUptr
   switch (storage_model_) {
     case StorageModel::NARY_MODEL: return std::make_unique<NAryPageHandle>(&tab_hdr_, page);
     case StorageModel::PAX_MODEL: return std::make_unique<PAXPageHandle>(&tab_hdr_, page, schema_.get(), field_offset_);
-    default: WSDB_FETAL("Unknown storage model");
+    default: WSDB_FATAL("Unknown storage model");
   }
 }
 

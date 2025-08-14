@@ -10,6 +10,7 @@ set(SOURCES
         executor_update.cpp
         executor_join.cpp
         executor_join_nestedloop.cpp
+        executor_join_hash.cpp
         executor_join_sortmerge.cpp
         executor_aggregate.cpp
         executor_sort.cpp
@@ -17,4 +18,4 @@ set(SOURCES
 )
 
 add_library(execution SHARED ${SOURCES})
-target_link_libraries(execution system_handle expr server_net)
+target_link_libraries(execution expr server_net system_db)

@@ -102,12 +102,14 @@ single_op ";"|"("|")"|","|"*"|"="|">"|"<"|"."
 "MIN" { return MIN; }
 "AVG" { return AVG; }
 "USING" {return USING;}
-"NESTED_LOOP_JOIN" {return NESTED_LOOP_JOIN; }
-"SORT_MERGE_JOIN" {return SORT_MERGE_JOIN; }
+"LOOP" {return LOOP; }
+"MERGE" {return MERGE; }
 "STORAGE" {return STORAGE; }
-"NARY" {return NARY; }
-"PAX" {return PAX; }
-"LIMIT" {return LIMIT; }
+"BPTREE" { return INDEX_BPTREE; }
+"HASH" { return HASH_KWD; }
+"NARY" { return NARY; }
+"PAX" { return PAX; }
+"LIMIT" { return LIMIT; }
 "TRUE" {
     yylval->sv_bool = true;
     return VALUE_BOOL;

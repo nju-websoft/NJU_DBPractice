@@ -31,17 +31,21 @@ InsertExecutor::InsertExecutor(TableHandle *tbl, std::list<IndexHandle *> indexe
   out_schema_ = std::make_unique<RecordSchema>(fields);
 }
 
-void InsertExecutor::Init() { WSDB_FETAL("InsertExecutor does not support Init"); }
+void InsertExecutor::Init()
+{
+  // For lab02, you can simply skip step 2 and 3.
+  // 1: Check against existing records in indexes, WSDB_STUDENT_TODO(l4, t2);
+  // 2: Check for duplicates within the same batch, WSDB_STUDENT_TODO(l4, t2);
+  // 3: Perform insertions only after all validations pass
+  int count = 0;  // number of inserted records
+  WSDB_STUDENT_TODO(l2, t1);
+  std::vector<ValueSptr> values{ValueFactory::CreateIntValue(count)};
+  record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
+}
 
 void InsertExecutor::Next()
 {
   // number of inserted records
-  int count = 0;
-
-  WSDB_STUDENT_TODO(l2, t1);
-
-  std::vector<ValueSptr> values{ValueFactory::CreateIntValue(count)};
-  record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
   is_end_ = true;
 }
 

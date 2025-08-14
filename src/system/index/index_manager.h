@@ -22,7 +22,7 @@
 #ifndef WSDB_INDEX_MANAGER_H
 #define WSDB_INDEX_MANAGER_H
 #include "system/handle/index_handle.h"
-#include "system/handle/record_handle.h"
+#include "common/record.h"
 namespace wsdb {
 class IndexManager
 {
@@ -36,13 +36,24 @@ public:
   ~IndexManager() = default;
 
   void CreateIndex(
-      const std::string &db_name, const std::string &index_name, const RecordSchema &schema, IndexType index_type);
+      const std::string &db_name, const std::string &index_name, const std::string &table_name, const RecordSchema &schema, IndexType index_type);
 
-  void DropIndex(const std::string &db_name, const std::string &index_name);
+  void DropIndex(const std::string &db_name, const std::string &index_name, const std::string &table_name);
 
-  IndexHandleUptr OpenIndex(const std::string &db_name, const std::string &index_name, IndexType index_type);
+  auto OpenIndex(const std::string &db_name, const std::string &index_name, const std::string table_name, IndexType index_type) -> IndexHandleUptr;
 
   void CloseIndex(const IndexHandle &index_handle);
+
+  auto GetIndexId(const std::string &db_name, const std::string &index_name, const std::string &table_name) -> idx_id_t;
+
+  // Additional utility methods
+  auto IndexExists(const std::string &db_name, const std::string &index_name, const std::string &table_name) -> bool;
+  
+  // Metadata management
+  auto ListIndexes(const std::string &db_name) -> std::vector<std::string>;
+
+  // Bulk operations
+  void RebuildIndex(const std::string &db_name, const std::string &index_name);
 
 private:
   DiskManager       *disk_manager_;

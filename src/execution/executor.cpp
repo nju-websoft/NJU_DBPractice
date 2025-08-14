@@ -42,6 +42,20 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
     return std::make_unique<DescTableExecutor>(db->GetTable(desc_table->table_name_));
   } else if (const auto show_table = std::dynamic_pointer_cast<ShowTablesPlan>(plan)) {
     return std::make_unique<ShowTablesExecutor>(db);
+  } else if (const auto create_index = std::dynamic_pointer_cast<CreateIndexPlan>(plan)) {
+    return std::make_unique<CreateIndexExecutor>(create_index->index_name_,
+        create_index->table_name_,
+        std::move(create_index->key_schema_),
+        create_index->index_type_,
+        db);
+  } else if (const auto drop_index = std::dynamic_pointer_cast<DropIndexPlan>(plan)) {
+    return std::make_unique<DropIndexExecutor>(drop_index->table_name_, drop_index->index_name_, db);
+  } else if (const auto show_index = std::dynamic_pointer_cast<ShowIndexesPlan>(plan)) {
+    if (show_index->table_name_.empty()) {
+      return std::make_unique<ShowIndexesExecutor>(db);
+    } else {
+      return std::make_unique<ShowIndexesExecutor>(show_index->table_name_, db);
+    }
   } else if (const auto insert = std::dynamic_pointer_cast<InsertPlan>(plan)) {
     if (db->GetTable(insert->table_name_) == nullptr) {
       WSDB_THROW(WSDB_TABLE_MISS, insert->table_name_);
@@ -78,7 +92,7 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
     return std::make_unique<IdxScanExecutor>(db->GetTable(idx_scan->table_name_),
         db->GetIndex(idx_scan->idx_id_),
         idx_scan->conds_,
-        idx_scan->matched_fields_);
+        true);  // Default to ascending order
   } else if (const auto sort_plan = std::dynamic_pointer_cast<SortPlan>(plan)) {
     return std::make_unique<SortExecutor>(
         Translate(sort_plan->child_, db), std::move(sort_plan->key_schema_), sort_plan->is_desc_);
@@ -88,12 +102,20 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
     if (join_plan->strategy_ == NESTED_LOOP) {
       return std::make_unique<NestedLoopJoinExecutor>(
           join_plan->type_, Translate(join_plan->left_, db), Translate(join_plan->right_, db), join_plan->conds_);
+    } else if (join_plan->strategy_ == HASH_JOIN) {
+      return std::make_unique<HashJoinExecutor>(join_plan->type_,
+          Translate(join_plan->left_, db),
+          Translate(join_plan->right_, db),
+          std::move(join_plan->left_key_schema_),
+          std::move(join_plan->right_key_schema_),
+          std::move(join_plan->conds_));
     } else if (join_plan->strategy_ == SORT_MERGE) {
       return std::make_unique<SortMergeJoinExecutor>(join_plan->type_,
           Translate(join_plan->left_, db),
           Translate(join_plan->right_, db),
           std::move(join_plan->left_key_schema_),
-          std::move(join_plan->right_key_schema_));
+          std::move(join_plan->right_key_schema_),
+          join_plan->join_op_);
     }
   } else if (const auto agg_plan = std::dynamic_pointer_cast<AggregatePlan>(plan)) {
     auto agg_schema   = std::make_unique<RecordSchema>(agg_plan->agg_fields);
@@ -104,33 +126,15 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
     return std::make_unique<LimitExecutor>(Translate(lim->child_, db), lim->limit_);
 
   } else {
-    WSDB_FETAL("Unknown plan type");
+    WSDB_FATAL("Unknown plan type");
   }
   return nullptr;
 }
+
 void Executor::Execute(const AbstractExecutorUptr &executor, Context *ctx)
 {
   if (executor->GetType() == TXN) {
     // do transaction executor if implemented
-  } else if (executor->GetType() == DDL || executor->GetType() == DML) {
-    // ddl should first call next, and then check for more records
-    auto header = executor->GetOutSchema();
-    executor->Next();
-    ctx->nt_ctl_->SendRecHeader(ctx->client_fd_, header);
-    auto rec = executor->GetRecord();
-    if (rec != nullptr) {
-      ctx->nt_ctl_->SendRec(ctx->client_fd_, rec.get());
-    }
-    while (!executor->IsEnd()) {
-      executor->Next();
-      if (executor->IsEnd()) {
-        break;
-      }
-      rec = executor->GetRecord();
-      WSDB_ASSERT(rec != nullptr, "");
-      ctx->nt_ctl_->SendRec(ctx->client_fd_, rec.get());
-    }
-    ctx->nt_ctl_->SendRecFinish(ctx->client_fd_);
   } else {
     auto header = executor->GetOutSchema();
     ctx->nt_ctl_->SendRecHeader(ctx->client_fd_, header);

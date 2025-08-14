@@ -89,6 +89,9 @@ namespace wsdb {
   ENUM(WSDB_DB_NOT_OPEN)       \
   ENUM(WSDB_TABLE_MISS)        \
   ENUM(WSDB_TABLE_EXIST)       \
+  ENUM(WSDB_INDEX_FAIL)        \
+  ENUM(WSDB_INDEX_EXISTS)      \
+  ENUM(WSDB_INDEX_MISS)        \
   ENUM(WSDB_GRAMMAR_ERROR)     \
   ENUM(WSDB_FIELD_MISS)        \
   ENUM(WSDB_STRING_OVERFLOW)   \
@@ -138,7 +141,7 @@ private:
 
 #define WSDB_THROW(type, msg) throw wsdb::WSDBException_(type, fmt::format("{}({})", __FILE__, __LINE__), __func__, msg)
 
-#define WSDB_FETAL(msg)                                                                                 \
+#define WSDB_FATAL(msg)                                                                                 \
   do {                                                                                                  \
     std::cerr << fmt::format("Fetal <{}({})::{}>: {}", __FILE__, __LINE__, __func__, msg) << std::endl; \
     exit(1);                                                                                            \

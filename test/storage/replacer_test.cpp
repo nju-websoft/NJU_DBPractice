@@ -113,6 +113,7 @@ TEST(ReplacerTest, LRU)
       ASSERT_EQ(victim_frame_id, frame_id);
     }
   }
+
 }
 
 TEST(ReplacerTest, LRUK)

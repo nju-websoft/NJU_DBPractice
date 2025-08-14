@@ -69,19 +69,8 @@ TableHandleUptr TableManager::OpenTable(
   cursor += sizeof(TableHeader);
   // parse field schemas, field is arranged as a formatted string:
   // field_name1:field_type1:field_size1:field_name2:field_type2:field_size2:...
-  std::vector<RTField> fields;
-  fields.reserve(header.field_num_);
-  for (size_t i = 0; i < header.field_num_; ++i) {
-    FieldSchema field;
-    field.field_name_ = cursor;
-    cursor += field.field_name_.size() + 1;
-    field.field_type_ = *reinterpret_cast<FieldType *>(cursor);
-    cursor += sizeof(FieldType);
-    field.field_size_ = *reinterpret_cast<size_t *>(cursor);
-    cursor += sizeof(size_t);
-    fields.push_back({.field_ = field});
-  }
-  schema = std::make_unique<RecordSchema>(fields);
+  schema = std::make_unique<RecordSchema>();
+  cursor += schema->Deserialize(cursor);
   delete[] file_hdr_data;
   return std::make_unique<TableHandle>(disk_manager_, buffer_pool_manager_, table_file, header, schema, storage_model);
 }
@@ -103,12 +92,11 @@ void TableManager::WriteTableHeader(table_id_t tid, const TableHeader &header, c
   disk_manager_->WriteFile(tid, reinterpret_cast<const char *>(&header), sizeof(TableHeader), SEEK_SET);
   // 4. write schema following the table header
   // field_name1:field_type1:field_size1:field_name2:field_type2:field_size2:..
-  for (size_t i = 0; i < schema.GetFieldCount(); ++i) {
-    const FieldSchema &field = schema.GetFieldAt(i).field_;
-    disk_manager_->WriteFile(tid, field.field_name_.c_str(), field.field_name_.size() + 1, SEEK_CUR);
-    disk_manager_->WriteFile(tid, reinterpret_cast<const char *>(&field.field_type_), sizeof(FieldType), SEEK_CUR);
-    disk_manager_->WriteFile(tid, reinterpret_cast<const char *>(&field.field_size_), sizeof(size_t), SEEK_CUR);
-  }
+  auto serialized_size = schema.SerializeSize();
+  auto serialized_data = new char[serialized_size];
+  schema.Serialize(serialized_data);
+  disk_manager_->WriteFile(tid, serialized_data, serialized_size, SEEK_END);
+  delete[] serialized_data;
 }
 
 auto TableManager::GetTableId(const std::string &db_name, const std::string &table_name) -> table_id_t

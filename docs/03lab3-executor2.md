@@ -187,9 +187,9 @@ Sort merge join也可以支持高效的等值连接，其时间复杂度也为O(
    $ ./client
    ```
    
-   关于client的更多用法可参考00basic.md或使用-h参数查看。如果`wsdb`因为端口监听异常启动失败（通常原因是已经启用了一个wsdb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间wsdb释放资源后再重新启动。
-
-   * 提示：你可以cd到`wsdb/test/sql/`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，客户端的基本使用方法请参考[开始之前](./00basic.md)。
+   关于client的更多用法可参考参考[开始之前](./00basic.md)或使用-h参数查看。如果`wsdb`因为端口监听异常启动失败（通常原因是已经启用了一个wsdb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间wsdb释放资源后再重新启动。
+   
+      * 提示：你可以cd到`wsdb/test/sql/`目录下通过脚本`evaluate.sh`进行测试。
 
       ```bash
       $ bash evaluate.sh <build directory> <lab directory> <sql directory>

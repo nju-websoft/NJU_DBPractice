@@ -26,8 +26,9 @@ B+树的主要操作包括插入、删除和查找。插入和删除操作会在
 - 叶子节点通过链表连接，支持范围查询
 - 树的高度保持平衡，保证查询性能
 
-开始之前，我们建议使用[可视化工具](https://www.cs.usfca.edu/~galles/visualization/BPlusTree.html)熟悉B+树的插入与删除操作，**不需要考虑重复值**。
+开始之前，我们建议使用[可视化工具](https://www.cs.usfca.edu/~galles/visualization/BPlusTree.html)熟悉B+树的插入与删除操作，重点理解插入后的内部节点和叶节点如何分裂（Split），以及删除某个键值导致叶节点或内部节点重新分布（Redistribute）。**不需要考虑重复值**。
 
+需要实现的所有代码均在`src/storage/index/index_bptree.cpp`和`src/storage/index/index_bptree.h`中。
 
 #### 页面结构
 - **BPTreePage**: 所有节点的基类，包含基本的页面信息
@@ -298,19 +299,21 @@ B+树的主要操作包括插入、删除和查找。插入和删除操作会在
 #### 3. 常见错误
 - 忘记更新父指针
 - 数组越界访问
-- 页面pinning/unpinning不匹配：建议使用`PageGuard`类，可以在析构函数中自动释放页面。
+- 页面pinning/unpinning不匹配：建议使用`PageGuard`类，可以在析构函数中自动释放页面。例如，你可以使用下面的代码访问leaf page：
+```c++
+auto leaf_guard = tree_->buffer_pool_manager_->FetchPageRead(tree_->index_id_, leaf_page_id_);
+auto leaf_node  = reinterpret_cast<const BPTreeLeafPage *>(PageContentPtr(leaf_guard.GetData()));
+```
 - 二分查找的边界条件错误：建议可以先用朴素遍历确保逻辑是正确的。
 
 #### 4. 并发
 为了简化实现，在做读写操作时只需要将整个索引锁住即可。对于更高效的并发控制算法，感兴趣的同学可以了解一下`latch crabbing`，实现更高效的并发算法。
 
-需要实现的所有代码均在`src/storage/index/index_bptree.cpp`和`src/storage/index/index_bptree.h`中。
-
 ### t2: 索引句柄（Index Handle）和索引扫描算子（IdxScanExecutor）（10 pts）
-本题需要索引通过句柄和算子集成到执行器中。
+本题需要索引通过句柄和算子集成到执行器中。在确保`t1`通过测试后，删除`src/storage/index/index_bptree.cpp`第30行的宏定义`#define TEST_BPTREE`以开始实验`t2`。
 首先完成Index Handle，其最主要的任务就是根据索引的Key Schema从原始记录中提取key value，然后调用索引的插入，删除和更新。
 
-其次需要在实验2完成的插入，和更新算子中加入索引的Uniqueness检查，即如果发现更新的记录违反了索引中无重复值的假设，需要抛出WSDB_INDEX_FAIL异常。
+其次需要在实验2完成的插入和更新算子中加入索引的Uniqueness检查，即如果发现更新的记录违反了索引中无重复值的假设，需要抛出`WSDB_INDEX_FAIL`异常。
 
 最后，你需要实现`IdxScanExecutor`。
 在此之前你需要先了解查询优化器中索引选择的逻辑。
@@ -485,4 +488,132 @@ conds = [
     Condition(city, OP_EQ, 'Beijing')  // 需要额外的Filter操作
 ]
 ```
-生成的Low key为`<'IT',50000>`，High key为`<String.Max(), Integer.Max()>`。加入表中刚好存在`<'IT',50000>`，由于比较符号有OP_GT(`>`)，所以该值应该被过滤。
+生成的Low key为`<'IT',50000>`，High key为`<String.Max(), Integer.Max()>`。加入表中刚好存在`<'IT',50000>`，由于比较符号中存在OP_GT(`>`)，所以该值应该被过滤。
+
+### 附加题f1: 哈希索引
+
+Hash索引是数据库系统中另一种重要的索引结构，与B+树索引相比具有不同的特点和适用场景。Hash索引基于哈希函数将键映射到存储桶中，提供O(1)的平均查找时间复杂度，但不支持范围查询和有序遍历。
+
+#### 核心思想
+Hash索引使用哈希函数将索引键映射到固定数量的存储桶（bucket）中。每个存储桶可以存储多个键值对，当发生哈希冲突时，同一个桶中的多个条目通过链式存储或开放寻址等方式处理。
+
+#### 主要特点
+- **等值查询高效**：通过哈希函数直接定位到目标桶，平均时间复杂度为O(1)
+- **不支持范围查询**：由于哈希函数的随机性，相邻的键可能被映射到完全不同的桶中
+- **不支持有序遍历**：键在桶中的存储顺序与原始键的顺序无关
+- **冲突处理**：当多个键映射到同一个桶时，需要通过链式存储等方式解决冲突
+
+需要完成的代码在`src/storage/index/index_hash.cpp`和`src/storage/index/index_hash.h`。
+
+#### WSDB中的Hash索引页面组织
+WSDB中的Hash索引采用三层页面结构来组织数据：
+
+1. 头部页面（Header Page）
+- **页面ID**: `FILE_HEADER_PAGE_ID` (通常为0)
+- **作用**: 存储Hash索引的全局元信息
+- **主要字段**:
+  - `bucket_count_`: 桶的总数量
+  - `total_entries_`: 索引中键值对的总数
+  - `next_page_id_`: 用于分配新页面的计数器
+
+2. 目录页面（Directory Page）
+- **页面ID**: `HASH_KEY_PAGE` (固定为1)
+- **作用**: 存储桶页面ID的目录，实现从桶索引到实际存储页面的映射
+- **主要字段**:
+  - `bucket_page_ids_[]`: 存储每个桶对应的页面ID数组
+  - 如果某个桶尚未创建，对应的页面ID为`INVALID_PAGE_ID`
+
+3. 桶页面（Bucket Page）
+- **页面ID**: 动态分配（从页面2开始）
+- **作用**: 实际存储键值对数据
+- **主要字段**:
+  - `next_page_id_`: 指向溢出页面的指针，用于处理桶容量不足的情况
+  - `entry_count_`: 当前页面中存储的条目数量
+  - `data_[]`: 存储序列化的键值对数据
+
+#### 数据组织流程
+1. **插入操作**: 通过哈希函数计算键的桶索引 → 在目录页面中查找对应的桶页面ID → 在桶页面中插入键值对
+2. **查找操作**: 计算键的桶索引 → 定位桶页面 → 在桶页面及其溢出页面中线性搜索匹配的键
+3. **溢出处理**: 当桶页面容量不足时，创建新的溢出页面并通过链表连接
+
+#### 哈希函数设计
+WSDB使用Record类内置的Hash()方法计算哈希值，然后对桶数量取模得到桶索引：
+```cpp
+size_t bucket_index = key.Hash() % bucket_count_;
+```
+
+#### 冲突解决
+采用链式存储方式解决哈希冲突：
+- 每个桶对应一个或多个页面
+- 当页面容量不足时，通过`next_page_id_`字段链接到溢出页面
+- 在同一个桶中线性搜索匹配的键
+
+#### 范围查询的特殊处理
+由于Hash索引不支持高效的范围查询，`SearchRange`方法需要扫描所有桶并在应用层过滤结果，这是Hash索引的固有限制。
+
+#### 迭代器实现
+Hash索引的迭代器需要按桶的顺序遍历所有键值对，由于Hash索引不保证顺序，迭代结果的顺序是不确定的。
+
+## 开放问题f2: 索引性能分析（0 pts）
+请尝试构造测试样例与测试脚本，分析不同索引在不同过滤条件下的查询性能，并在报告中写下你的结论与思考。
+
+## 作业评分与提交
+
+### 评分标准
+
+1. 实验报告（10%）：实现思路，遇到的困难以及如何解决的，实验结果，对框架代码和实验的建议，以及在报告中出现的思考等，请尽量避免直接粘贴代码，建议2-4页。
+
+2. 功能分数（90%）：
+    1. t1需要通过`test/storage/bptree_test.cpp`中的所有Gtest测试。
+
+    2. t2 需要<u>**顺序**</u>通过`wsdb/test/sql/lab04/basic`下的SQL测试并与`expected`输出比较，无差异获得该小题满分。
+
+    3. f1需要通过`test/storage/hashindex_test.cpp`中的所有Gtest测试。<u>**顺序**</u>通过`wsdb/test/sql/lab04/bonus`下的SQL测试并与`expected`输出比较，无差异获得该小题满分。
+
+**重要：请勿尝试抄袭代码或搬运他人实验结果，我们会严格审查，如被发现将取消大实验分数，情节严重可能会对课程总评产生影响!!!**
+
+3. 测试方法：编译`wsdb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
+   
+   ```shell
+   $ ./wsdb
+   $ ./client
+   ```
+   
+   关于client的更多用法可参考参考[开始之前](./00basic.md)或使用-h参数查看。如果`wsdb`因为端口监听异常启动失败（通常原因是已经启用了一个wsdb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间wsdb释放资源后再重新启动。
+
+   * 提示：你可以cd到`wsdb/test/sql/`目录下通过脚本`evaluate.sh`进行测试。
+
+      ```bash
+      $ bash evaluate.sh <build directory> <lab directory> <sql directory>
+      # e.g. bash evaluate.sh /path/to/wsdb/build lab03 bonus
+      ```
+
+### 提交材料
+
+1. 实验报告（提交一份PDF，命名格式：lab4\_学号\_姓名.pdf）：请在报告开头写上相关信息。
+   
+   | 学号     | 姓名 | 邮箱                      | 完成题目 |
+      | -------- | ---- | ------------------------- | -------- |
+   | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | t1/t2/f1/f2    |
+
+2. 代码：`wsdb/src`文件夹
+
+*提交示例：请将以上两部分内容打包并命名为lab4\_学号\_姓名.zip（例如lab4_123456_张三.zip）并上传至提交平台，请确保解压后目录树如下：*
+
+```
+├── lab4_123456_张三.pdf
+└── src
+ ├── CMakeLists.txt
+ ├── common
+ ├── concurrency
+ ├── execution
+ ├── expr
+ ├── log
+ ├── main.cpp
+ ├── net
+ ├── optimizer
+ ├── parser
+ ├── plan
+ ├── storage
+ └── system
+```

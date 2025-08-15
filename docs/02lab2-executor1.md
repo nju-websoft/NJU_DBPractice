@@ -128,11 +128,11 @@ private:
 
 - 以及继承自`AbstractExecutor`的`record_`用于存放生成的记录
 
-  ```c++
-  void ShowTablesExecutor::Next()
-  {
+```c++
+void ShowTablesExecutor::Next()
+{
   if (is_end_) {
-    WSDB_FETAL(ShowTablesExecutor, Next, "ShowTablesExecutor is end");
+    WSDB_FATAL("ShowTablesExecutor is end");
   }
   auto &tables = db_->GetAllTables();
   if (cursor_ >= tables.size()) {
@@ -144,14 +144,16 @@ private:
   auto tab_hdl = it->second.get();
   auto values  = MakeTableDescValue(db_->GetName(),
       tab_hdl->GetTableName(),
+      tab_hdl->GetTableId(),
       tab_hdl->GetSchema().GetFieldCount(),
       tab_hdl->GetSchema().GetRecordLength(),
       StorageModelToString(tab_hdl->GetStorageModel()),
-      db_->GetIndexNum(tab_hdl->GetTableId()));
+      db_->GetIndexNum(tab_hdl->GetTableId()),
+      true);  // Include table ID for SHOW TABLES
   record_      = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
   cursor_++;
-  }
-  ```
+}
+```
 
   在`ShowTablesExecutor`的`Next`函数中，首先检查 table 信息是否已全部输出，如果没有则根据 cursor_ 位置获取对应的 table 信息，并生成记录，最后递增 cursor_ 。
 
@@ -181,7 +183,7 @@ select name, score, remark from nju_db where group_id = 2 and l1_score > 90 orde
 * `system/handle/index_handle.h`
 * `common/value.h`
 
-### 附加实验 f1: 嵌套循环内连接与归并排序（10pts）
+### 附加实验 f1: 嵌套循环内连接与归并排序（10 pts）
 
 `t1`的executor_sort假定排序的中间结果能够全部载入内存。然而在大多数应用场景中，可能需要对大量数据进行排序，并且往往没有足够的内存空间支持内排序。在本次实验中，你需要在前一次实验实现的内排序基础上完成外排序，并额外实现嵌套循环连接的内连接算子，能够执行以下SQL，该SQL会对两张含有1000条记录的表做一次笛卡尔积，并对得到的1000*1000条数据根据i_id和s_i_id排序：
 
@@ -261,13 +263,6 @@ def nestedloop_join(left, right, condition):
 
         * `04_merge_sort.sql`: 10pts
 
-    * 提示：你可以cd到`wsdb/test/sql/lab02`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，**注意：脚本并不负责项目的编译，所以请在运行脚本之前手动编译。**
-
-      ```bash
-      $ bash evaluate.sh <bin directory> <test sql directory>
-      # e.g. bash evaluate.sh /path/to/wsdb/cmake-build-debug/bin t1
-      ```
-
 **重要：请勿尝试抄袭代码或搬运他人实验结果，我们会严格审查，如被发现将取消大实验分数，情节严重可能会对课程总评产生影响!!!**
 
 3. 测试方法：编译`wsdb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
@@ -278,6 +273,13 @@ def nestedloop_join(left, right, condition):
    ```
    
    关于client的更多用法可参考00basic.md或使用-h参数查看。如果`wsdb`因为端口监听异常启动失败（通常原因是已经启用了一个wsdb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间wsdb释放资源后再重新启动。
+
+   * 提示：你可以cd到`wsdb/test/sql/`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，客户端的基本使用方法请参考[开始之前](./00basic.md)。
+
+      ```bash
+      $ bash evaluate.sh <build directory> <lab directory> <sql directory>
+      # e.g. bash evaluate.sh /path/to/wsdb/build lab02 t1
+      ```
 
 ### 提交材料
 

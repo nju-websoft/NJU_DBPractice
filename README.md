@@ -11,7 +11,7 @@ Six Labs are included in this repository, and the details of each lab are as fol
 * Lab 1: Storage, implement the disk manager and the buffer manager.
 * Lab 2: Executor, Implement `INSERT`, `UPDATE`, and `DELETE` queries and basic operators like filter, sort, etc.
 * Lab 3. Executor, Implement `JOIN` and `AGGREGATE` queries.
-* Lab 4 (future): Index, implement the index manager and B+ tree index.
+* Lab 4 : Index, implement the index handle and B+ tree index.
 * Lab 5 (future): Concurrency, implement SS2PL concurrency control and deadlock detection.
 * Lab 6 (future): Recovery, implement log manager and recovery manager to support WAL/ARIES recovery algorithm.
 

@@ -6,27 +6,61 @@
 
 This repository is a toy RDBMS for NJU "Introduction to Databases" course. It is implemented in C++ and supports a
 subset of SQL queries.
-Six Labs are included in this repository, and the details of each lab are as follows:
 
-* Lab 1: Storage, implement the disk manager and the buffer manager.
-* Lab 2: Executor, Implement `INSERT`, `UPDATE`, and `DELETE` queries and basic operators like filter, sort, etc.
-* Lab 3. Executor, Implement `JOIN` and `AGGREGATE` queries.
-* Lab 4 : Index, implement the index handle and B+ tree index.
-* Lab 5 (future): Concurrency, implement SS2PL concurrency control and deadlock detection.
-* Lab 6 (future): Recovery, implement log manager and recovery manager to support WAL/ARIES recovery algorithm.
+Four Labs are included in this repository, and the details of each lab are as follows:
+
+* **Lab01**: Buffer Pool - Implement the disk manager and buffer pool manager
+* **Lab02**: Executor Basic - Implement `INSERT`, `UPDATE`, `DELETE` and basic operators (filter, sort, etc.)
+* **Lab03**: Executor Analysis - Implement `JOIN` and `AGGREGATE` queries  
+* **Lab04**: Index & Storage Index - Implement B+ tree, hash index, and index scan executor
+* **Lab05** (future): Concurrency, implement SS2PL concurrency control and deadlock detection.
+* **Lab06** (future): Recovery, implement log manager and recovery manager to support WAL/ARIES recovery algorithm.
 
 The project is mostly inspired by [Rucbase](https://github.com/ruc-deke/rucbase-lab)
 , and some components follow the design of
  [BusTub](https://github.com/cmu-db/bustub),  [MiniOB](https://github.com/oceanbase/miniob). Thanks for their great work!
 
+
+## Lab Configuration System
+
+WSDB features a flexible configuration system that allows you to choose between compiling labs from source or using pre-compiled gold-standard libraries for each lab individually.
+
+### Quick Start
+
+```bash
+# Safe default - compile everything from source
+./configure.sh --all-source
+
+# Working on Lab01 - use gold dependencies
+./configure.sh --lab02-gold
+
+# Working on Lab02 - use Lab01 as gold dependency  
+./configure.sh --lab01-gold
+
+# Get help and see all options
+./configure.sh --help
+```
+
+### Documentation
+
+- 📖 **[Lab Configuration Guide](docs/LAB_CONFIGURATION.md)** - Complete configuration reference
+- 🚀 **[Practical Usage Guide](docs/PRACTICAL_USAGE_GUIDE.md)** - Real-world development workflows
+- 🔧 **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+
+This system allows you to focus on one lab at a time while using stable implementations for dependencies, significantly speeding up development and testing cycles.
+
+The project referenced [BusTub](https://github.com/cmu-db/bustub), [Rucbase](https://github.com/ruc-deke/rucbase-lab)
+,and[MiniOB](https://github.com/oceanbase/miniob). Thanks for their great work!
+Other document references: [TiDB](https://docs.pingcap.com/), [Oracle](https://docs.oracle.com/search/?q=Oracle%20Data%20Types&pg=1&size=10&library=en%2Fdatabase%2Foracle%2Foracle-database%2F23&book=SQLQR&lang=en) and [PostgreSQL](https://www.postgresql.org/docs/current/sql-commands.html).
+
 ## System requirements
 
-We tested WSDB on MacOS and Ubuntu, but if it also works on other systems, please let us know by issuing
+We only tested WSDB on MacOS 14.5 and Ubuntu 20.04, but if it also works on other systems, please let us know by issuing
 or pulling requests.
 
 ## How to build
 
-First clone the repository from github.
+First clone the repository from github. // TODO: change repository name for public repo
 
 ```shell
 $ git clone --recursive https://github.com/nju-websoft/NJU_DBPractice
@@ -46,12 +80,6 @@ For MacOS:
 $ sudo brew install clang cmake flex bison readline
 ```
 
-NOTE: Flex and Bison versions will be checked in `src/parser/CMakeLists.txt`, you can modify the minimum version to fit your environment and check if it compiles.
-
-We recommend flex >= 2.6 and bison >=3.8. If your package manager does not provide the latest version and your version fails to compile `wsdb`, please install them manually. you can check the version by running `flex --version` and `bison --version`.
-
-Low versions of the compiler and cmake may also cause problems, such as missing libraries, error finding include headers, etc. So please make sure you have the latest version of them.
-
 Then change directory into the repository foot and run
 
 ```shell
@@ -59,7 +87,7 @@ $ mkdir build && cd build
 ```
 
 ```shell
-$ cmake .. && make -j8
+cmake .. && make -j8
 ```
 
 About how to change cmake configurations, please refer to their guide.

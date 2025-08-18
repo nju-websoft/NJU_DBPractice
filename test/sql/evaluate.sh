@@ -4,7 +4,7 @@
 # first store current directory
 sql_dir=$(pwd)/$2
 cd $1
-cmake .. && make -j
+make -j
 cd ./bin
 
 # mkdir output under sql_dir if it does not exist

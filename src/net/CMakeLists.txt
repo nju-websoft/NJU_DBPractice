@@ -1,2 +1,2 @@
 add_library(server_net SHARED net_controller.cpp)
-target_link_libraries(server_net common_net system_handle)
+target_link_libraries(server_net common_net handle_db)

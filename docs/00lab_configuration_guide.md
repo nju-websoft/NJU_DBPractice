@@ -142,3 +142,4 @@ This means:
 - Working on Lab02: Should use Lab01 as gold
 - Working on Lab03: Should use Lab01,02 as gold  
 - Working on Lab04: Should use Lab01, lab02 as gold (Lab02,03 optional)
+

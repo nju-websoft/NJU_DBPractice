@@ -584,6 +584,11 @@ bash ./configure.sh --lab01-gold --lab02-gold --clean
    $ ./wsdb
    $ ./client
    ```
+
+   如果遇到`./wsdb`某个共享链接库的路径无法找到，可以在终端手动设置链接路径
+   ```shell
+   cd /path/to/wsdb/build/bin && export LD_LIBRARY_PATH=/path/to/wsdb/lib-gold/linux/debug:/path/to/wsdb/build/lib:$LD_LIBRARY_PATH
+   ```
    
    关于client的更多用法可参考参考[开始之前](./00basic.md)或使用-h参数查看。如果`wsdb`因为端口监听异常启动失败（通常原因是已经启用了一个wsdb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间wsdb释放资源后再重新启动。
 

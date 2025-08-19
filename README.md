@@ -41,14 +41,6 @@ WSDB features a flexible configuration system that allows you to choose between 
 ./configure.sh --help
 ```
 
-### Documentation
-
-- 📖 **[Lab Configuration Guide](docs/LAB_CONFIGURATION.md)** - Complete configuration reference
-- 🚀 **[Practical Usage Guide](docs/PRACTICAL_USAGE_GUIDE.md)** - Real-world development workflows
-- 🔧 **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
-
-This system allows you to focus on one lab at a time while using stable implementations for dependencies, significantly speeding up development and testing cycles.
-
 The project referenced [BusTub](https://github.com/cmu-db/bustub), [Rucbase](https://github.com/ruc-deke/rucbase-lab)
 ,and[MiniOB](https://github.com/oceanbase/miniob). Thanks for their great work!
 Other document references: [TiDB](https://docs.pingcap.com/), [Oracle](https://docs.oracle.com/search/?q=Oracle%20Data%20Types&pg=1&size=10&library=en%2Fdatabase%2Foracle%2Foracle-database%2F23&book=SQLQR&lang=en) and [PostgreSQL](https://www.postgresql.org/docs/current/sql-commands.html).

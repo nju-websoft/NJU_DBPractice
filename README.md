@@ -29,15 +29,15 @@ WSDB features a flexible configuration system that allows you to choose between 
 
 ```bash
 # Safe default - compile everything from source
-./configure.sh --all-source
+./configure.sh --all-source --clean
 
 # Working on Lab01 - use gold dependencies
-./configure.sh --lab02-gold
+./configure.sh --lab02-gold --clean
 
 # Working on Lab02 - use Lab01 as gold dependency  
-./configure.sh --lab01-gold
+./configure.sh --lab01-gold --clean
 
-# Get help and see all options
+# Get help and see all options, we suggest using --clean for all configurations to avoid cmake warnings.
 ./configure.sh --help
 ```
 

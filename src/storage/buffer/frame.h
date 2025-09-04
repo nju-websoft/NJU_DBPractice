@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_FRAME_H
-#define WSDB_FRAME_H
+#ifndef NJUDB_FRAME_H
+#define NJUDB_FRAME_H
 
 #include "common/types.h"
 #include "common/config.h"
@@ -47,7 +47,7 @@ public:
 
   inline void Unpin()
   {
-    WSDB_ASSERT(pin_count_ > 0, "Unpin a frame with pin_count = 0");
+    NJUDB_ASSERT(pin_count_ > 0, "Unpin a frame with pin_count = 0");
     pin_count_--;
   }
 
@@ -64,4 +64,4 @@ private:
   int  pin_count_{0};
 };
 
-#endif  // WSDB_FRAME_H
+#endif  // NJUDB_FRAME_H

@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_PLAN_H
-#define WSDB_PLAN_H
+#ifndef NJUDB_PLAN_H
+#define NJUDB_PLAN_H
 #include <utility>
 
 #include "common/record.h"
@@ -28,13 +28,13 @@
 
 #define TAB_STR(level) std::string(2 * level, ' ')
 
-namespace wsdb {
+namespace njudb {
 class AbstractPlan
 {
 public:
   virtual ~AbstractPlan() = default;
 
-  virtual auto ToString(int level) const -> std::string { WSDB_FATAL("Unimplemented ToString(level) in AbstractPlan"); }
+  virtual auto ToString(int level) const -> std::string { NJUDB_FATAL("Unimplemented ToString(level) in AbstractPlan"); }
 };
 
 class ExplainPlan : public AbstractPlan
@@ -399,6 +399,6 @@ public:
   size_t                        limit_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_PLAN_H
+#endif  // NJUDB_PLAN_H

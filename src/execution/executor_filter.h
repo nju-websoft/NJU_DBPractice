@@ -24,12 +24,12 @@
  * 
  */
 
-#ifndef WSDB_EXECUTOR_FILTER_H
-#define WSDB_EXECUTOR_FILTER_H
+#ifndef NJUDB_EXECUTOR_FILTER_H
+#define NJUDB_EXECUTOR_FILTER_H
 #include <functional>
 #include "executor_abstract.h"
 
-namespace wsdb {
+namespace njudb {
 
 class FilterExecutor : public AbstractExecutor
 {
@@ -49,6 +49,6 @@ private:
   std::function<bool(const Record &)> filter_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_FILTER_H
+#endif  // NJUDB_EXECUTOR_FILTER_H

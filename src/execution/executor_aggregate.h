@@ -19,12 +19,12 @@
 // Created by ziqi on 2024/8/5.
 //
 
-#ifndef WSDB_EXECUTOR_AGGREGATE_H
-#define WSDB_EXECUTOR_AGGREGATE_H
+#ifndef NJUDB_EXECUTOR_AGGREGATE_H
+#define NJUDB_EXECUTOR_AGGREGATE_H
 #include <unordered_map>
 #include "executor_abstract.h"
 
-namespace wsdb {
+namespace njudb {
 
 class AggregateExecutor : public AbstractExecutor
 {
@@ -82,6 +82,6 @@ private:
   std::unordered_map<Record, AggregateValue>::iterator group_iter_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_AGGREGATE_H
+#endif  // NJUDB_EXECUTOR_AGGREGATE_H

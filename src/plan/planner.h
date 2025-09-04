@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_ANALYSER_H
-#define WSDB_ANALYSER_H
+#ifndef NJUDB_ANALYSER_H
+#define NJUDB_ANALYSER_H
 
 #include <utility>
 
@@ -28,7 +28,7 @@
 #include "plan.h"
 #include "system/context.h"
 
-namespace wsdb {
+namespace njudb {
 
 class Planner
 {
@@ -92,6 +92,6 @@ private:
   auto MakeProjSortPlan(std::shared_ptr<AbstractPlan> &child, const std::vector<RTField> &proj_fields,
       const std::vector<RTField> &sort_fields, bool is_desc) -> std::shared_ptr<AbstractPlan>;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_ANALYSER_H
+#endif  // NJUDB_ANALYSER_H

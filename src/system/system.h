@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/19.
 //
 
-#ifndef WSDB_SYSTEM_H
-#define WSDB_SYSTEM_H
+#ifndef NJUDB_SYSTEM_H
+#define NJUDB_SYSTEM_H
 
 #include "storage/storage.h"
 #include "execution/executor.h"
@@ -32,11 +32,11 @@
 #include "concurrency/txn_manager.h"
 #include "handle/database_handle.h"
 
-namespace wsdb {
+namespace njudb {
 
 /**
  * @brief SystemManager is the main entry point for the system.
- * It manages all the components of wsdb,
+ * It manages all the components of njudb,
  * and is responsible for creating, dropping databases and managing the database handles.
  */
 class SystemManager
@@ -92,6 +92,6 @@ private:
   std::unordered_map<std::string, std::unique_ptr<DatabaseHandle>> databases_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_SYSTEM_H
+#endif  // NJUDB_SYSTEM_H

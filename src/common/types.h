@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_TYPES_H
-#define WSDB_TYPES_H
+#ifndef NJUDB_TYPES_H
+#define NJUDB_TYPES_H
 #include <cstddef>
 #include <atomic>
 #include "../common/micro.h"
@@ -170,4 +170,4 @@ ENUM_TO_STRING_BODY(IndexType)
 #undef ENUM
 #undef ENUM_ENTITIES
 
-#endif  // WSDB_TYPES_H
+#endif  // NJUDB_TYPES_H

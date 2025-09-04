@@ -19,12 +19,12 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_LOG_MANAGER_H
-#define WSDB_LOG_MANAGER_H
+#ifndef NJUDB_LOG_MANAGER_H
+#define NJUDB_LOG_MANAGER_H
 
 #include "storage/disk/disk_manager.h"
 
-namespace wsdb {
+namespace njudb {
 class LogManager
 {
 public:
@@ -33,6 +33,6 @@ public:
 
   void FlushLog();
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_LOG_MANAGER_H
+#endif  // NJUDB_LOG_MANAGER_H

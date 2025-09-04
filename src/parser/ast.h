@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/17.
 //
 
-#ifndef WSDB_AST_H
-#define WSDB_AST_H
+#ifndef NJUDB_AST_H
+#define NJUDB_AST_H
 
 #include <utility>
 #include <vector>
@@ -29,7 +29,7 @@
 
 #include "common/types.h"
 
-namespace wsdb {
+namespace njudb {
 
 namespace ast {
 
@@ -413,12 +413,12 @@ struct SemValue
   std::shared_ptr<GroupBy> sv_groupby;
 };
 
-extern std::shared_ptr<TreeNode> wsdb_ast_;
+extern std::shared_ptr<TreeNode> njudb_ast_;
 
 }  // namespace ast
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#define YYSTYPE wsdb::ast::SemValue
+#define YYSTYPE njudb::ast::SemValue
 
-#endif  // WSDB_AST_H
+#endif  // NJUDB_AST_H

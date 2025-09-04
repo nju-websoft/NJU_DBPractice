@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# WSDB Lab Configuration Script
+# NJUDB Lab Configuration Script
 # This script helps configure which labs to compile from source or use gold libraries
 
 set -e
@@ -26,7 +26,7 @@ NC='\033[0m' # No Color
 usage() {
     echo "Usage: $0 [OPTIONS]"
     echo
-    echo "Configure WSDB labs to compile from source or use gold libraries"
+    echo "Configure NJUDB labs to compile from source or use gold libraries"
     echo
     echo "Options:"
     echo "  --lab01-gold          Use gold library for Lab01 (Buffer Pool)"
@@ -123,7 +123,7 @@ done
 
 # Print configuration
 echo
-log_info "WSDB Lab Configuration:"
+log_info "NJUDB Lab Configuration:"
 echo "  Lab01 (Buffer Pool): $([ "$LAB01_GOLD" = true ] && echo "Gold Library" || echo "Compile from Source")"
 echo "  Lab02 (Executor Basic): $([ "$LAB02_GOLD" = true ] && echo "Gold Library" || echo "Compile from Source")"
 echo "  Lab03 (Executor Analysis): $([ "$LAB03_GOLD" = true ] && echo "Gold Library" || echo "Compile from Source")"

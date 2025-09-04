@@ -20,7 +20,7 @@
 //
 
 #include "table_handle.h"
-namespace wsdb {
+namespace njudb {
 
 TableHandle::TableHandle(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, table_id_t table_id,
     TableHeader &hdr, RecordSchemaUptr &schema, StorageModel storage_model)
@@ -35,7 +35,7 @@ TableHandle::TableHandle(DiskManager *disk_manager, BufferPoolManager *buffer_po
   schema_->SetTableId(table_id_);
   if (storage_model_ == PAX_MODEL) {
     // calculate offsets of fields
-    WSDB_STUDENT_TODO(l1, f2);
+    NJUDB_STUDENT_TODO(l1, f2);
   }
 }
 
@@ -43,24 +43,24 @@ auto TableHandle::GetRecord(const RID &rid) -> RecordUptr
 {
   auto nullmap = std::make_unique<char[]>(tab_hdr_.nullmap_size_);
   auto data    = std::make_unique<char[]>(tab_hdr_.rec_size_);
-  WSDB_STUDENT_TODO(l1, t3);
+  NJUDB_STUDENT_TODO(l1, t3);
 }
 
-auto TableHandle::GetChunk(page_id_t pid, const RecordSchema *chunk_schema) -> ChunkUptr { WSDB_STUDENT_TODO(l1, f2); }
+auto TableHandle::GetChunk(page_id_t pid, const RecordSchema *chunk_schema) -> ChunkUptr { NJUDB_STUDENT_TODO(l1, f2); }
 
-auto TableHandle::InsertRecord(const Record &record) -> RID { WSDB_STUDENT_TODO(l1, t3); }
+auto TableHandle::InsertRecord(const Record &record) -> RID { NJUDB_STUDENT_TODO(l1, t3); }
 
 void TableHandle::InsertRecord(const RID &rid, const Record &record)
 {
   if (rid.PageID() == INVALID_PAGE_ID) {
-    WSDB_THROW(WSDB_PAGE_MISS, fmt::format("Page: {}", rid.PageID()));
+    NJUDB_THROW(NJUDB_PAGE_MISS, fmt::format("Page: {}", rid.PageID()));
   }
-  WSDB_STUDENT_TODO(l1, t3);
+  NJUDB_STUDENT_TODO(l1, t3);
 }
 
-void TableHandle::DeleteRecord(const RID &rid) { WSDB_STUDENT_TODO(l1, t3); }
+void TableHandle::DeleteRecord(const RID &rid) { NJUDB_STUDENT_TODO(l1, t3); }
 
-void TableHandle::UpdateRecord(const RID &rid, const Record &record) { WSDB_STUDENT_TODO(l1, t3); }
+void TableHandle::UpdateRecord(const RID &rid, const Record &record) { NJUDB_STUDENT_TODO(l1, t3); }
 
 auto TableHandle::FetchPageHandle(page_id_t page_id) -> PageHandleUptr
 {
@@ -93,7 +93,7 @@ auto TableHandle::WrapPageHandle(Page *page) -> PageHandleUptr
   switch (storage_model_) {
     case StorageModel::NARY_MODEL: return std::make_unique<NAryPageHandle>(&tab_hdr_, page);
     case StorageModel::PAX_MODEL: return std::make_unique<PAXPageHandle>(&tab_hdr_, page, schema_.get(), field_offset_);
-    default: WSDB_FATAL("Unknown storage model");
+    default: NJUDB_FATAL("Unknown storage model");
   }
 }
 
@@ -151,4 +151,4 @@ auto TableHandle::HasField(const std::string &field_name) const -> bool
   return schema_->HasField(table_id_, field_name);
 }
 
-}  // namespace wsdb
+}  // namespace njudb

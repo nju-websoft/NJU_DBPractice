@@ -21,7 +21,7 @@
 
 #include "executor_projection.h"
 
-namespace wsdb {
+namespace njudb {
 
 ProjectionExecutor::ProjectionExecutor(AbstractExecutorUptr child, RecordSchemaUptr proj_schema)
     : AbstractExecutor(Basic), child_(std::move(child))
@@ -31,10 +31,10 @@ ProjectionExecutor::ProjectionExecutor(AbstractExecutorUptr child, RecordSchemaU
 
 // hint: record_ = std::make_unique<Record>(out_schema_.get(), *child_record);
 
-void ProjectionExecutor::Init() { WSDB_STUDENT_TODO(l2, t1); }
+void ProjectionExecutor::Init() { NJUDB_STUDENT_TODO(l2, t1); }
 
-void ProjectionExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
+void ProjectionExecutor::Next() { NJUDB_STUDENT_TODO(l2, t1); }
 
-auto ProjectionExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l2, t1); }
+auto ProjectionExecutor::IsEnd() const -> bool { NJUDB_STUDENT_TODO(l2, t1); }
 
-}  // namespace wsdb
+}  // namespace njudb

@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/17.
 //
 
-#ifndef WSDB_RECORD_MANAGER_H
-#define WSDB_RECORD_MANAGER_H
+#ifndef NJUDB_RECORD_MANAGER_H
+#define NJUDB_RECORD_MANAGER_H
 
 #include "../../common/micro.h"
 #include "meta.h"
@@ -28,7 +28,7 @@
 #include "value.h"
 #include "bitmap.h"
 
-namespace wsdb {
+namespace njudb {
 
 class Record;
 class Chunk;
@@ -71,13 +71,13 @@ public:
 
   [[nodiscard]] auto GetFieldAt(size_t index) const -> const RTField &
   {
-    WSDB_ASSERT(index < fields_.size(), "Index out of range");
+    NJUDB_ASSERT(index < fields_.size(), "Index out of range");
     return fields_[index];
   }
 
   [[nodiscard]] auto GetFieldOffset(size_t index) const -> size_t
   {
-    WSDB_ASSERT(index < fields_.size(), "Index out of range");
+    NJUDB_ASSERT(index < fields_.size(), "Index out of range");
     return offsets_[index];
   }
 
@@ -262,7 +262,7 @@ public:
           case FieldType::TYPE_BOOL: {
             auto value = std::dynamic_pointer_cast<BoolValue>(values[i]);
             if (value == nullptr)
-              WSDB_THROW(WSDB_TYPE_MISSMATCH,
+              NJUDB_THROW(NJUDB_TYPE_MISSMATCH,
                   fmt::format(
                       "{} != {}", FieldTypeToString(field.field_.field_type_), FieldTypeToString(values[i]->GetType())));
             *reinterpret_cast<bool *>(data_ + cursor) = value->Get();
@@ -272,7 +272,7 @@ public:
             auto value = std::dynamic_pointer_cast<IntValue>(ValueFactory::CastTo(values[i], FieldType::TYPE_INT));
             // should first try to cast to IntValue
             if (value == nullptr)
-              WSDB_THROW(WSDB_TYPE_MISSMATCH,
+              NJUDB_THROW(NJUDB_TYPE_MISSMATCH,
                   fmt::format(
                       "{} != {}", FieldTypeToString(field.field_.field_type_), FieldTypeToString(values[i]->GetType())));
 
@@ -282,7 +282,7 @@ public:
           case FieldType::TYPE_FLOAT: {
             auto value = std::dynamic_pointer_cast<FloatValue>(ValueFactory::CastTo(values[i], FieldType::TYPE_FLOAT));
             if (value == nullptr)
-              WSDB_THROW(WSDB_TYPE_MISSMATCH,
+              NJUDB_THROW(NJUDB_TYPE_MISSMATCH,
                   fmt::format(
                       "{} != {}", FieldTypeToString(field.field_.field_type_), FieldTypeToString(values[i]->GetType())));
 
@@ -292,12 +292,12 @@ public:
           case FieldType::TYPE_STRING: {
             auto value = std::dynamic_pointer_cast<StringValue>(values[i]);
             if (value == nullptr)
-              WSDB_THROW(WSDB_TYPE_MISSMATCH,
+              NJUDB_THROW(NJUDB_TYPE_MISSMATCH,
                   fmt::format(
                       "{} != {}", FieldTypeToString(field.field_.field_type_), FieldTypeToString(values[i]->GetType())));
 
             if (value->Get().size() > field.field_.field_size_) {
-              WSDB_THROW(WSDB_STRING_OVERFLOW,
+              NJUDB_THROW(NJUDB_STRING_OVERFLOW,
                   fmt::format("field:{}, size:{}, requested:{}",
                       field.field_.field_name_,
                       field.field_.field_size_,
@@ -306,7 +306,7 @@ public:
             std::memcpy(data_ + cursor, value->Get().c_str(), value->Get().size());
             break;
           }
-          default: WSDB_FATAL("Unsupported field type");
+          default: NJUDB_FATAL("Unsupported field type");
         }
       }
       cursor += field.field_.field_size_;
@@ -330,7 +330,7 @@ public:
       auto &field     = schema_->GetFieldAt(i);
       auto  other_idx = other.schema_->GetRTFieldIndex(field);
       if (other_idx == other.schema_->GetFieldCount()) {
-        WSDB_FATAL("Field not found in other record");
+        NJUDB_FATAL("Field not found in other record");
       }
       auto other_offset = other.schema_->offsets_[other_idx];
       std::memcpy(data_ + schema_->offsets_[i], other.data_ + other_offset, field.field_.field_size_);
@@ -350,9 +350,9 @@ public:
   Record(const RecordSchema *schema, const Record &rec1, const Record &rec2)
   {
     // do some simple asserts
-    WSDB_ASSERT(
+    NJUDB_ASSERT(
         schema->GetFieldCount() == rec1.schema_->GetFieldCount() + rec2.schema_->GetFieldCount(), "Field count mismatch");
-    WSDB_ASSERT(schema->GetRecordLength() == rec1.schema_->GetRecordLength() + rec2.schema_->GetRecordLength(),
+    NJUDB_ASSERT(schema->GetRecordLength() == rec1.schema_->GetRecordLength() + rec2.schema_->GetRecordLength(),
         "Record length mismatch");
     schema_  = schema;
     data_    = new char[schema_->GetRecordLength()];
@@ -475,7 +475,7 @@ public:
         case FieldType::TYPE_STRING:
           hash ^= std::hash<std::string>{}(std::string(data_ + schema_->offsets_[i], field.field_.field_size_));
           break;
-        default: WSDB_FATAL("Unsupported field type to hash");
+        default: NJUDB_FATAL("Unsupported field type to hash");
       }
     }
     return hash;
@@ -488,7 +488,7 @@ public:
 
   [[nodiscard]] auto GetValueAt(size_t index) const -> ValueSptr
   {
-    WSDB_ASSERT(index < schema_->GetFieldCount(), "Index out of range");
+    NJUDB_ASSERT(index < schema_->GetFieldCount(), "Index out of range");
     auto &field = schema_->GetFieldAt(index);
     if (BitMap::GetBit(nullmap_, index)) {
       return ValueFactory::CreateNullValue(field.field_.field_type_);
@@ -516,9 +516,9 @@ public:
   static auto Compare(const Record &lrec, const Record &rrec) -> int
   {
     // compare two records,
-    //  WSDB_ASSERT(Record, Compare, lrec.GetSchema() == rrec.GetSchema(), "Schema mismatch");
+    //  NJUDB_ASSERT(Record, Compare, lrec.GetSchema() == rrec.GetSchema(), "Schema mismatch");
     // more loose assert to support two similar records
-    WSDB_ASSERT(lrec.GetSchema()->GetFieldCount() == rrec.GetSchema()->GetFieldCount(), "field count mismatch");
+    NJUDB_ASSERT(lrec.GetSchema()->GetFieldCount() == rrec.GetSchema()->GetFieldCount(), "field count mismatch");
     for (size_t i = 0; i < lrec.GetSchema()->GetFieldCount(); ++i) {
       auto lval = lrec.GetValueAt(i);
       auto rval = rrec.GetValueAt(i);
@@ -566,7 +566,7 @@ public:
 
   Chunk(const RecordSchema *schema, std::vector<ArrayValueSptr> cols) : schema_(schema), cols_(std::move(cols))
   {
-    WSDB_ASSERT(schema_->GetFieldCount() == cols_.size(), "Field count mismatch");
+    NJUDB_ASSERT(schema_->GetFieldCount() == cols_.size(), "Field count mismatch");
   }
 
   ~Chunk() = default;
@@ -588,16 +588,16 @@ private:
   std::vector<ArrayValueSptr> cols_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
 namespace std {
 template <>
-struct hash<wsdb::Record>
+struct hash<njudb::Record>
 {
-  auto operator()(const wsdb::Record &record) const -> size_t { return record.Hash(); }
+  auto operator()(const njudb::Record &record) const -> size_t { return record.Hash(); }
 };
 }  // namespace std
 
 
 
-#endif  // WSDB_RECORD_MANAGER_H
+#endif  // NJUDB_RECORD_MANAGER_H

@@ -21,4 +21,4 @@
 
 #include "executor_aggregate_vec.h"
 
-namespace wsdb {}  // namespace wsdb
+namespace njudb {}  // namespace njudb

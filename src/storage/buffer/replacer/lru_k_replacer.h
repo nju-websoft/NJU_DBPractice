@@ -19,15 +19,15 @@
 // Created by ziqi on 2024/7/17.
 //
 
-#ifndef WSDB_LRU_K_REPLACER_H
-#define WSDB_LRU_K_REPLACER_H
+#ifndef NJUDB_LRU_K_REPLACER_H
+#define NJUDB_LRU_K_REPLACER_H
 #include <list>
 #include <mutex>
 #include <unordered_map>
 #include "replacer.h"
 #include "../common/error.h"
 
-namespace wsdb {
+namespace njudb {
 
 class LRUKReplacer : public Replacer
 {
@@ -52,7 +52,7 @@ private:
 
     explicit LRUKNode(frame_id_t fid, size_t k) : fid_(fid), k(k), is_evictable_(false) {}
 
-    void AddHistory(timestamp_t ts) { WSDB_STUDENT_TODO(l1, f1); }
+    void AddHistory(timestamp_t ts) { NJUDB_STUDENT_TODO(l1, f1); }
 
     /**
      * Get the distance between the current timestamp and the k-th timestamp in the history,
@@ -62,12 +62,12 @@ private:
      */
     auto GetBackwardKDistance(timestamp_t cur_ts) -> unsigned long long
     {
-      WSDB_STUDENT_TODO(l1, f1);
+      NJUDB_STUDENT_TODO(l1, f1);
     }
 
-    [[nodiscard]] auto IsEvictable() const -> bool { WSDB_STUDENT_TODO(l1, f1); }
+    [[nodiscard]] auto IsEvictable() const -> bool { NJUDB_STUDENT_TODO(l1, f1); }
 
-    auto SetEvictable(bool set_evictable) -> void { WSDB_STUDENT_TODO(l1, f1); }
+    auto SetEvictable(bool set_evictable) -> void { NJUDB_STUDENT_TODO(l1, f1); }
 
   private:
     std::list<timestamp_t> history_;
@@ -84,6 +84,6 @@ private:
   size_t                                   k_;            // k for LRU-k
   std::mutex                               latch_;        // mutex for curr_size_, node_store_, and curr_timestamp_
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_LRU_K_REPLACER_H
+#endif  // NJUDB_LRU_K_REPLACER_H

@@ -25,13 +25,13 @@
  *
  */
 
-#ifndef WSDB_EXECUTOR_JOIN_H
-#define WSDB_EXECUTOR_JOIN_H
+#ifndef NJUDB_EXECUTOR_JOIN_H
+#define NJUDB_EXECUTOR_JOIN_H
 
 #include "executor_abstract.h"
 #include "common/condition.h"
 
-namespace wsdb {
+namespace njudb {
 class JoinExecutor : public AbstractExecutor
 {
 public:
@@ -63,6 +63,6 @@ protected:
   ConditionVec         conditions_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_JOIN_H
+#endif  // NJUDB_EXECUTOR_JOIN_H

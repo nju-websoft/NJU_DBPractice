@@ -25,7 +25,7 @@
 static long long sort_result_fresh_id_ = 0;
 #define SORT_FILE_PATH(obj_name) FILE_NAME(TMP_DIR, obj_name, TMP_SUFFIX)
 
-namespace wsdb {
+namespace njudb {
 SortExecutor::SortExecutor(AbstractExecutorUptr child, RecordSchemaUptr key_schema, bool is_desc)
     : AbstractExecutor(Basic),
       child_(std::move(child)),
@@ -46,7 +46,7 @@ SortExecutor::~SortExecutor()
 {
   if (is_merge_sort_) {
     // TODO: do some clean up, e.g. close the result file
-    WSDB_STUDENT_TODO(l2, f1);
+    NJUDB_STUDENT_TODO(l2, f1);
   }
 }
 
@@ -56,25 +56,25 @@ void SortExecutor::Init()
   // leave is_merge_sort_ as false if you just want to use in-memory sort
   is_merge_sort_ = false;
   if (is_merge_sort_) {
-    WSDB_STUDENT_TODO(l2, f1);
+    NJUDB_STUDENT_TODO(l2, f1);
   }
-  WSDB_STUDENT_TODO(l2, t1);
+  NJUDB_STUDENT_TODO(l2, t1);
 }
 
 void SortExecutor::Next()
 {
   if (is_merge_sort_) {
-    WSDB_STUDENT_TODO(l2, f1);
+    NJUDB_STUDENT_TODO(l2, f1);
   }
-  WSDB_STUDENT_TODO(l2, t1);
+  NJUDB_STUDENT_TODO(l2, t1);
 }
 
 auto SortExecutor::IsEnd() const -> bool
 {
   if (is_merge_sort_) {
-    WSDB_STUDENT_TODO(l2, f1);
+    NJUDB_STUDENT_TODO(l2, f1);
   }
-  WSDB_STUDENT_TODO(l2, t1);
+  NJUDB_STUDENT_TODO(l2, t1);
 }
 
 auto SortExecutor::Compare(const Record &lhs, const Record &rhs) const -> bool
@@ -94,13 +94,13 @@ auto SortExecutor::GetSortFileName(size_t file_group, size_t file_idx) const -> 
 }
 
 // sort the records according to the key schema in the buffer
-void SortExecutor::SortBuffer() { WSDB_STUDENT_TODO(l2, t1); }
+void SortExecutor::SortBuffer() { NJUDB_STUDENT_TODO(l2, t1); }
 
 // dump the sorted buffer to the file denoted by file_idx
-void SortExecutor::DumpBufferToFile(size_t file_idx) { WSDB_STUDENT_TODO(l2, f1); }
+void SortExecutor::DumpBufferToFile(size_t file_idx) { NJUDB_STUDENT_TODO(l2, f1); }
 
 // load sort result from merge_result_file_handle_ into buffer
-void SortExecutor::LoadMergeResult() { WSDB_STUDENT_TODO(l2, f1); }
+void SortExecutor::LoadMergeResult() { NJUDB_STUDENT_TODO(l2, f1); }
 
 void SortExecutor::Merge()
 {
@@ -108,7 +108,7 @@ void SortExecutor::Merge()
   // 2. read the first tuple from each file
   // 3. pop the top of the heap and write to file: group 1, file: file_index
   // run until all runs are exhausted, then read tuples from group 1, file 0, write to group 0, file 0 ...
-  WSDB_STUDENT_TODO(L2, f1);
+  NJUDB_STUDENT_TODO(L2, f1);
 }
 
-}  // namespace wsdb
+}  // namespace njudb

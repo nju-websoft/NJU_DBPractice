@@ -19,14 +19,14 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_INDEX_ABSTRACT_H
-#define WSDB_INDEX_ABSTRACT_H
+#ifndef NJUDB_INDEX_ABSTRACT_H
+#define NJUDB_INDEX_ABSTRACT_H
 
 #include "storage/buffer/buffer_pool_manager.h"
 #include "storage/disk/disk_manager.h"
 #include "common/record.h"
 
-namespace wsdb {
+namespace njudb {
 
 class Index
 {
@@ -88,6 +88,6 @@ protected:
   const RecordSchema      *key_schema_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_INDEX_ABSTRACT_H
+#endif  // NJUDB_INDEX_ABSTRACT_H

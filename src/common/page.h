@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_PAGE_H
-#define WSDB_PAGE_H
+#ifndef NJUDB_PAGE_H
+#define NJUDB_PAGE_H
 
 #include "../../common/micro.h"
 #include "config.h"
@@ -56,37 +56,37 @@ public:
 
   auto GetLsn() -> lsn_t
   {
-    WSDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't load data from file header page");
+    NJUDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't load data from file header page");
     return *reinterpret_cast<lsn_t *>(data_ + PAGE_LSN_OFFSET);
   }
 
   void SetLsn(lsn_t lsn)
   {
-    WSDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't set data from file header page");
+    NJUDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't set data from file header page");
     *reinterpret_cast<lsn_t *>(data_ + PAGE_LSN_OFFSET) = lsn;
   }
 
   auto GetNextFreePageId() -> page_id_t
   {
-    WSDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't load data from file header page");
+    NJUDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't load data from file header page");
     return *reinterpret_cast<page_id_t *>(data_ + PAGE_NEXT_FREE_PAGE_ID_OFFSET);
   }
 
   void SetNextFreePageId(page_id_t next_free_page_id)
   {
-    WSDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't set data from file header page");
+    NJUDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't set data from file header page");
     *reinterpret_cast<page_id_t *>(data_ + PAGE_NEXT_FREE_PAGE_ID_OFFSET) = next_free_page_id;
   }
 
   auto GetRecordNum() -> size_t
   {
-    WSDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't load data from file header page");
+    NJUDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't load data from file header page");
     return *reinterpret_cast<size_t *>(data_ + PAGE_RECORD_NUM_OFFSET);
   }
 
   void SetRecordNum(size_t record_num)
   {
-    WSDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't set data from file header page");
+    NJUDB_ASSERT(pid_ != FILE_HEADER_PAGE_ID, "Can't set data from file header page");
     *reinterpret_cast<size_t *>(data_ + PAGE_RECORD_NUM_OFFSET) = record_num;
   }
 
@@ -103,4 +103,4 @@ private:
   char      data_[PAGE_SIZE]{};
 };
 
-#endif  // WSDB_PAGE_H
+#endif  // NJUDB_PAGE_H

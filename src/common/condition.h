@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/8/1.
 //
 
-#ifndef WSDB_CONDITION_H
-#define WSDB_CONDITION_H
+#ifndef NJUDB_CONDITION_H
+#define NJUDB_CONDITION_H
 
 #include <utility>
 
@@ -28,7 +28,7 @@
 #include "types.h"
 #include "meta.h"
 
-namespace wsdb {
+namespace njudb {
 
 enum CondRvalType
 {
@@ -80,19 +80,19 @@ public:
 
   [[nodiscard]] auto GetRCol() const -> const RTField &
   {
-    WSDB_ASSERT(rval_type_ == kColumn, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
+    NJUDB_ASSERT(rval_type_ == kColumn, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
     return r_col_;
   }
 
   [[nodiscard]] auto GetRVal() const -> ValueSptr
   {
-    WSDB_ASSERT(rval_type_ == kValue, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
+    NJUDB_ASSERT(rval_type_ == kValue, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
     return r_val_;
   }
 
   void SetRVal(ValueSptr &r_val)
   {
-    WSDB_ASSERT(rval_type_ == kValue, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
+    NJUDB_ASSERT(rval_type_ == kValue, fmt::format("should be: {}", CondRvalTypeToString(rval_type_)));
     r_val_ = r_val;
   }
 
@@ -100,7 +100,7 @@ public:
 
   [[nodiscard]] auto GetSubqueryId() const -> int32_t
   {
-    WSDB_ASSERT(rval_type_ == kSubquery, "should be subquery");
+    NJUDB_ASSERT(rval_type_ == kSubquery, "should be subquery");
     return subquery_id_;
   }
 
@@ -118,7 +118,7 @@ public:
   }
 
   auto GetReversedCondition() const -> Condition{
-    WSDB_ASSERT(rval_type_ == kColumn, "Only column condition can be reversed");
+    NJUDB_ASSERT(rval_type_ == kColumn, "Only column condition can be reversed");
     CompOp reversed_op;
     switch (op_) {
       case OP_EQ: reversed_op = OP_EQ; break;
@@ -128,7 +128,7 @@ public:
       case OP_LE: reversed_op = OP_GE; break;
       case OP_GE: reversed_op = OP_LE; break;
       default:
-        WSDB_THROW(WSDB_UNSUPPORTED_OP, fmt::format("Cannot reverse condition with operator: {}", CompOpToString(op_)));
+        NJUDB_THROW(NJUDB_UNSUPPORTED_OP, fmt::format("Cannot reverse condition with operator: {}", CompOpToString(op_)));
     }
     return Condition(reversed_op, r_col_, l_col_);
   }
@@ -142,6 +142,6 @@ private:
   int32_t      subquery_id_{-1};
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_CONDITION_H
+#endif  // NJUDB_CONDITION_H

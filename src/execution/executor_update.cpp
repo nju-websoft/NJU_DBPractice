@@ -22,7 +22,7 @@
 #include "executor_update.h"
 #include <fmt/format.h>
 
-namespace wsdb {
+namespace njudb {
 
 UpdateExecutor::UpdateExecutor(AbstractExecutorUptr child, TableHandle *tbl, std::list<IndexHandle *> indexes,
     std::vector<std::pair<RTField, ValueSptr>> updates)
@@ -42,13 +42,13 @@ void UpdateExecutor::Init()
 {
   // You can skip step 2 in lab02
   // 1: Collect all old and new records first
-  // 2: [WSDB_STUDENT_TODO(l4, t2)] Validate ALL updates against index unique constraints BEFORE applying any
+  // 2: [NJUDB_STUDENT_TODO(l4, t2)] Validate ALL updates against index unique constraints BEFORE applying any
   // 3: Do updates
-  WSDB_STUDENT_TODO(l2, t1);
+  NJUDB_STUDENT_TODO(l2, t1);
 }
 
 void UpdateExecutor::Next() { is_end_ = true; }
 
 auto UpdateExecutor::IsEnd() const -> bool { return is_end_; }
 
-}  // namespace wsdb
+}  // namespace njudb

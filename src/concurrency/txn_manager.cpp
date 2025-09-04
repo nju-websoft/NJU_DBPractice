@@ -22,12 +22,12 @@
 #include "txn_manager.h"
 #include "../common/error.h"
 
-namespace wsdb {
+namespace njudb {
 
 void TxnManager::Begin(txn_id_t txn_id)
 {
-  WSDB_ASSERT(txn_id != INVALID_TXN_ID, "Invalid txn_id");
-  WSDB_ASSERT(tid_to_ts_.find(txn_id) == tid_to_ts_.end(), "txn_id already exists");
+  NJUDB_ASSERT(txn_id != INVALID_TXN_ID, "Invalid txn_id");
+  NJUDB_ASSERT(tid_to_ts_.find(txn_id) == tid_to_ts_.end(), "txn_id already exists");
   // create a new transaction and set its state to growing
   std::lock_guard<std::mutex> lock(latch_);
   auto                        txn = std::make_unique<Transaction>(txn_id);
@@ -41,4 +41,4 @@ void TxnManager::Abort(txn_id_t txn_id) {}
 
 void TxnManager::SetTransaction(Transaction *txn) {}
 
-}  // namespace wsdb
+}  // namespace njudb

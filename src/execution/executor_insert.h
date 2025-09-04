@@ -23,10 +23,10 @@
 #include "system/handle/table_handle.h"
 #include "system/handle/index_handle.h"
 
-#ifndef WSDB_EXECUTOR_INSERT_H
-#define WSDB_EXECUTOR_INSERT_H
+#ifndef NJUDB_EXECUTOR_INSERT_H
+#define NJUDB_EXECUTOR_INSERT_H
 
-namespace wsdb {
+namespace njudb {
 class InsertExecutor : public AbstractExecutor
 {
 public:
@@ -44,6 +44,6 @@ private:
   std::vector<RecordUptr>  inserts_;
   bool                     is_end_;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_INSERT_H
+#endif  // NJUDB_EXECUTOR_INSERT_H

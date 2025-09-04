@@ -19,14 +19,14 @@
 // Created by ziqi on 2024/7/27.
 //
 
-#ifndef WSDB_CONTEXT_H
-#define WSDB_CONTEXT_H
+#ifndef NJUDB_CONTEXT_H
+#define NJUDB_CONTEXT_H
 #include "concurrency/txn_manager.h"
 #include "log/log_manager.h"
 #include "handle/database_handle.h"
 #include "net/net_controller.h"
 
-namespace wsdb {
+namespace njudb {
 struct Context
 {
   Transaction    *txn;
@@ -39,6 +39,6 @@ struct Context
       : txn(txn), log_manager(log_manager), db_(db_hdl), nt_ctl_(nt_ctl_), client_fd_(client_fd)
   {}
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_CONTEXT_H
+#endif  // NJUDB_CONTEXT_H

@@ -25,9 +25,9 @@
 
 int main()
 {
-  auto wsdb_sys = wsdb::SystemManager::GetInstance();
-  WSDB_LOG("Creating components");
-  wsdb_sys->Init();
-  WSDB_LOG("System Running");
-  wsdb_sys->Run();
+  auto njudb_sys = njudb::SystemManager::GetInstance();
+  NJUDB_LOG("Creating components");
+  njudb_sys->Init();
+  NJUDB_LOG("System Running");
+  njudb_sys->Run();
 }

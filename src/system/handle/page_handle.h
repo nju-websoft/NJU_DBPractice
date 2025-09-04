@@ -19,14 +19,14 @@
 // Created by ziqi on 2024/7/27.
 //
 
-#ifndef WSDB_PAGE_HANDLE_H
-#define WSDB_PAGE_HANDLE_H
+#ifndef NJUDB_PAGE_HANDLE_H
+#define NJUDB_PAGE_HANDLE_H
 
 #include "common/meta.h"
 #include "common/page.h"
 #include "common/record.h"
 
-namespace wsdb {
+namespace njudb {
 class PageHandle
 {
 public:
@@ -104,6 +104,6 @@ private:
 };
 
 DEFINE_UNIQUE_PTR(PageHandle);
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_PAGE_HANDLE_H
+#endif  // NJUDB_PAGE_HANDLE_H

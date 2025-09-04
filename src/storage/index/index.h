@@ -19,10 +19,10 @@
 // Created by ziqi on 2024/7/28.
 //
 
-#ifndef WSDB_INDEX_H
-#define WSDB_INDEX_H
+#ifndef NJUDB_INDEX_H
+#define NJUDB_INDEX_H
 
 #include "index_bptree.h"
 #include "index_hash.h"
 
-#endif  // WSDB_INDEX_H
+#endif  // NJUDB_INDEX_H

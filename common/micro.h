@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/19.
 //
 
-#ifndef WSDB_MICRO_H
-#define WSDB_MICRO_H
+#ifndef NJUDB_MICRO_H
+#define NJUDB_MICRO_H
 
 #include <memory>
 #include <filesystem>
@@ -56,9 +56,9 @@ inline auto GetHourMinuteSecond() -> const std::string
 #define FILE_NAME(db_name, obj_name, suffix) (fmt::format("{}/{}{}", db_name, obj_name, suffix))
 #define OBJNAME_FROM_FILENAME(filename) (std::filesystem::path(filename).stem().string())
 
-#define WSDB_LOG(msg) \
+#define NJUDB_LOG(msg) \
   std::cout << fmt::format("\033[32m[{}]LOG <{}::{}>: {}\033[0m\n", GetHourMinuteSecond(), __func__, __LINE__, msg)
-#define WSDB_LOG_ERROR(msg) \
+#define NJUDB_LOG_ERROR(msg) \
   std::cerr << fmt::format("\033[31m[{}]ERROR <{}::{}>: {}\033[0m\n", GetHourMinuteSecond(), __func__, __LINE__, msg)
 
 #define DECLARE_ENUM(EnumName, ...) \
@@ -84,7 +84,7 @@ inline auto GetHourMinuteSecond() -> const std::string
     if (enum_map.find(value) != enum_map.end()) {                          \
       return enum_map[value];                                              \
     }                                                                      \
-    WSDB_LOG_ERROR(fmt::format("Unknown {} value: {}", #EnumName, value)); \
+    NJUDB_LOG_ERROR(fmt::format("Unknown {} value: {}", #EnumName, value)); \
     std::abort();                                                          \
   }
 
@@ -93,4 +93,4 @@ inline auto GetHourMinuteSecond() -> const std::string
   case x: return #x;
 #define STRING2ENUM(x) {#x, x},
 
-#endif  // WSDB_MICRO_H
+#endif  // NJUDB_MICRO_H

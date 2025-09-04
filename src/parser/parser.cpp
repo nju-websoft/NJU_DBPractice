@@ -23,18 +23,18 @@
 #include "def.h"
 #include "../common/error.h"
 
-namespace wsdb {
+namespace njudb {
 
 std::shared_ptr<ast::TreeNode> Parser::Parse(const std::string &sql)
 {
   auto buf = yy_scan_string(sql.c_str());
   if (yyparse() != 0) {
     yy_delete_buffer(buf);
-    WSDB_THROW(WSDB_INVALID_SQL, sql);
+    NJUDB_THROW(NJUDB_INVALID_SQL, sql);
   }
-  auto ret = ast::wsdb_ast_;
+  auto ret = ast::njudb_ast_;
   yy_delete_buffer(buf);
   return ret;
 }
 
-}  // namespace wsdb
+}  // namespace njudb

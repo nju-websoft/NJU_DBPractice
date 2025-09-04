@@ -19,14 +19,14 @@
 // Created by ziqi on 2024/7/31.
 //
 
-#ifndef WSDB_EXECUTOR_ABSTRACT_H
-#define WSDB_EXECUTOR_ABSTRACT_H
+#ifndef NJUDB_EXECUTOR_ABSTRACT_H
+#define NJUDB_EXECUTOR_ABSTRACT_H
 
 #include "../../common/error.h"
 #include "../../common/micro.h"
 #include "common/record.h"
 
-namespace wsdb {
+namespace njudb {
 
 enum ExecutorType
 {
@@ -57,7 +57,7 @@ public:
 
   [[nodiscard]] virtual auto GetOutSchema() const -> const RecordSchema *
   {
-    WSDB_ASSERT(out_schema_ != nullptr, "out_schema_ is nullptr");
+    NJUDB_ASSERT(out_schema_ != nullptr, "out_schema_ is nullptr");
     return out_schema_.get();
   };
 
@@ -81,6 +81,6 @@ private:
 
 DEFINE_UNIQUE_PTR(AbstractExecutor);
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_ABSTRACT_H
+#endif  // NJUDB_EXECUTOR_ABSTRACT_H

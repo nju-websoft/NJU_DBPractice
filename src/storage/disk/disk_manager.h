@@ -28,7 +28,7 @@
 #include <unordered_map>
 #include "common/types.h"
 
-namespace wsdb {
+namespace njudb {
 class DiskManager
 {
 public:
@@ -92,6 +92,6 @@ private:
   std::unordered_map<file_id_t, std::string> fid_name_map_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
 #endif  // NJU_DBCOURSE_DISK_MANAGER_H

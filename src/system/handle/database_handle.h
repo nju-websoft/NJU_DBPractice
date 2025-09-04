@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/28.
 //
 
-#ifndef WSDB_DATABASE_HANDLE_H
-#define WSDB_DATABASE_HANDLE_H
+#ifndef NJUDB_DATABASE_HANDLE_H
+#define NJUDB_DATABASE_HANDLE_H
 
 #include <thread>
 #include "storage/disk/disk_manager.h"
@@ -28,7 +28,7 @@
 #include "system/table/table_manager.h"
 #include "system/index/index_manager.h"
 
-namespace wsdb {
+namespace njudb {
 class DatabaseHandle
 {
 public:
@@ -84,6 +84,6 @@ private:
   std::unordered_map<idx_id_t, std::unique_ptr<IndexHandle>>   indexes_;
   std::unordered_map<table_id_t, std::list<idx_id_t>>          tab_idx_map_;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_DATABASE_HANDLE_H
+#endif  // NJUDB_DATABASE_HANDLE_H

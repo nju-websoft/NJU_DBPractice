@@ -7,8 +7,8 @@
 TEST(HelloTest, Hello)
 {
   EXPECT_EQ(1, 1);
-  WSDB_ASSERT(1 == 1, "1 == 1");
-  WSDB_THROW(wsdb::WSDB_FILE_EXISTS, "");
+  NJUDB_ASSERT(1 == 1, "1 == 1");
+  NJUDB_THROW(njudb::NJUDB_FILE_EXISTS, "");
 }
 
 int main(int argc, char **argv)

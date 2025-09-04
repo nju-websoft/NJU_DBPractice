@@ -1,5 +1,5 @@
 # Lab02: Executor Basic
-wsdb_should_compile_from_source(COMPILE_BASIC_FROM_SOURCE "02")
+njudb_should_compile_from_source(COMPILE_BASIC_FROM_SOURCE "02")
 if(COMPILE_BASIC_FROM_SOURCE)
     set(BASIC_SOURCES
             executor_ddl.cpp
@@ -18,7 +18,7 @@ if(COMPILE_BASIC_FROM_SOURCE)
 endif()
 
 # Lab03: Executor Analysis
-wsdb_should_compile_from_source(COMPILE_ANALYSIS_FROM_SOURCE "03")
+njudb_should_compile_from_source(COMPILE_ANALYSIS_FROM_SOURCE "03")
 if(COMPILE_ANALYSIS_FROM_SOURCE)
     set(ANALYSIS_SOURCES
             executor_join.cpp
@@ -33,7 +33,7 @@ if(COMPILE_ANALYSIS_FROM_SOURCE)
 endif()
 
 # Lab04: Executor Index (part of Lab04)
-wsdb_should_compile_from_source(COMPILE_INDEX_FROM_SOURCE "04")
+njudb_should_compile_from_source(COMPILE_INDEX_FROM_SOURCE "04")
 if(COMPILE_INDEX_FROM_SOURCE)
     set(INDEX_EXECUTION_SOURCES
             executor_idxscan.cpp

@@ -14,7 +14,7 @@
 #include <shared_mutex>
 
 #include "gtest/gtest.h"
-using namespace wsdb;
+using namespace njudb;
 
 class BPTreeTest : public ::testing::Test
 {

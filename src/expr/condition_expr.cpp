@@ -21,27 +21,27 @@
 
 #include "condition_expr.h"
 
-namespace wsdb {
+namespace njudb {
 
-auto ConditionExpr::Eval(const ConditionVec &condition, const wsdb::Record &record) -> bool
+auto ConditionExpr::Eval(const ConditionVec &condition, const njudb::Record &record) -> bool
 {
   return std::all_of(
       condition.begin(), condition.end(), [&record](const Condition &cond) { return EvalCond(cond, record); });
 }
 
-auto ConditionExpr::EvalCond(const Condition &condition, const wsdb::Record &record) -> bool
+auto ConditionExpr::EvalCond(const Condition &condition, const njudb::Record &record) -> bool
 {
   // first get the lhs value according to condition
   auto idx = record.GetSchema()->GetRTFieldIndex(condition.GetLCol());
-  WSDB_ASSERT(idx != record.GetSchema()->GetFieldCount(), "Invalid field");
+  NJUDB_ASSERT(idx != record.GetSchema()->GetFieldCount(), "Invalid field");
   auto lhs = record.GetValueAt(idx);
-  WSDB_ASSERT(condition.GetRhsType() == kValue || condition.GetRhsType() == kColumn, "Invalid condition type");
+  NJUDB_ASSERT(condition.GetRhsType() == kValue || condition.GetRhsType() == kColumn, "Invalid condition type");
   ValueSptr rhs;
   if (condition.GetRhsType() == kValue) {
     rhs = condition.GetRVal();
   } else {
     idx = record.GetSchema()->GetRTFieldIndex(condition.GetRCol());
-    WSDB_ASSERT(idx != record.GetSchema()->GetFieldCount(), "Invalid field");
+    NJUDB_ASSERT(idx != record.GetSchema()->GetFieldCount(), "Invalid field");
     rhs = record.GetValueAt(idx);
   }
   ValueFactory::AlignTypes(lhs, rhs);
@@ -53,9 +53,9 @@ auto ConditionExpr::EvalCond(const Condition &condition, const wsdb::Record &rec
     case OP_GT: return *lhs > *rhs;
     case OP_GE: return *lhs >= *rhs;
     case OP_IN: return std::dynamic_pointer_cast<ArrayValue>(rhs)->Contains(lhs);
-    default: WSDB_FATAL(CompOpToString(condition.GetOp()));
+    default: NJUDB_FATAL(CompOpToString(condition.GetOp()));
   }
   // should never reach here
 }
 
-}  // namespace wsdb
+}  // namespace njudb

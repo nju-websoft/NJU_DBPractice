@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# WSDB Configuration Examples
-# This script demonstrates various configuration scenarios for WSDB labs
+# NJUDB Configuration Examples
+# This script demonstrates various configuration scenarios for NJUDB labs
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
-echo "=== WSDB Lab Configuration Examples ==="
+echo "=== NJUDB Lab Configuration Examples ==="
 echo
 
 echo "Example 1: Working on Lab01 (Buffer Pool)"

@@ -13,7 +13,7 @@
 #include <shared_mutex>
 #include "gtest/gtest.h"
 
-using namespace wsdb;
+using namespace njudb;
 
 class HashIndexTest : public ::testing::Test
 {

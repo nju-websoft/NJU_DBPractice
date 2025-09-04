@@ -22,16 +22,16 @@
 #include "lru_replacer.h"
 #include "common/config.h"
 #include "../common/error.h"
-namespace wsdb {
+namespace njudb {
 
 LRUReplacer::LRUReplacer() : cur_size_(0), max_size_(BUFFER_POOL_SIZE) {}
 
-auto LRUReplacer::Victim(frame_id_t *frame_id) -> bool { WSDB_STUDENT_TODO(l1, t1); }
+auto LRUReplacer::Victim(frame_id_t *frame_id) -> bool { NJUDB_STUDENT_TODO(l1, t1); }
 
-void LRUReplacer::Pin(frame_id_t frame_id) { WSDB_STUDENT_TODO(l1, t1); }
+void LRUReplacer::Pin(frame_id_t frame_id) { NJUDB_STUDENT_TODO(l1, t1); }
 
-void LRUReplacer::Unpin(frame_id_t frame_id) { WSDB_STUDENT_TODO(l1, t1); }
+void LRUReplacer::Unpin(frame_id_t frame_id) { NJUDB_STUDENT_TODO(l1, t1); }
 
-auto LRUReplacer::Size() -> size_t { WSDB_STUDENT_TODO(l1, t1); }
+auto LRUReplacer::Size() -> size_t { NJUDB_STUDENT_TODO(l1, t1); }
 
-}  // namespace wsdb
+}  // namespace njudb

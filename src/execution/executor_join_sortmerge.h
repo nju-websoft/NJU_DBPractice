@@ -24,13 +24,13 @@
  *
  */
 
-#ifndef WSDB_EXECUTOR_JOIN_SORTMERGE_H
-#define WSDB_EXECUTOR_JOIN_SORTMERGE_H
+#ifndef NJUDB_EXECUTOR_JOIN_SORTMERGE_H
+#define NJUDB_EXECUTOR_JOIN_SORTMERGE_H
 
 #include "executor_join.h"
 #include "common/types.h"
 
-namespace wsdb {
+namespace njudb {
 class SortMergeJoinExecutor : public JoinExecutor
 {
 public:
@@ -82,6 +82,6 @@ private:
   RecordUptr right_rec_;
   bool       right_exhausted_{false};
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_JOIN_SORTMERGE_H
+#endif  // NJUDB_EXECUTOR_JOIN_SORTMERGE_H

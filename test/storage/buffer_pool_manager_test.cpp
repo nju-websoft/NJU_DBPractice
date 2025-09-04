@@ -35,17 +35,17 @@
 
 TEST(BufferPoolManagerTest, SimpleTest)
 {
-  wsdb::DiskManager       disk_manager{};
-  wsdb::BufferPoolManager buffer_pool_manager(&disk_manager);
+  njudb::DiskManager       disk_manager{};
+  njudb::BufferPoolManager buffer_pool_manager(&disk_manager);
   if (!std::filesystem::exists(TEST_DIR))
     std::filesystem::create_directory(TEST_DIR);
   std::filesystem::current_path(TEST_DIR);
   try {
-    wsdb::DiskManager::CreateFile("test.tbl");
-  } catch (wsdb::WSDBException_ &e) {
+    njudb::DiskManager::CreateFile("test.tbl");
+  } catch (njudb::NJUDBException_ &e) {
     // destroy and recreate the file
-    wsdb::DiskManager::DestroyFile("test.tbl");
-    wsdb::DiskManager::CreateFile("test.tbl");
+    njudb::DiskManager::DestroyFile("test.tbl");
+    njudb::DiskManager::CreateFile("test.tbl");
   }
   SUB_TEST(Basic)
   {
@@ -99,7 +99,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
     }
     buffer_pool_manager.DeleteAllPages(fd);
     disk_manager.CloseFile(fd);
-    wsdb::DiskManager::DestroyFile("test.tbl");
+    njudb::DiskManager::DestroyFile("test.tbl");
   }
 
   SUB_TEST(MultiFiles)
@@ -107,11 +107,11 @@ TEST(BufferPoolManagerTest, SimpleTest)
     for (int i = 0; i < MAX_FILES; ++i) {
       std::string file_name = "test" + std::to_string(i) + ".tbl";
       try {
-        wsdb::DiskManager::CreateFile(file_name);
-      } catch (wsdb::WSDBException_ &e) {
+        njudb::DiskManager::CreateFile(file_name);
+      } catch (njudb::NJUDBException_ &e) {
         // destroy and recreate the file
-        wsdb::DiskManager::DestroyFile(file_name);
-        wsdb::DiskManager::CreateFile(file_name);
+        njudb::DiskManager::DestroyFile(file_name);
+        njudb::DiskManager::CreateFile(file_name);
       }
       auto fd = disk_manager.OpenFile(file_name);
       for (int j = 0; j < MAX_PAGES; ++j) {
@@ -164,7 +164,7 @@ TEST(BufferPoolManagerTest, SimpleTest)
       auto        fd        = disk_manager.GetFileId(file_name);
       buffer_pool_manager.DeleteAllPages(fd);
       disk_manager.CloseFile(fd);
-      wsdb::DiskManager::DestroyFile(file_name);
+      njudb::DiskManager::DestroyFile(file_name);
     }
   }
 }
@@ -199,8 +199,8 @@ private:
 
 TEST(BufferPoolManagerTest, MultiThread)
 {
-  wsdb::DiskManager       disk_manager{};
-  wsdb::BufferPoolManager buffer_pool_manager(&disk_manager);
+  njudb::DiskManager       disk_manager{};
+  njudb::BufferPoolManager buffer_pool_manager(&disk_manager);
   if (!std::filesystem::exists(TEST_DIR))
     std::filesystem::create_directory(TEST_DIR);
   std::filesystem::current_path(TEST_DIR);
@@ -209,11 +209,11 @@ TEST(BufferPoolManagerTest, MultiThread)
     std::cout << "Single file test begin..." << std::endl;
     Progress progress(10000 + 10 * MAX_PAGES + 10 * MAX_PAGES);
     try {
-      wsdb::DiskManager::CreateFile("test.tbl");
-    } catch (wsdb::WSDBException_ &e) {
+      njudb::DiskManager::CreateFile("test.tbl");
+    } catch (njudb::NJUDBException_ &e) {
       // destroy and recreate the file
-      wsdb::DiskManager::DestroyFile("test.tbl");
-      wsdb::DiskManager::CreateFile("test.tbl");
+      njudb::DiskManager::DestroyFile("test.tbl");
+      njudb::DiskManager::CreateFile("test.tbl");
     }
     auto                     fd = disk_manager.OpenFile("test.tbl");
     std::vector<std::thread> threads;
@@ -225,8 +225,8 @@ TEST(BufferPoolManagerTest, MultiThread)
           while (page == nullptr) {
             try {
               page = buffer_pool_manager.FetchPage(fd, j);
-            } catch (wsdb::WSDBException_ &e) {
-              if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
+            } catch (njudb::NJUDBException_ &e) {
+              if (e.type_ == njudb::NJUDB_NO_FREE_FRAME) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
               } else {
                 throw;
@@ -264,8 +264,8 @@ TEST(BufferPoolManagerTest, MultiThread)
           while (page == nullptr) {
             try {
               page = buffer_pool_manager.FetchPage(fd, j);
-            } catch (wsdb::WSDBException_ &e) {
-              if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
+            } catch (njudb::NJUDBException_ &e) {
+              if (e.type_ == njudb::NJUDB_NO_FREE_FRAME) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
               } else {
                 throw;
@@ -294,8 +294,8 @@ TEST(BufferPoolManagerTest, MultiThread)
           while (page == nullptr) {
             try {
               page = buffer_pool_manager.FetchPage(fd, j);
-            } catch (wsdb::WSDBException_ &e) {
-              if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
+            } catch (njudb::NJUDBException_ &e) {
+              if (e.type_ == njudb::NJUDB_NO_FREE_FRAME) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
               } else {
                 throw;
@@ -325,11 +325,11 @@ TEST(BufferPoolManagerTest, MultiThread)
     for (int i = 0; i < MAX_FILES; ++i) {
       std::string file_name = "test" + std::to_string(i) + ".tbl";
       try {
-        wsdb::DiskManager::CreateFile(file_name);
-      } catch (wsdb::WSDBException_ &e) {
+        njudb::DiskManager::CreateFile(file_name);
+      } catch (njudb::NJUDBException_ &e) {
         // destroy and recreate the file
-        wsdb::DiskManager::DestroyFile(file_name);
-        wsdb::DiskManager::CreateFile(file_name);
+        njudb::DiskManager::DestroyFile(file_name);
+        njudb::DiskManager::CreateFile(file_name);
       }
     }
     std::vector<std::thread> threads;
@@ -359,8 +359,8 @@ TEST(BufferPoolManagerTest, MultiThread)
             while (page == nullptr) {
               try {
                 page = buffer_pool_manager.FetchPage(fd, rd_pid);
-              } catch (wsdb::WSDBException_ &e) {
-                if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
+              } catch (njudb::NJUDBException_ &e) {
+                if (e.type_ == njudb::NJUDB_NO_FREE_FRAME) {
                   std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 } else {
                   throw;
@@ -399,8 +399,8 @@ TEST(BufferPoolManagerTest, MultiThread)
             while (page == nullptr) {
               try {
                 page = buffer_pool_manager.FetchPage(fd, rd_pid);
-              } catch (wsdb::WSDBException_ &e) {
-                if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
+              } catch (njudb::NJUDBException_ &e) {
+                if (e.type_ == njudb::NJUDB_NO_FREE_FRAME) {
                   std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 } else {
                   throw;
@@ -432,7 +432,7 @@ TEST(BufferPoolManagerTest, MultiThread)
       file_id_t   fd        = disk_manager.GetFileId(file_name);
       buffer_pool_manager.DeleteAllPages(fd);
       disk_manager.CloseFile(fd);
-      wsdb::DiskManager::DestroyFile(file_name);
+      njudb::DiskManager::DestroyFile(file_name);
     }
   }
 }

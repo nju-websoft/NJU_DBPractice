@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/8/7.
 //
 
-#ifndef WSDB_EXECUTOR_DEFS_H
-#define WSDB_EXECUTOR_DEFS_H
+#ifndef NJUDB_EXECUTOR_DEFS_H
+#define NJUDB_EXECUTOR_DEFS_H
 
 #include "executor_aggregate.h"
 #include "executor_ddl.h"
@@ -37,4 +37,4 @@
 #include "executor_sort.h"
 #include "executor_update.h"
 
-#endif  // WSDB_EXECUTOR_DEFS_H
+#endif  // NJUDB_EXECUTOR_DEFS_H

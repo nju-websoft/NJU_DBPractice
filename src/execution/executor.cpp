@@ -24,13 +24,13 @@
 
 #include "expr/condition_expr.h"
 
-namespace wsdb {
+namespace njudb {
 
 // translate the plan to executor
 auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHandle *db) -> AbstractExecutorUptr
 {
   if (db == nullptr) {
-    WSDB_THROW(WSDB_DB_NOT_OPEN, "");
+    NJUDB_THROW(NJUDB_DB_NOT_OPEN, "");
   }
   // translate
   if (const auto create_table = std::dynamic_pointer_cast<CreateTablePlan>(plan)) {
@@ -58,7 +58,7 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
     }
   } else if (const auto insert = std::dynamic_pointer_cast<InsertPlan>(plan)) {
     if (db->GetTable(insert->table_name_) == nullptr) {
-      WSDB_THROW(WSDB_TABLE_MISS, insert->table_name_);
+      NJUDB_THROW(NJUDB_TABLE_MISS, insert->table_name_);
     }
     auto                    tab = db->GetTable(insert->table_name_);
     std::vector<RecordUptr> inserts;
@@ -67,14 +67,14 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
   } else if (const auto update = std::dynamic_pointer_cast<UpdatePlan>(plan)) {
     auto tab = db->GetTable(update->table_name_);
     if (tab == nullptr) {
-      WSDB_THROW(WSDB_TABLE_MISS, update->table_name_);
+      NJUDB_THROW(NJUDB_TABLE_MISS, update->table_name_);
     }
     return std::make_unique<UpdateExecutor>(
         Translate(update->child_, db), tab, db->GetIndexes(update->table_name_), std::move(update->updates_));
   } else if (const auto del = std::dynamic_pointer_cast<DeletePlan>(plan)) {
     auto tab = db->GetTable(del->table_name_);
     if (tab == nullptr) {
-      WSDB_THROW(WSDB_TABLE_MISS, del->table_name_);
+      NJUDB_THROW(NJUDB_TABLE_MISS, del->table_name_);
     }
     return std::make_unique<DeleteExecutor>(Translate(del->child_, db), tab, db->GetIndexes(del->table_name_));
   } else if (const auto filter = std::dynamic_pointer_cast<FilterPlan>(plan)) {
@@ -85,7 +85,7 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
   } else if (const auto scan = std::dynamic_pointer_cast<ScanPlan>(plan)) {
     auto tab = db->GetTable(scan->table_name_);
     if (tab == nullptr) {
-      WSDB_THROW(WSDB_TABLE_MISS, scan->table_name_);
+      NJUDB_THROW(NJUDB_TABLE_MISS, scan->table_name_);
     }
     return std::make_unique<SeqScanExecutor>(tab);
   } else if (const auto idx_scan = std::dynamic_pointer_cast<IdxScanPlan>(plan)) {
@@ -126,7 +126,7 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
     return std::make_unique<LimitExecutor>(Translate(lim->child_, db), lim->limit_);
 
   } else {
-    WSDB_FATAL("Unknown plan type");
+    NJUDB_FATAL("Unknown plan type");
   }
   return nullptr;
 }
@@ -140,11 +140,11 @@ void Executor::Execute(const AbstractExecutorUptr &executor, Context *ctx)
     ctx->nt_ctl_->SendRecHeader(ctx->client_fd_, header);
     for (executor->Init(); !executor->IsEnd(); executor->Next()) {
       auto rec = executor->GetRecord();
-      WSDB_ASSERT(rec != nullptr, "");
+      NJUDB_ASSERT(rec != nullptr, "");
       ctx->nt_ctl_->SendRec(ctx->client_fd_, rec.get());
     }
     ctx->nt_ctl_->SendRecFinish(ctx->client_fd_);
   }
 }
 
-}  // namespace wsdb
+}  // namespace njudb

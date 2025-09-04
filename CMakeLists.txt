@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 
 set(CMAKE_CXX_STANDARD 20)
 
-project(wsdb)
+project(njudb)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -56,7 +56,7 @@ if(USE_GOLD_LAB01 OR USE_GOLD_LAB02 OR USE_GOLD_LAB03 OR USE_GOLD_LAB04)
 endif()
 
 # Print configuration
-message(STATUS "WSDB Lab Configuration:")
+message(STATUS "NJUDB Lab Configuration:")
 message(STATUS "  Lab01 (Buffer Pool): ${USE_GOLD_LAB01}")
 message(STATUS "  Lab02 (Executor Basic): ${USE_GOLD_LAB02}")
 message(STATUS "  Lab03 (Executor Analysis): ${USE_GOLD_LAB03}")
@@ -69,10 +69,10 @@ endif()
 
 # Include the lab configuration helper
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-include(WSDBLabConfig)
+include(NJUDBLabConfig)
 
 # Pre-declare gold libraries if needed
-wsdb_predeclare_gold_libraries()
+njudb_predeclare_gold_libraries()
 
 include_directories(src)
 include_directories(third_party/fmt/include)

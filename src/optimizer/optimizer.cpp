@@ -20,7 +20,7 @@
 //
 
 #include "optimizer.h"
-namespace wsdb {
+namespace njudb {
 auto Optimizer::Optimize(std::shared_ptr<AbstractPlan> plan, DatabaseHandle *db) -> std::shared_ptr<AbstractPlan>
 {
   plan = LogicalOptimize(plan, db);
@@ -77,7 +77,7 @@ auto Optimizer::PhysicalOptimize(std::shared_ptr<AbstractPlan> plan, DatabaseHan
 }
 
 auto Optimizer::PhysicalOptimizeScan(const std::shared_ptr<ScanPlan> &scan, ConditionVec &conds,
-    wsdb::DatabaseHandle *db) -> std::shared_ptr<AbstractPlan>
+    njudb::DatabaseHandle *db) -> std::shared_ptr<AbstractPlan>
 {
   // try to make index scan
   size_t       max_matched_fields = 0;
@@ -569,4 +569,4 @@ auto Optimizer::OptimizeSortMergeJoin(std::shared_ptr<JoinPlan> join, DatabaseHa
 
   return join;
 }
-}  // namespace wsdb
+}  // namespace njudb

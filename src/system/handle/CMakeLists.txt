@@ -1,5 +1,5 @@
 # Lab01: page handle and table handle
-wsdb_should_compile_from_source(COMPILE_FROM_SOURCE_ONE "01")
+njudb_should_compile_from_source(COMPILE_FROM_SOURCE_ONE "01")
 if(COMPILE_FROM_SOURCE_ONE)
     add_library(handle_page SHARED
             page_handle.cpp
@@ -27,7 +27,7 @@ endif()
 
 
 # Lab04: System Handle (part of Lab04)
-wsdb_should_compile_from_source(COMPILE_FROM_SOURCE_FOUR "04")
+njudb_should_compile_from_source(COMPILE_FROM_SOURCE_FOUR "04")
 if(COMPILE_FROM_SOURCE_FOUR)
     add_library(handle_index SHARED
             index_handle.cpp

@@ -23,16 +23,16 @@
 #include "common/config.h"
 #include "../common/error.h"
 
-namespace wsdb {
+namespace njudb {
 
 LRUKReplacer::LRUKReplacer(size_t k) : max_size_(BUFFER_POOL_SIZE), k_(k) {}
 
-auto LRUKReplacer::Victim(frame_id_t *frame_id) -> bool { WSDB_STUDENT_TODO(l1, f1); }
+auto LRUKReplacer::Victim(frame_id_t *frame_id) -> bool { NJUDB_STUDENT_TODO(l1, f1); }
 
-void LRUKReplacer::Pin(frame_id_t frame_id) { WSDB_STUDENT_TODO(l1, f1); }
+void LRUKReplacer::Pin(frame_id_t frame_id) { NJUDB_STUDENT_TODO(l1, f1); }
 
-void LRUKReplacer::Unpin(frame_id_t frame_id) { WSDB_STUDENT_TODO(l1, f1); }
+void LRUKReplacer::Unpin(frame_id_t frame_id) { NJUDB_STUDENT_TODO(l1, f1); }
 
-auto LRUKReplacer::Size() -> size_t { WSDB_STUDENT_TODO(l1, f1); }
+auto LRUKReplacer::Size() -> size_t { NJUDB_STUDENT_TODO(l1, f1); }
 
-}  // namespace wsdb
+}  // namespace njudb

@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/31.
 //
 
-#ifndef WSDB_NET_H
-#define WSDB_NET_H
+#ifndef NJUDB_NET_H
+#define NJUDB_NET_H
 
 #include <unistd.h>
 
@@ -54,4 +54,4 @@ int ReadNetPkg(int sockfd, NetPkg &pkg);
 int WriteNetPkg(int sockfd, NetPkg &pkg);
 }  // namespace net
 
-#endif  // WSDB_NET_H
+#endif  // NJUDB_NET_H

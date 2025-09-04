@@ -24,14 +24,14 @@
  *
  */
 
-#ifndef WSDB_EXECUTOR_SORT_H
-#define WSDB_EXECUTOR_SORT_H
+#ifndef NJUDB_EXECUTOR_SORT_H
+#define NJUDB_EXECUTOR_SORT_H
 #include <functional>
 #include <fstream>
 #include <utility>
 #include "executor_abstract.h"
 
-namespace wsdb {
+namespace njudb {
 
 class SortExecutor : public AbstractExecutor
 {
@@ -94,17 +94,17 @@ private:
      */
     auto LoadNextRecord(size_t max_rec_num) -> bool
     {
-      WSDB_ASSERT(file_handle_ != nullptr, "file_handle_ is nullptr");
-      WSDB_ASSERT(file_handle_->is_open(), "file_handle_ is not open");
+      NJUDB_ASSERT(file_handle_ != nullptr, "file_handle_ is nullptr");
+      NJUDB_ASSERT(file_handle_->is_open(), "file_handle_ is not open");
 
-      WSDB_STUDENT_TODO(l2, f1);
+      NJUDB_STUDENT_TODO(l2, f1);
     }
 
     [[nodiscard]] auto GetRecord() const -> const RecordUptr & { return record_; }
 
     void CloseFile()
     {
-      WSDB_ASSERT(file_handle_ != nullptr, "file_handle_ is nullptr");
+      NJUDB_ASSERT(file_handle_ != nullptr, "file_handle_ is nullptr");
       file_handle_->close();
       file_handle_ = nullptr;
     }
@@ -145,6 +145,6 @@ private:
   std::unique_ptr<std::ifstream> merge_result_file_handle_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_SORT_H
+#endif  // NJUDB_EXECUTOR_SORT_H

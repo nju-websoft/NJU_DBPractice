@@ -1,5 +1,5 @@
 # Lab01: Buffer Pool
-wsdb_should_compile_from_source(COMPILE_FROM_SOURCE "01")
+njudb_should_compile_from_source(COMPILE_FROM_SOURCE "01")
 if(COMPILE_FROM_SOURCE)
     set(SOURCES
             buffer_pool_manager.cpp

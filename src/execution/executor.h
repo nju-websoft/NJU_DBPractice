@@ -19,14 +19,14 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_EXECUTOR_H
-#define WSDB_EXECUTOR_H
+#ifndef NJUDB_EXECUTOR_H
+#define NJUDB_EXECUTOR_H
 
 #include "plan/plan.h"
 #include "executor_abstract.h"
 #include "system/context.h"
 
-namespace wsdb {
+namespace njudb {
 class Executor
 {
 public:
@@ -36,6 +36,6 @@ public:
 
   void Execute(const AbstractExecutorUptr &executor, Context *ctx);
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_H
+#endif  // NJUDB_EXECUTOR_H

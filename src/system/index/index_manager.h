@@ -19,11 +19,11 @@
 // Created by ziqi on 2024/7/28.
 //
 
-#ifndef WSDB_INDEX_MANAGER_H
-#define WSDB_INDEX_MANAGER_H
+#ifndef NJUDB_INDEX_MANAGER_H
+#define NJUDB_INDEX_MANAGER_H
 #include "system/handle/index_handle.h"
 #include "common/record.h"
-namespace wsdb {
+namespace njudb {
 class IndexManager
 {
 public:
@@ -59,6 +59,6 @@ private:
   DiskManager       *disk_manager_;
   BufferPoolManager *buffer_pool_manager_;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_INDEX_MANAGER_H
+#endif  // NJUDB_INDEX_MANAGER_H

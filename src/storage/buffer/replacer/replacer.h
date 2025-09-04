@@ -24,7 +24,7 @@
 
 #include "common/types.h"
 
-namespace wsdb {
+namespace njudb {
 
 /**
  * Replacer is an abstract class that tracks page usage.
@@ -58,6 +58,6 @@ public:
   virtual auto Size() -> size_t = 0;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
 #endif  // NJU_DBCOURSE_REPLACER_H

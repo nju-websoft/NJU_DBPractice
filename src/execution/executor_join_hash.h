@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/8/9.
 //
 
-#ifndef WSDB_EXECUTOR_JOIN_HASH_H
-#define WSDB_EXECUTOR_JOIN_HASH_H
+#ifndef NJUDB_EXECUTOR_JOIN_HASH_H
+#define NJUDB_EXECUTOR_JOIN_HASH_H
 
 #include "executor_join.h"
 #include "common/bloom_filter.h"
@@ -28,7 +28,7 @@
 #include <vector>
 #include <memory>
 
-namespace wsdb {
+namespace njudb {
 
 /**
  * Hash Join Executor implementing grace hash join algorithm
@@ -88,6 +88,6 @@ private:
   size_t probe_records_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_JOIN_HASH_H
+#endif  // NJUDB_EXECUTOR_JOIN_HASH_H

@@ -21,8 +21,8 @@
 
 #include "ast.h"
 
-namespace wsdb {
+namespace njudb {
 namespace ast{
-std::shared_ptr<TreeNode> wsdb_ast_;
+std::shared_ptr<TreeNode> njudb_ast_;
 }
 }

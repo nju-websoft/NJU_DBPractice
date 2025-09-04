@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_CONFIG_H
-#define WSDB_CONFIG_H
+#ifndef NJUDB_CONFIG_H
+#define NJUDB_CONFIG_H
 #include <string>
 /// storage
 constexpr size_t  PAGE_SIZE        = 4096;
@@ -49,4 +49,4 @@ const std::string TMP_DIR = ".tmp";
 // Working directory will be written by cmake
 const std::string DATA_DIR = "./data";
 
-#endif  // WSDB_CONFIG_H
+#endif  // NJUDB_CONFIG_H

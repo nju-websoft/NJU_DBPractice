@@ -24,12 +24,12 @@
  *
  */
 
-#ifndef WSDB_EXECUTOR_LIMIT_H
-#define WSDB_EXECUTOR_LIMIT_H
+#ifndef NJUDB_EXECUTOR_LIMIT_H
+#define NJUDB_EXECUTOR_LIMIT_H
 
 #include "executor_abstract.h"
 
-namespace wsdb {
+namespace njudb {
 class LimitExecutor : public AbstractExecutor
 {
 public:
@@ -50,6 +50,6 @@ private:
   // current number of records returned
   int count_;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_LIMIT_H
+#endif  // NJUDB_EXECUTOR_LIMIT_H

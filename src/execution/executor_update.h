@@ -23,14 +23,14 @@
  * @brief set the fields in the records extracted from the child executor to the new values and update the tables and indexes
  */
 
-#ifndef WSDB_EXECUTOR_UPDATE_H
-#define WSDB_EXECUTOR_UPDATE_H
+#ifndef NJUDB_EXECUTOR_UPDATE_H
+#define NJUDB_EXECUTOR_UPDATE_H
 
 #include "executor_abstract.h"
 #include "system/handle/table_handle.h"
 #include "system/handle/index_handle.h"
 
-namespace wsdb {
+namespace njudb {
 class UpdateExecutor : public AbstractExecutor
 {
 public:
@@ -51,6 +51,6 @@ private:
   std::vector<std::pair<std::unique_ptr<Record>, std::unique_ptr<Record>>> updates_to_perform_;
   bool                                       is_end_;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_UPDATE_H
+#endif  // NJUDB_EXECUTOR_UPDATE_H

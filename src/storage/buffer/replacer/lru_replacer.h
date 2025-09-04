@@ -15,8 +15,8 @@
  - along with this program.  If not, see <https://www.gnu.org/licenses/>.
  -----------------------------------------------------------------------------*/
 
-#ifndef WSDB_LRU_REPLACER_H
-#define WSDB_LRU_REPLACER_H
+#ifndef NJUDB_LRU_REPLACER_H
+#define NJUDB_LRU_REPLACER_H
 
 #include <list>
 #include <mutex>  // NOLINT
@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include "replacer.h"
 
-namespace wsdb {
+namespace njudb {
 
 /**
  * LRUReplacer implements the Least Recently Used replacement policy.
@@ -91,6 +91,6 @@ private:
   size_t max_size_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_LRU_REPLACER_H
+#endif  // NJUDB_LRU_REPLACER_H

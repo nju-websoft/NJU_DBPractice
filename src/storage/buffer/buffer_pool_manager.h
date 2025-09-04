@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/17.
 //
 
-#ifndef WSDB_BUFFER_POOL_MANAGER_H
-#define WSDB_BUFFER_POOL_MANAGER_H
+#ifndef NJUDB_BUFFER_POOL_MANAGER_H
+#define NJUDB_BUFFER_POOL_MANAGER_H
 
 #include <list>
 #include <memory>
@@ -33,7 +33,7 @@
 #include "frame.h"
 #include "common/page.h"
 
-namespace wsdb {
+namespace njudb {
 
 class ReadPageGuard;
 class WritePageGuard;
@@ -44,20 +44,20 @@ struct fid_pid_t
 
   bool operator==(const fid_pid_t &rhs) const { return fid == rhs.fid && pid == rhs.pid; }
 };
-}  // namespace wsdb
+}  // namespace njudb
 
 namespace std {
 template <>
-struct hash<wsdb::fid_pid_t>
+struct hash<njudb::fid_pid_t>
 {
-  size_t operator()(const wsdb::fid_pid_t &fp) const
+  size_t operator()(const njudb::fid_pid_t &fp) const
   {
     return std::hash<table_id_t>()(fp.fid) ^ std::hash<frame_id_t>()(fp.pid);
   }
 };
 }  // namespace std
 
-namespace wsdb {
+namespace njudb {
 
 class BufferPoolManager
 {
@@ -159,7 +159,7 @@ private:
    * Get the available frame
    * 1. if the free list is not empty, get the frame id from the free list
    * 2. else use the replacer to get the frame id
-   * 3. if no frame can be evicted, throw WSDB_NO_FREE_FRAME
+   * 3. if no frame can be evicted, throw NJUDB_NO_FREE_FRAME
    * @return the frame id
    */
   auto GetAvailableFrame() -> frame_id_t;
@@ -186,6 +186,6 @@ private:
   std::unordered_map<fid_pid_t, frame_id_t> page_frame_lookup_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_BUFFER_POOL_MANAGER_H
+#endif  // NJUDB_BUFFER_POOL_MANAGER_H

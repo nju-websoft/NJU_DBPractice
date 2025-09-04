@@ -19,14 +19,14 @@
 // Created by ziqi on 2024/7/19.
 //
 
-#ifndef WSDB_BITMAP_H
-#define WSDB_BITMAP_H
+#ifndef NJUDB_BITMAP_H
+#define NJUDB_BITMAP_H
 
 #include <cstring>
 #include "../../common/error.h"
 #include "../../common/micro.h"
 
-namespace wsdb {
+namespace njudb {
 #define BITMAP_WIDTH 8
 #define BITMAP_SIZE(bit_num) ((bit_num + BITMAP_WIDTH - 1) / BITMAP_WIDTH)
 
@@ -66,6 +66,6 @@ public:
     return bit_num;
   }
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_BITMAP_H
+#endif  // NJUDB_BITMAP_H

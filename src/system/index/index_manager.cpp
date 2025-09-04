@@ -24,7 +24,7 @@
 #include "common/types.h"
 #include <filesystem>
 
-namespace wsdb {
+namespace njudb {
 void IndexManager::CreateIndex(const std::string &db_name, const std::string &index_name, const std::string &table_name,
     const RecordSchema &schema, IndexType index_type)
 {
@@ -112,7 +112,7 @@ IndexHandleUptr IndexManager::OpenIndex(
   } else if (index_type == IndexType::HASH) {
     cursor = HashIndex::GetIndexHeaderSize();
   } else {
-    WSDB_FATAL("Unknown index type");
+    NJUDB_FATAL("Unknown index type");
   }
   cursor += schema->Deserialize(file_header_data + cursor);
   schema->SetTableId(table_fd);
@@ -126,9 +126,9 @@ IndexHandleUptr IndexManager::OpenIndex(
   IndexType index_type_dummy = static_cast<IndexType>(index_type_data);
 
   // check if the index name and type match
-  WSDB_ASSERT(index_type_dummy == index_type,
+  NJUDB_ASSERT(index_type_dummy == index_type,
       fmt::format("Expected index type {}, got {}", static_cast<int>(index_type), index_type_data));
-  WSDB_ASSERT(
+  NJUDB_ASSERT(
       index_name_dummy == index_name, fmt::format("Expected index name {}, got {}", index_name, index_name_dummy));
 
   return std::make_unique<IndexHandle>(
@@ -190,7 +190,7 @@ void IndexManager::RebuildIndex(const std::string &db_name, const std::string &i
   // 2. Clear the existing index
   // 3. Re-insert all records into the index
 
-  WSDB_THROW(WSDB_NOT_IMPLEMENTED, "RebuildIndex not yet implemented");
+  NJUDB_THROW(NJUDB_NOT_IMPLEMENTED, "RebuildIndex not yet implemented");
 }
 
-}  // namespace wsdb
+}  // namespace njudb

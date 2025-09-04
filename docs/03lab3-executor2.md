@@ -26,7 +26,7 @@ having id=3 and avg(score) > 90.0;
 聚合操作是对一组数据进行统计计算的过程，常见的聚合函数包括计数（COUNT）、求和（SUM）、平均值（AVG）、最大值（MAX）、最小值（MIN）等。聚合通常与分组（GROUP BY）结合使用，用于对数据进行分类统计。例如，可以统计每个学生的总成绩、每门课程的最高分等。聚合操作是数据分析和报表生成的重要基础。
 
 ## 实验要求
-本次实验需要完成Join和Aggregate算子并通过SQL测试。假设仓库目录名为wsdb，服务器代码文件均在wsdb/src/目录下。你只需要修改或添加src文件夹下的文件，如果遇到不在WSDB_ERRORS（wsdb/common/errors.h）列表中的未知异常，请使用WSDB_EXCEPTION_EMPTY，并在报告中写下你遇到的特殊情况。请完成所有标注WSDB_STUDENT_TODO宏的函数，并在完成后将宏删除。
+本次实验需要完成Join和Aggregate算子并通过SQL测试。假设仓库目录名为njudb，服务器代码文件均在njudb/src/目录下。你只需要修改或添加src文件夹下的文件，如果遇到不在NJUDB_ERRORS（njudb/common/errors.h）列表中的未知异常，请使用NJUDB_EXCEPTION_EMPTY，并在报告中写下你遇到的特殊情况。请完成所有标注NJUDB_STUDENT_TODO宏的函数，并在完成后将宏删除。
 
 ### t1： 嵌套循环内连接（Nested Loop Inner Join）（20 pts）
 嵌套循环连接是最朴素，支持的连接条件最丰富的方法。嵌套循环内连接用伪代码表示如下：
@@ -79,7 +79,7 @@ select i_im_id, avg(i_im_id), count(i_im_id) from item where i_im_id > 25 group 
 1. COUNT不会返回空值，而其他函数可能返回空值。
 2. 假如聚合算子记录中至少有一个有效值，则需要输出，否则如果聚合的所有结果均为空，则输出0条记录，请看下面的例子，item表中所有i_im_id均小于等于50；
 ```sql
-wsdb> select count(*), sum(i_im_id) from item where i_im_id > 50;
+njudb> select count(*), sum(i_im_id) from item where i_im_id > 50;
 
 +--------------+--------------+
 | COUNT(*)     | SUM(i_im_id) | 
@@ -88,7 +88,7 @@ wsdb> select count(*), sum(i_im_id) from item where i_im_id > 50;
 | 0            | (null)       | 
 +--------------+--------------+
 Total tuple(s): 1
-wsdb> select sum(i_im_id) from item where i_im_id > 50;
+njudb> select sum(i_im_id) from item where i_im_id > 50;
 
 +--------------+
 | SUM(i_im_id) | 
@@ -103,7 +103,7 @@ Nested loop join的优点是适用于任意复杂的连接条件，但时间复�
 
 Hash Join支持高效的等值连接（例如left.a=right.i and left.b=right.j），可以将平均时间复杂度降低到O(n+m)。主要由两阶段组成：1. 构建哈希表：将右表中对应列的键值（上例中键值为\<right.i, right.j\>）插入到哈希表中；2. 左表probing：对于左表中的键值\<left.a, left.b\>，检查是否在哈希表中存在，若存在则与右表连接输出。
 
-WSDB中，Hash Join只要连接条件中有至少一个等值连接就可以使用，对于其他非等值连接条件，Hash Join需要在probing阶段另外检查这些条件是否能够满足。
+NJUDB中，Hash Join只要连接条件中有至少一个等值连接就可以使用，对于其他非等值连接条件，Hash Join需要在probing阶段另外检查这些条件是否能够满足。
 
 本题需要完成`src/execution/executor_join_hash.cpp`部分。
 
@@ -133,7 +133,7 @@ Sort merge join也可以支持高效的等值连接，其时间复杂度也为O(
 
 这种方式能够高效地处理等值连接，尤其适用于大数据量的场景。
 
-对于非等值连接，以`<`为例，WSDB会将左表按照升序排序，右表按照将序排序，这样的好处是左表向后遍历的同时，右表如果检查到第一个不满足条件记录就可以停止。例如：左表为[1,2,3,3,4,5,6,7,7,8]，右表为[5,4,3]。
+对于非等值连接，以`<`为例，NJUDB会将左表按照升序排序，右表按照将序排序，这样的好处是左表向后遍历的同时，右表如果检查到第一个不满足条件记录就可以停止。例如：左表为[1,2,3,3,4,5,6,7,7,8]，右表为[5,4,3]。
 对于非等值连接（如 `<`），假设左表已按升序排序 `[1,2,3,3,4,5,6,7,7,8]`，右表按降序排序 `[5,4,3]`。连接条件为左表值 `<` 右表值。
 
 连接过程如下：
@@ -156,7 +156,7 @@ Sort merge join也可以支持高效的等值连接，其时间复杂度也为O(
 
 这种排序合并方式能高效地处理非等值连接，虽然时间复杂度仍为O(m*n)，但避免了不必要的遍历和比较。
 
-在WSDB中，非等值连接仅支持单一列比较（`left.a>right.i`，并且没有其他连接条件），等值连接支持多列等值条件（`left.a=right.i and left.b=right.j`）。跟细节的判定标准请阅读`src/optimizer/optimizer.cpp`的`OptimizeSortMergeJoin`部分。
+在NJUDB中，非等值连接仅支持单一列比较（`left.a>right.i`，并且没有其他连接条件），等值连接支持多列等值条件（`left.a=right.i and left.b=right.j`）。跟细节的判定标准请阅读`src/optimizer/optimizer.cpp`的`OptimizeSortMergeJoin`部分。
 
 ## 开放问题f3：连接方式比较（0 pts）
 本开放问题源自Stack Overflow上的[What is the difference between a hash join and a merge join (Oracle RDBMS )?](https://stackoverflow.com/questions/1111707/what-is-the-difference-between-a-hash-join-and-a-merge-join-oracle-rdbms)。
@@ -172,28 +172,28 @@ Sort merge join也可以支持高效的等值连接，其时间复杂度也为O(
 
 1. 实验报告（10%）：实现思路，优化技巧，实验结果，对框架代码和实验的建议，以及在报告中出现的思考等，请尽量避免直接粘贴代码，建议2-4页。
 
-2. 功能分数（90%）：需要通过`wsdb/test/sql`目录下的SQL语句测试。
+2. 功能分数（90%）：需要通过`njudb/test/sql`目录下的SQL语句测试。
 
-    * basic: <u>**顺序**</u>通过`wsdb/test/sql/lab03/basic`下的SQL测试并与`expected`输出比较，无差异获得该小题满分。
+    * basic: <u>**顺序**</u>通过`njudb/test/sql/lab03/basic`下的SQL测试并与`expected`输出比较，无差异获得该小题满分。
 
-    * bonus: <u>**顺序**</u>通过`wsdb/test/sql/lab03/bonus`下的SQL测试。
+    * bonus: <u>**顺序**</u>通过`njudb/test/sql/lab03/bonus`下的SQL测试。
 
 **重要：请勿尝试抄袭代码或搬运他人实验结果，我们会严格审查，如被发现将取消大实验分数，情节严重可能会对课程总评产生影响!!!**
 
-3. 测试方法：编译`wsdb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
+3. 测试方法：编译`njudb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
    
    ```shell
-   $ ./wsdb
+   $ ./njudb
    $ ./client
    ```
    
-   关于client的更多用法可参考参考[开始之前](./00basic.md)或使用-h参数查看。如果`wsdb`因为端口监听异常启动失败（通常原因是已经启用了一个wsdb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间wsdb释放资源后再重新启动。
+   关于client的更多用法可参考参考[开始之前](./00basic.md)或使用-h参数查看。如果`njudb`因为端口监听异常启动失败（通常原因是已经启用了一个njudb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间njudb释放资源后再重新启动。
    
-      * 提示：你可以cd到`wsdb/test/sql/`目录下通过脚本`evaluate.sh`进行测试。
+      * 提示：你可以cd到`njudb/test/sql/`目录下通过脚本`evaluate.sh`进行测试。
 
       ```bash
       $ bash evaluate.sh <build directory> <lab directory> <sql directory>
-      # e.g. bash evaluate.sh /path/to/wsdb/build lab03 bonus
+      # e.g. bash evaluate.sh /path/to/njudb/build lab03 bonus
       ```
 
 ### 提交材料
@@ -204,7 +204,7 @@ Sort merge join也可以支持高效的等值连接，其时间复杂度也为O(
       | -------- | ---- | ------------------------- | -------- |
    | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | t1/t2/f1/f2/f3    |
 
-2. 代码：`wsdb/src`文件夹
+2. 代码：`njudb/src`文件夹
 
 *提交示例：请将以上两部分内容打包并命名为lab3\_学号\_姓名.zip（例如lab3_123456_张三.zip）并上传至提交平台，请确保解压后目录树如下：*
 

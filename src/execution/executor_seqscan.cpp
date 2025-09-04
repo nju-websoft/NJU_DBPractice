@@ -21,7 +21,7 @@
 
 #include "executor_seqscan.h"
 
-namespace wsdb {
+namespace njudb {
 
 SeqScanExecutor::SeqScanExecutor(TableHandle *tab) : AbstractExecutor(Basic), tab_(tab) {}
 
@@ -29,12 +29,12 @@ void SeqScanExecutor::Init()
 {
   rid_ = tab_->GetFirstRID();
   
-  WSDB_STUDENT_TODO(l2, t1);
+  NJUDB_STUDENT_TODO(l2, t1);
 }
 
-void SeqScanExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
+void SeqScanExecutor::Next() { NJUDB_STUDENT_TODO(l2, t1); }
 
-auto SeqScanExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l2, t1); }
+auto SeqScanExecutor::IsEnd() const -> bool { NJUDB_STUDENT_TODO(l2, t1); }
 
 auto SeqScanExecutor::GetOutSchema() const -> const RecordSchema * { return &tab_->GetSchema(); }
-}  // namespace wsdb
+}  // namespace njudb

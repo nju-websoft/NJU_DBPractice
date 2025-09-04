@@ -1,5 +1,5 @@
 # read all the sql files in the directory and evaluate them comparing the output with the expected output
-# Usage: ./evaluate.sh <wsdb bin directory> <sql directory>
+# Usage: ./evaluate.sh <njudb bin directory> <sql directory>
 
 # first store current directory
 sql_dir=$(pwd)
@@ -14,9 +14,9 @@ if [ -d "data/db2024" ]; then
     rm -r data/db2024
 fi
 
-# start a new process for wsdb
-echo "Start wsdb..."
-./wsdb &
+# start a new process for njudb
+echo "Start njudb..."
+./njudb &
 sleep 1
 
 # run client
@@ -48,5 +48,5 @@ done
 # print the number of passed tests
 echo "Passed [$passed/$total] tests"
 
-# kill the wsdb process
-kill $(pgrep wsdb)
+# kill the njudb process
+kill $(pgrep njudb)

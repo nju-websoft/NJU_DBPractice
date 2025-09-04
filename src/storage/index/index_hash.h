@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/28.
 //
 
-#ifndef WSDB_INDEX_HASH_H
-#define WSDB_INDEX_HASH_H
+#ifndef NJUDB_INDEX_HASH_H
+#define NJUDB_INDEX_HASH_H
 
 #include "index_abstract.h"
 #include "common/config.h"
@@ -29,7 +29,7 @@
 
 #define HASH_KEY_PAGE 1
 
-namespace wsdb {
+namespace njudb {
 
 // Hash index header page structure (page 0)
 struct HashHeaderPage
@@ -134,6 +134,6 @@ private:
   static constexpr double MAX_LOAD_FACTOR      = 0.75;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_INDEX_HASH_H
+#endif  // NJUDB_INDEX_HASH_H

@@ -26,15 +26,15 @@
 #include "../../common/config.h"
 #include "../../../common/error.h"
 
-namespace wsdb {
+namespace njudb {
 void DiskManager::CreateFile(const std::string &fname)
 {
   if (FileExists(fname)) {
-    WSDB_THROW(WSDB_FILE_EXISTS, fname);
+    NJUDB_THROW(NJUDB_FILE_EXISTS, fname);
   }
   std::ofstream file(fname);
   if (!file) {
-    WSDB_FATAL("Create file failed");
+    NJUDB_FATAL("Create file failed");
   }
   file.close();
 }
@@ -42,24 +42,24 @@ void DiskManager::CreateFile(const std::string &fname)
 void DiskManager::DestroyFile(const std::string &fname)
 {
   if (!FileExists(fname)) {
-    WSDB_THROW(WSDB_FILE_NOT_EXISTS, fname);
+    NJUDB_THROW(NJUDB_FILE_NOT_EXISTS, fname);
   }
   int ret = unlink(fname.c_str());
   if (ret < 0) {
-    WSDB_THROW(WSDB_FILE_DELETE_ERROR, fname);
+    NJUDB_THROW(NJUDB_FILE_DELETE_ERROR, fname);
   }
 }
 
 auto DiskManager::OpenFile(const std::string &fname) -> file_id_t
 {
   if (!FileExists(fname))
-    WSDB_THROW(WSDB_FILE_NOT_EXISTS, fname);
+    NJUDB_THROW(NJUDB_FILE_NOT_EXISTS, fname);
   if (name_fid_map_.find(fname) != name_fid_map_.end()) {
-    WSDB_THROW(WSDB_FILE_REOPEN, fname);
+    NJUDB_THROW(NJUDB_FILE_REOPEN, fname);
   } else {
     int fd = open(fname.c_str(), O_RDWR);
     if (fd == -1) {
-      WSDB_THROW(WSDB_FILE_NOT_OPEN, fname);
+      NJUDB_THROW(NJUDB_FILE_NOT_OPEN, fname);
     }
     name_fid_map_.insert(std::make_pair(fname, fd));
     fid_name_map_.insert(std::make_pair(fd, fname));
@@ -70,7 +70,7 @@ auto DiskManager::OpenFile(const std::string &fname) -> file_id_t
 void DiskManager::CloseFile(file_id_t fid)
 {
   if (fid_name_map_.find(fid) == fid_name_map_.end()) {
-    WSDB_THROW(WSDB_FILE_NOT_OPEN, fmt::format("fid: {}", fid));
+    NJUDB_THROW(NJUDB_FILE_NOT_OPEN, fmt::format("fid: {}", fid));
   } else {
     name_fid_map_.erase(fid_name_map_[fid]);
     fid_name_map_.erase(fid);
@@ -80,40 +80,40 @@ void DiskManager::CloseFile(file_id_t fid)
 
 void DiskManager::WritePage(file_id_t fid, page_id_t page_id, const char *data)
 {
-  WSDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), fmt::format("fid: {}", fid));
+  NJUDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), fmt::format("fid: {}", fid));
   lseek(fid, static_cast<off_t>(page_id) * static_cast<off_t>(PAGE_SIZE), SEEK_SET);
   if (write(fid, data, PAGE_SIZE) != PAGE_SIZE) {
-    WSDB_THROW(
-        WSDB_FILE_WRITE_ERROR, fmt::format("fid: {}, page_id: {}", fid, page_id));
+    NJUDB_THROW(
+        NJUDB_FILE_WRITE_ERROR, fmt::format("fid: {}, page_id: {}", fid, page_id));
   }
 }
 
 void DiskManager::ReadPage(file_id_t fid, page_id_t page_id, char *data)
 {
-  WSDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), fmt::format("fid: {}", fid));
+  NJUDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), fmt::format("fid: {}", fid));
   lseek(fid, static_cast<off_t>(page_id) * static_cast<off_t>(PAGE_SIZE), SEEK_SET);
   if (read(fid, data, PAGE_SIZE) < 0) {
-    WSDB_THROW(
-        WSDB_FILE_READ_ERROR, fmt::format("fid: {}, page_id: {}", fid, page_id));
+    NJUDB_THROW(
+        NJUDB_FILE_READ_ERROR, fmt::format("fid: {}, page_id: {}", fid, page_id));
   }
 }
 
 void DiskManager::ReadFile(file_id_t fid, char *data, size_t size, size_t offset, int type)
 {
-  WSDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), "File not Opened");
+  NJUDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), "File not Opened");
   lseek(fid, static_cast<off_t>(offset), type);
   if(read(fid, data, size) < 0) {
-    WSDB_THROW(WSDB_FILE_READ_ERROR, fmt::format("fid: {}", fid));
+    NJUDB_THROW(NJUDB_FILE_READ_ERROR, fmt::format("fid: {}", fid));
   }
 }
 
 void DiskManager::WriteFile(file_id_t fid, const char *data, size_t size, int type, int off)
 {
-  WSDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), "File not Opened");
-  WSDB_ASSERT(type == SEEK_CUR || type == SEEK_SET || type == SEEK_END, "Invalid Type");
+  NJUDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), "File not Opened");
+  NJUDB_ASSERT(type == SEEK_CUR || type == SEEK_SET || type == SEEK_END, "Invalid Type");
   lseek(fid, off, type);
   if(write(fid, data, size) < 0) {
-    WSDB_THROW(WSDB_FILE_WRITE_ERROR, fmt::format("fid: {}", fid));
+    NJUDB_THROW(NJUDB_FILE_WRITE_ERROR, fmt::format("fid: {}", fid));
   }
 }
 
@@ -137,10 +137,10 @@ auto DiskManager::GetFileName(file_id_t fid) -> std::string
   if (it != fid_name_map_.end()) {
     return it->second;
   } else {
-    WSDB_THROW(WSDB_FILE_NOT_OPEN, fmt::format("fid: {}", fid));
+    NJUDB_THROW(NJUDB_FILE_NOT_OPEN, fmt::format("fid: {}", fid));
   }
 }
 
 auto DiskManager::FileExists(const std::string &fname) -> bool { return std::filesystem::exists(fname); }
 
-}  // namespace wsdb
+}  // namespace njudb

@@ -19,13 +19,13 @@
 // Created by ziqi on 2024/7/28.
 //
 
-#ifndef WSDB_TABLE_MANAGER_H
-#define WSDB_TABLE_MANAGER_H
+#ifndef NJUDB_TABLE_MANAGER_H
+#define NJUDB_TABLE_MANAGER_H
 
 #include "storage/disk/disk_manager.h"
 #include "system/handle/table_handle.h"
 
-namespace wsdb {
+namespace njudb {
 
 class TableManager
 {
@@ -54,6 +54,6 @@ private:
   BufferPoolManager *buffer_pool_manager_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_TABLE_MANAGER_H
+#endif  // NJUDB_TABLE_MANAGER_H

@@ -1,8 +1,8 @@
-# WSDB Lab Configuration Helper
+# NJUDB Lab Configuration Helper
 # This module provides functions to conditionally link against gold libraries or source libraries
 
 # Function to conditionally create or link library targets based on lab configuration
-function(wsdb_add_lab_library TARGET_NAME LAB_NUMBER GOLD_LIB_NAME)
+function(njudb_add_lab_library TARGET_NAME LAB_NUMBER GOLD_LIB_NAME)
     set(USE_GOLD_VAR "USE_GOLD_LAB${LAB_NUMBER}")
     
     if(${${USE_GOLD_VAR}})
@@ -28,7 +28,7 @@ function(wsdb_add_lab_library TARGET_NAME LAB_NUMBER GOLD_LIB_NAME)
 endfunction()
 
 # Function to check if we should compile a lab component from source
-function(wsdb_should_compile_from_source RESULT_VAR LAB_NUMBER)
+function(njudb_should_compile_from_source RESULT_VAR LAB_NUMBER)
     set(USE_GOLD_VAR "USE_GOLD_LAB${LAB_NUMBER}")
     if(${${USE_GOLD_VAR}})
         set(${RESULT_VAR} FALSE PARENT_SCOPE)
@@ -38,7 +38,7 @@ function(wsdb_should_compile_from_source RESULT_VAR LAB_NUMBER)
 endfunction()
 
 # Function to get the appropriate library extension based on platform
-function(wsdb_get_lib_extension RESULT_VAR)
+function(njudb_get_lib_extension RESULT_VAR)
     if(APPLE)
         set(${RESULT_VAR} "dylib" PARENT_SCOPE)
     elseif(UNIX)
@@ -49,8 +49,8 @@ function(wsdb_get_lib_extension RESULT_VAR)
 endfunction()
 
 # Function to pre-declare all gold libraries
-function(wsdb_predeclare_gold_libraries)
-    wsdb_get_lib_extension(LIB_EXT)
+function(njudb_predeclare_gold_libraries)
+    njudb_get_lib_extension(LIB_EXT)
     
     # Set up RPATH for mixed gold/source library configurations
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE PARENT_SCOPE)

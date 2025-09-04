@@ -19,15 +19,15 @@
 // Created by ziqi on 2024/8/3.
 //
 
-#ifndef WSDB_EXECUTOR_DDL_H
-#define WSDB_EXECUTOR_DDL_H
+#ifndef NJUDB_EXECUTOR_DDL_H
+#define NJUDB_EXECUTOR_DDL_H
 
 #include <utility>
 
 #include "system/handle/database_handle.h"
 #include "executor_abstract.h"
 
-namespace wsdb {
+namespace njudb {
 class CreateTableExecutor : public AbstractExecutor
 {
 public:
@@ -162,6 +162,6 @@ private:
   size_t cursor_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_DDL_H
+#endif  // NJUDB_EXECUTOR_DDL_H

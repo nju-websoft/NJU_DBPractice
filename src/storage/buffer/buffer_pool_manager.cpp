@@ -25,9 +25,9 @@
 
 #include "../../../common/error.h"
 
-namespace wsdb {
+namespace njudb {
 
-BufferPoolManager::BufferPoolManager(DiskManager *disk_manager, wsdb::LogManager *log_manager, size_t replacer_lru_k)
+BufferPoolManager::BufferPoolManager(DiskManager *disk_manager, njudb::LogManager *log_manager, size_t replacer_lru_k)
     : disk_manager_(disk_manager), log_manager_(log_manager)
 {
   if (REPLACER == "LRUReplacer") {
@@ -35,7 +35,7 @@ BufferPoolManager::BufferPoolManager(DiskManager *disk_manager, wsdb::LogManager
   } else if (REPLACER == "LRUKReplacer") {
     replacer_ = std::make_unique<LRUKReplacer>(replacer_lru_k);
   } else {
-    WSDB_FATAL("Unknown replacer: " + REPLACER);
+    NJUDB_FATAL("Unknown replacer: " + REPLACER);
   }
   // init free_list_
   for (frame_id_t i = 0; i < static_cast<int>(BUFFER_POOL_SIZE); i++) {
@@ -43,21 +43,21 @@ BufferPoolManager::BufferPoolManager(DiskManager *disk_manager, wsdb::LogManager
   }
 }
 
-auto BufferPoolManager::FetchPage(file_id_t fid, page_id_t pid) -> Page * { WSDB_STUDENT_TODO(l1, t2); }
+auto BufferPoolManager::FetchPage(file_id_t fid, page_id_t pid) -> Page * { NJUDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::UnpinPage(file_id_t fid, page_id_t pid, bool is_dirty) -> bool { WSDB_STUDENT_TODO(l1, t2); }
+auto BufferPoolManager::UnpinPage(file_id_t fid, page_id_t pid, bool is_dirty) -> bool { NJUDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::DeletePage(file_id_t fid, page_id_t pid) -> bool { WSDB_STUDENT_TODO(l1, t2); }
+auto BufferPoolManager::DeletePage(file_id_t fid, page_id_t pid) -> bool { NJUDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::DeleteAllPages(file_id_t fid) -> bool { WSDB_STUDENT_TODO(l1, t2); }
+auto BufferPoolManager::DeleteAllPages(file_id_t fid) -> bool { NJUDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::FlushPage(file_id_t fid, page_id_t pid) -> bool { WSDB_STUDENT_TODO(l1, t2); }
+auto BufferPoolManager::FlushPage(file_id_t fid, page_id_t pid) -> bool { NJUDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::FlushAllPages(file_id_t fid) -> bool { WSDB_STUDENT_TODO(l1, t2); }
+auto BufferPoolManager::FlushAllPages(file_id_t fid) -> bool { NJUDB_STUDENT_TODO(l1, t2); }
 
-auto BufferPoolManager::GetAvailableFrame() -> frame_id_t { WSDB_STUDENT_TODO(l1, t2); }
+auto BufferPoolManager::GetAvailableFrame() -> frame_id_t { NJUDB_STUDENT_TODO(l1, t2); }
 
-void BufferPoolManager::UpdateFrame(frame_id_t frame_id, file_id_t fid, page_id_t pid) { WSDB_STUDENT_TODO(l1, t2); }
+void BufferPoolManager::UpdateFrame(frame_id_t frame_id, file_id_t fid, page_id_t pid) { NJUDB_STUDENT_TODO(l1, t2); }
 
 auto BufferPoolManager::GetFrame(file_id_t fid, page_id_t pid) -> Frame *
 {
@@ -77,4 +77,4 @@ auto BufferPoolManager::FetchPageWrite(file_id_t fid, page_id_t pid) -> WritePag
   return {this, page, fid, pid};
 }
 
-}  // namespace wsdb
+}  // namespace njudb

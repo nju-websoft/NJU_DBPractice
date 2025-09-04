@@ -19,12 +19,12 @@
 // Created by ziqi on 2024/7/19.
 //
 
-#ifndef WSDB_LOCK_MANAGER_H
-#define WSDB_LOCK_MANAGER_H
+#ifndef NJUDB_LOCK_MANAGER_H
+#define NJUDB_LOCK_MANAGER_H
 
 class LockManager
 {
 
 };
 
-#endif  // WSDB_LOCK_MANAGER_H
+#endif  // NJUDB_LOCK_MANAGER_H

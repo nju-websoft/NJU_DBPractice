@@ -24,12 +24,12 @@
  * Hint: use Record(proj_schema, child_rec) to do the projection
  */
 
-#ifndef WSDB_EXECUTOR_PROJECTION_H
-#define WSDB_EXECUTOR_PROJECTION_H
+#ifndef NJUDB_EXECUTOR_PROJECTION_H
+#define NJUDB_EXECUTOR_PROJECTION_H
 
 #include "executor_abstract.h"
 
-namespace wsdb {
+namespace njudb {
 class ProjectionExecutor : public AbstractExecutor
 {
 public:
@@ -44,6 +44,6 @@ public:
 private:
   AbstractExecutorUptr child_;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_PROJECTION_H
+#endif  // NJUDB_EXECUTOR_PROJECTION_H

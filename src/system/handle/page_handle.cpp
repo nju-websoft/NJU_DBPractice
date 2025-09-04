@@ -23,19 +23,19 @@
 #include "../../../common/error.h"
 #include "storage/buffer/buffer_pool_manager.h"
 
-namespace wsdb {
+namespace njudb {
 PageHandle::PageHandle(const TableHeader *tab_hdr, Page *page, char *bit_map, char *slots_mem)
     : tab_hdr_(tab_hdr), page_(page), bitmap_(bit_map), slots_mem_(slots_mem)
 {
-  WSDB_ASSERT(BITMAP_SIZE(tab_hdr->rec_per_page_) == tab_hdr->bitmap_size_, "bitmap size not match");
+  NJUDB_ASSERT(BITMAP_SIZE(tab_hdr->rec_per_page_) == tab_hdr->bitmap_size_, "bitmap size not match");
 }
 void PageHandle::WriteSlot(size_t slot_id, const char *null_map, const char *data, bool update)
 {
-  WSDB_THROW(WSDB_EXCEPTION_EMPTY, "");
+  NJUDB_THROW(NJUDB_EXCEPTION_EMPTY, "");
 }
 
-void PageHandle::ReadSlot(size_t slot_id, char *null_map, char *data) { WSDB_THROW(WSDB_EXCEPTION_EMPTY, ""); }
-auto PageHandle::ReadChunk(const RecordSchema *chunk_schema) -> ChunkUptr { WSDB_THROW(WSDB_EXCEPTION_EMPTY, ""); }
+void PageHandle::ReadSlot(size_t slot_id, char *null_map, char *data) { NJUDB_THROW(NJUDB_EXCEPTION_EMPTY, ""); }
+auto PageHandle::ReadChunk(const RecordSchema *chunk_schema) -> ChunkUptr { NJUDB_THROW(NJUDB_EXCEPTION_EMPTY, ""); }
 
 NAryPageHandle::NAryPageHandle(const TableHeader *tab_hdr, Page *page)
     : PageHandle(
@@ -44,8 +44,8 @@ NAryPageHandle::NAryPageHandle(const TableHeader *tab_hdr, Page *page)
 
 void NAryPageHandle::WriteSlot(size_t slot_id, const char *null_map, const char *data, bool update)
 {
-  WSDB_ASSERT(slot_id < tab_hdr_->rec_per_page_, "slot_id out of range");
-  WSDB_ASSERT(BitMap::GetBit(bitmap_, slot_id) == update, fmt::format("update: {}", update));
+  NJUDB_ASSERT(slot_id < tab_hdr_->rec_per_page_, "slot_id out of range");
+  NJUDB_ASSERT(BitMap::GetBit(bitmap_, slot_id) == update, fmt::format("update: {}", update));
   // a record consists of null map and data
   size_t rec_full_size = tab_hdr_->nullmap_size_ + tab_hdr_->rec_size_;
   memcpy(slots_mem_ + slot_id * rec_full_size, null_map, tab_hdr_->nullmap_size_);
@@ -54,8 +54,8 @@ void NAryPageHandle::WriteSlot(size_t slot_id, const char *null_map, const char 
 
 void NAryPageHandle::ReadSlot(size_t slot_id, char *null_map, char *data)
 {
-  WSDB_ASSERT(slot_id < tab_hdr_->rec_per_page_, "slot_id out of range");
-  WSDB_ASSERT(BitMap::GetBit(bitmap_, slot_id) == true, "slot is empty");
+  NJUDB_ASSERT(slot_id < tab_hdr_->rec_per_page_, "slot_id out of range");
+  NJUDB_ASSERT(BitMap::GetBit(bitmap_, slot_id) == true, "slot is empty");
   size_t rec_full_size = tab_hdr_->nullmap_size_ + tab_hdr_->rec_size_;
   memcpy(null_map, slots_mem_ + slot_id * rec_full_size, tab_hdr_->nullmap_size_);
   memcpy(data, slots_mem_ + slot_id * rec_full_size + tab_hdr_->nullmap_size_, tab_hdr_->rec_size_);
@@ -79,17 +79,17 @@ PAXPageHandle::~PAXPageHandle() = default;
 // | field_m_1, field_m_2, ... , field_m_n |
 void PAXPageHandle::WriteSlot(size_t slot_id, const char *null_map, const char *data, bool update)
 {
-  WSDB_STUDENT_TODO(l1, f2);
+  NJUDB_STUDENT_TODO(l1, f2);
 }
 
-void PAXPageHandle::ReadSlot(size_t slot_id, char *null_map, char *data) { WSDB_STUDENT_TODO(l1, f2); }
+void PAXPageHandle::ReadSlot(size_t slot_id, char *null_map, char *data) { NJUDB_STUDENT_TODO(l1, f2); }
 
 auto PAXPageHandle::ReadChunk(const RecordSchema *chunk_schema) -> ChunkUptr
 {
   std::vector<ArrayValueSptr> col_arrs;
   col_arrs.reserve(chunk_schema->GetFieldCount());
   // read data each field and construct ArrayValue
-  WSDB_STUDENT_TODO(l1, f2);
+  NJUDB_STUDENT_TODO(l1, f2);
   return std::make_unique<Chunk>(chunk_schema, std::move(col_arrs));
 }
-}  // namespace wsdb
+}  // namespace njudb

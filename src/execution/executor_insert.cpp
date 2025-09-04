@@ -21,7 +21,7 @@
 
 #include "executor_insert.h"
 
-namespace wsdb {
+namespace njudb {
 
 InsertExecutor::InsertExecutor(TableHandle *tbl, std::list<IndexHandle *> indexes, std::vector<RecordUptr> inserts)
     : AbstractExecutor(DML), tbl_(tbl), indexes_(std::move(indexes)), inserts_(std::move(inserts)), is_end_(false)
@@ -34,11 +34,11 @@ InsertExecutor::InsertExecutor(TableHandle *tbl, std::list<IndexHandle *> indexe
 void InsertExecutor::Init()
 {
   // For lab02, you can simply skip step 2 and 3.
-  // 1: Check against existing records in indexes, WSDB_STUDENT_TODO(l4, t2);
-  // 2: Check for duplicates within the same batch, WSDB_STUDENT_TODO(l4, t2);
+  // 1: Check against existing records in indexes, NJUDB_STUDENT_TODO(l4, t2);
+  // 2: Check for duplicates within the same batch, NJUDB_STUDENT_TODO(l4, t2);
   // 3: Perform insertions only after all validations pass
   int count = 0;  // number of inserted records
-  WSDB_STUDENT_TODO(l2, t1);
+  NJUDB_STUDENT_TODO(l2, t1);
   std::vector<ValueSptr> values{ValueFactory::CreateIntValue(count)};
   record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
 }
@@ -51,4 +51,4 @@ void InsertExecutor::Next()
 
 auto InsertExecutor::IsEnd() const -> bool { return is_end_; }
 
-}  // namespace wsdb
+}  // namespace njudb

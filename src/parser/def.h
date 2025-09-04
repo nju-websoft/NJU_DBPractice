@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/31.
 //
 
-#ifndef WSDB_DEF_H
-#define WSDB_DEF_H
+#ifndef NJUDB_DEF_H
+#define NJUDB_DEF_H
 
 /* Copyright (c) 2023 Renmin University of China
 RMDB is licensed under Mulan PSL v2.
@@ -40,4 +40,4 @@ YY_BUFFER_STATE yy_scan_string(const char *str);
 
 void yy_delete_buffer(YY_BUFFER_STATE buffer);
 
-#endif  // WSDB_DEF_H
+#endif  // NJUDB_DEF_H

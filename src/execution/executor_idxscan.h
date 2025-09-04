@@ -19,15 +19,15 @@
 // Created by ziqi on 2024/8/5.
 //
 
-#ifndef WSDB_EXECUTOR_IDXSCAN_H
-#define WSDB_EXECUTOR_IDXSCAN_H
+#ifndef NJUDB_EXECUTOR_IDXSCAN_H
+#define NJUDB_EXECUTOR_IDXSCAN_H
 
 #include "executor_abstract.h"
 #include "system/handle/index_handle.h"
 #include "system/handle/table_handle.h"
 #include "common/condition.h"
 
-namespace wsdb {
+namespace njudb {
 class IdxScanExecutor : public AbstractExecutor
 {
 public:
@@ -67,6 +67,6 @@ private:
   // Helper functions
   void GenerateRangeKeys();
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_IDXSCAN_H
+#endif  // NJUDB_EXECUTOR_IDXSCAN_H

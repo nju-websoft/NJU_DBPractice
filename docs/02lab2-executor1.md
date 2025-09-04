@@ -10,7 +10,7 @@ select name, score, remark from nju_db where group_id = 2 and l1_score > 90;  
 
 ## 数据流
 
-在WSDB中，一条SQL语句的前处理执行流程如下：
+在NJUDB中，一条SQL语句的前处理执行流程如下：
 
 ```mermaid
 flowchart LR
@@ -39,7 +39,7 @@ flowchart LR
 
 <img title="" src="./02lab2-executor1.assets/valcano.png" alt="valcano" style="zoom:50%;">
 
-在WSDB中，每个算子都由`Init`，`Next`，`IsEnd`接口组成，分别用于算子资源的初始化，获取下一条记录，以及判断算子计算是否结束。
+在NJUDB中，每个算子都由`Init`，`Next`，`IsEnd`接口组成，分别用于算子资源的初始化，获取下一条记录，以及判断算子计算是否结束。
 
 要执行上述的算子树，我们只需要将最顶层的算子`exec_tree`传入函数：
 
@@ -93,7 +93,7 @@ void Executor::Execute(const AbstractExecutorUptr &executor, Context *ctx)
 
 ## 实验要求
 
-本次实验需要完成基本算子并通过SQL测试。假设仓库目录名为`wsdb`，服务器代码文件均在`wsdb/src/`目录下。你只需要修改或添加`src`文件夹下的文件，如果遇到不在`WSDB_ERRORS`（`wsdb/common/errors.h`）列表中的未知异常，请使用`WSDB_EXCEPTION_EMPTY`，并在报告中写下你遇到的特殊情况。请完成所有标注`WSDB_STUDENT_TODO`宏的函数，并在完成后将宏删除。
+本次实验需要完成基本算子并通过SQL测试。假设仓库目录名为`njudb`，服务器代码文件均在`njudb/src/`目录下。你只需要修改或添加`src`文件夹下的文件，如果遇到不在`NJUDB_ERRORS`（`njudb/common/errors.h`）列表中的未知异常，请使用`NJUDB_EXCEPTION_EMPTY`，并在报告中写下你遇到的特殊情况。请完成所有标注`NJUDB_STUDENT_TODO`宏的函数，并在完成后将宏删除。
 
 ### t1: 基本执行算子（90 pts）
 
@@ -132,7 +132,7 @@ private:
 void ShowTablesExecutor::Next()
 {
   if (is_end_) {
-    WSDB_FATAL("ShowTablesExecutor is end");
+    NJUDB_FATAL("ShowTablesExecutor is end");
   }
   auto &tables = db_->GetAllTables();
   if (cursor_ >= tables.size()) {
@@ -229,7 +229,7 @@ select i_id, s_i_id from item, stock order by i_id, s_i_id;
 |0,1,2,2,3,3,3,4,5,5,6,6,7,7,8|
 ```
 
-WSDB中`k=SORT_WAY_NUM`默认为10，一个buffer能够支持的最大记录数为`max_rec_num_=SORT_BUFFER_SIZE/record_length`。相关常量定义见`common/config.h`。
+NJUDB中`k=SORT_WAY_NUM`默认为10，一个buffer能够支持的最大记录数为`max_rec_num_=SORT_BUFFER_SIZE/record_length`。相关常量定义见`common/config.h`。
 
 嵌套循环内连接的python伪代码如下：
 
@@ -250,35 +250,35 @@ def nestedloop_join(left, right, condition):
 
 1. 实验报告（10%）：实现思路，优化技巧，实验结果，对框架代码和实验的建议，以及在报告中出现的思考等，请尽量避免直接粘贴代码，建议2-4页。
 
-2. 功能分数（90%）：需要通过`wsdb/test/sql`目录下的SQL语句测试。
+2. 功能分数（90%）：需要通过`njudb/test/sql`目录下的SQL语句测试。
 
-    * t1: <u>**顺序**</u>通过`wsdb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
+    * t1: <u>**顺序**</u>通过`njudb/test/sql/lab02/t1`下的SQL测试并与`expected`输出比较，无差异获得该小题满分，测试文件分值分别为
 
         * `01_prepare_table_dbcourse.sql`: 15 pts
         * `02_seqscan_limit_projection.sql`: 30 pts
         * `03_filter_update_delete.sql`: 30 pts
         * `04_sort_final.sql`: 15 pts
 
-    * f1: <u>**顺序**</u>通过`wsdb/test/sql/lab02/f1`下的SQL测试，请先解压`expected.tar.gz`。（提示，该测试需要的时间可能较长，如若20分钟之内不能得到测试结果，可能是实现不够高效或实现有误）
+    * f1: <u>**顺序**</u>通过`njudb/test/sql/lab02/f1`下的SQL测试，请先解压`expected.tar.gz`。（提示，该测试需要的时间可能较长，如若20分钟之内不能得到测试结果，可能是实现不够高效或实现有误）
 
         * `04_merge_sort.sql`: 10pts
 
 **重要：请勿尝试抄袭代码或搬运他人实验结果，我们会严格审查，如被发现将取消大实验分数，情节严重可能会对课程总评产生影响!!!**
 
-3. 测试方法：编译`wsdb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
+3. 测试方法：编译`njudb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
    
    ```shell
-   $ ./wsdb
+   $ ./njudb
    $ ./client
    ```
    
-   关于client的更多用法可参考00basic.md或使用-h参数查看。如果`wsdb`因为端口监听异常启动失败（通常原因是已经启用了一个wsdb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间wsdb释放资源后再重新启动。
+   关于client的更多用法可参考00basic.md或使用-h参数查看。如果`njudb`因为端口监听异常启动失败（通常原因是已经启用了一个njudb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间njudb释放资源后再重新启动。
 
-   * 提示：你可以cd到`wsdb/test/sql/`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，客户端的基本使用方法请参考[开始之前](./00basic.md)。
+   * 提示：你可以cd到`njudb/test/sql/`目录下通过脚本`evaluate.sh`进行测试，也可以使用终端的命令行工具逐个文件测试或使用交互模式逐个命令测试，客户端的基本使用方法请参考[开始之前](./00basic.md)。
 
       ```bash
       $ bash evaluate.sh <build directory> <lab directory> <sql directory>
-      # e.g. bash evaluate.sh /path/to/wsdb/build lab02 t1
+      # e.g. bash evaluate.sh /path/to/njudb/build lab02 t1
       ```
 
 ### 提交材料
@@ -289,7 +289,7 @@ def nestedloop_join(left, right, condition):
       | -------- | ---- | ------------------------- | -------- |
    | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | t1/f1    |
 
-2. 代码：`wsdb/src`文件夹
+2. 代码：`njudb/src`文件夹
 
 *提交示例：请将以上两部分内容打包并命名为lab2\_学号\_姓名.zip（例如lab2_123456_张三.zip）并上传至提交平台，请确保解压后目录树如下：*
 

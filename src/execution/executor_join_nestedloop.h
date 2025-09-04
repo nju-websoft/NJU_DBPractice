@@ -24,12 +24,12 @@
  * 
  */
 
-#ifndef WSDB_EXECUTOR_JOIN_NESTEDLOOP_H
-#define WSDB_EXECUTOR_JOIN_NESTEDLOOP_H
+#ifndef NJUDB_EXECUTOR_JOIN_NESTEDLOOP_H
+#define NJUDB_EXECUTOR_JOIN_NESTEDLOOP_H
 
 #include "executor_join.h"
 
-namespace wsdb {
+namespace njudb {
 
 class NestedLoopJoinExecutor : public JoinExecutor
 {
@@ -56,6 +56,6 @@ private:
   bool need_gen_null_{false};
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_JOIN_NESTEDLOOP_H
+#endif  // NJUDB_EXECUTOR_JOIN_NESTEDLOOP_H

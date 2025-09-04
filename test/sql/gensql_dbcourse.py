@@ -2,8 +2,8 @@ import random
 import string
 import os
 
-sql_path = "/Users/ziqi/Work/course/database/wsdb/test/sql/lab02/t1/01_prepare_table_dbcourse.sql"
-# sql_path = "/Users/ziqi/Work/course/database/wsdb/test/sql/lab02/t1/02_seqscan_limit_projection.sql"
+sql_path = "/Users/ziqi/Work/course/database/njudb/test/sql/lab02/t1/01_prepare_table_dbcourse.sql"
+# sql_path = "/Users/ziqi/Work/course/database/njudb/test/sql/lab02/t1/02_seqscan_limit_projection.sql"
 table_def = "create table dbcourse (id int, name char(20), age int, address char(50), gpa float, l1_score float, l2_score float);\n"
 cached = []
 

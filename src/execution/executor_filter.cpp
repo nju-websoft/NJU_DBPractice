@@ -21,16 +21,16 @@
 
 #include "executor_filter.h"
 
-namespace wsdb {
+namespace njudb {
 
 FilterExecutor::FilterExecutor(AbstractExecutorUptr child, std::function<bool(const Record &)> filter)
     : AbstractExecutor(Basic), child_(std::move(child)), filter_(std::move(filter))
 {}
-void FilterExecutor::Init() { WSDB_STUDENT_TODO(l2, t1); }
+void FilterExecutor::Init() { NJUDB_STUDENT_TODO(l2, t1); }
 
-void FilterExecutor::Next() { WSDB_STUDENT_TODO(l2, t1); }
+void FilterExecutor::Next() { NJUDB_STUDENT_TODO(l2, t1); }
 
-auto FilterExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l2, t1); }
+auto FilterExecutor::IsEnd() const -> bool { NJUDB_STUDENT_TODO(l2, t1); }
 
 auto FilterExecutor::GetOutSchema() const -> const RecordSchema * { return child_->GetOutSchema(); }
-}  // namespace wsdb
+}  // namespace njudb

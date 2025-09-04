@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/19.
 //
 
-#ifndef WSDB_VALUE_H
-#define WSDB_VALUE_H
+#ifndef NJUDB_VALUE_H
+#define NJUDB_VALUE_H
 
 #include <string>
 #include <vector>
@@ -29,7 +29,7 @@
 #include "../../common/error.h"
 #include "../../common/micro.h"
 
-namespace wsdb {
+namespace njudb {
 
 class Value;
 class IntValue;
@@ -77,11 +77,11 @@ public:
 
   virtual auto operator+=(const Value &value) -> Value &
   {
-    WSDB_THROW(WSDB_UNSUPPORTED_OP, FieldTypeToString(GetType()));
+    NJUDB_THROW(NJUDB_UNSUPPORTED_OP, FieldTypeToString(GetType()));
   }
 
   // this special operator is used to support average calculation in aggregation
-  virtual auto operator/=(int k) -> Value & { WSDB_THROW(WSDB_UNSUPPORTED_OP, FieldTypeToString(GetType())); }
+  virtual auto operator/=(int k) -> Value & { NJUDB_THROW(NJUDB_UNSUPPORTED_OP, FieldTypeToString(GetType())); }
 
   static auto Max(const Value &lval, const Value &rval) -> const Value &
   {
@@ -128,12 +128,12 @@ public:
     return *lval < *rval ? lval : rval;
   }
 
-  [[nodiscard]] virtual auto ToString() const -> std::string { WSDB_FATAL("never reach here"); }
+  [[nodiscard]] virtual auto ToString() const -> std::string { NJUDB_FATAL("never reach here"); }
 
   static void CheckBasic(const Value &lval, const Value &rval)
   {
     if (lval.GetType() != rval.GetType()) {
-      WSDB_THROW(WSDB_TYPE_MISSMATCH,
+      NJUDB_THROW(NJUDB_TYPE_MISSMATCH,
           fmt::format("Type mismatch: {} != {}", FieldTypeToString(lval.GetType()), FieldTypeToString(rval.GetType())));
     }
   }
@@ -158,7 +158,7 @@ public:
   {}
   explicit IntValue(const char *mem) : Value(FieldType::TYPE_INT, sizeof(int32_t), false)
   {
-    WSDB_ASSERT(mem != nullptr, "mem is nullptr");
+    NJUDB_ASSERT(mem != nullptr, "mem is nullptr");
     value_ = *reinterpret_cast<const int32_t *>(mem);
   }
   IntValue(const IntValue &value)            = default;
@@ -205,7 +205,7 @@ public:
       return *this;
     }
     if (k == 0) {
-      WSDB_THROW(WSDB_UNEXPECTED_NULL, "Divide by zero");
+      NJUDB_THROW(NJUDB_UNEXPECTED_NULL, "Divide by zero");
     }
     value_ /= k;
     return *this;
@@ -228,7 +228,7 @@ public:
   FloatValue(float value, bool is_null) : Value(FieldType::TYPE_FLOAT, sizeof(float), is_null), value_(value) {}
   explicit FloatValue(const char *mem) : Value(FieldType::TYPE_FLOAT, sizeof(float), false)
   {
-    WSDB_ASSERT(mem != nullptr, "mem is nullptr");
+    NJUDB_ASSERT(mem != nullptr, "mem is nullptr");
     value_ = *reinterpret_cast<const float *>(mem);
   }
   FloatValue(const FloatValue &value)            = default;
@@ -275,7 +275,7 @@ public:
       return *this;
     }
     if (k == 0) {
-      WSDB_THROW(WSDB_UNEXPECTED_NULL, "Divide by zero");
+      NJUDB_THROW(NJUDB_UNEXPECTED_NULL, "Divide by zero");
     }
     value_ /= static_cast<float>(k);
     return *this;
@@ -299,7 +299,7 @@ public:
 
   explicit BoolValue(const char *mem) : Value(FieldType::TYPE_BOOL, sizeof(bool), false)
   {
-    WSDB_ASSERT(mem != nullptr, "mem is nullptr");
+    NJUDB_ASSERT(mem != nullptr, "mem is nullptr");
     value_ = *reinterpret_cast<const bool *>(mem);
   }
 
@@ -492,7 +492,7 @@ public:
       return *this;
     }
     if (values_.size() != dynamic_cast<const ArrayValue &>(value).values_.size()) {
-      WSDB_THROW(WSDB_TYPE_MISSMATCH,
+      NJUDB_THROW(NJUDB_TYPE_MISSMATCH,
           fmt::format("sizes: {}, {}", values_.size(), dynamic_cast<const ArrayValue &>(value).values_.size()));
     }
     for (size_t i = 0; i < values_.size(); i++) {
@@ -574,7 +574,7 @@ public:
       case FieldType::TYPE_INT: return ValueFactory::CreateIntValue(*reinterpret_cast<const int32_t *>(data));
       case FieldType::TYPE_FLOAT: return ValueFactory::CreateFloatValue(*reinterpret_cast<const float *>(data));
       case FieldType::TYPE_STRING: return ValueFactory::CreateStringValue(data, size);
-      default: WSDB_FATAL("Unsupported field type");
+      default: NJUDB_FATAL("Unsupported field type");
     }
   }
 
@@ -586,7 +586,7 @@ public:
       case FieldType::TYPE_BOOL: return std::make_shared<BoolValue>(false, true);
       case FieldType::TYPE_STRING: return std::make_shared<StringValue>("", 0, true);
       case FieldType::TYPE_ARRAY: return std::make_shared<ArrayValue>(std::vector<ValueSptr>(), true);
-      default: WSDB_FATAL("Unknown FieldType");
+      default: NJUDB_FATAL("Unknown FieldType");
     }
   }
 
@@ -599,7 +599,7 @@ public:
     } else if (lval->GetType() == FieldType::TYPE_FLOAT && rval->GetType() == FieldType::TYPE_INT) {
       rval = CreateFloatValue(static_cast<float>(std::dynamic_pointer_cast<IntValue>(rval)->Get()));
     } else {
-      WSDB_THROW(WSDB_TYPE_MISSMATCH,
+      NJUDB_THROW(NJUDB_TYPE_MISSMATCH,
           fmt::format(
               "Type mismatch: {} != {}", FieldTypeToString(lval->GetType()), FieldTypeToString(rval->GetType())));
     }
@@ -612,7 +612,7 @@ public:
     }
     if (value->GetType() == FieldType::TYPE_INT) {
       if (type != FieldType::TYPE_FLOAT) {
-        WSDB_THROW(WSDB_TYPE_MISSMATCH,
+        NJUDB_THROW(NJUDB_TYPE_MISSMATCH,
             fmt::format("Type mismatch {} != {}", FieldTypeToString(value->GetType()), FieldTypeToString(type)));
       }
       if (value->IsNull()) {
@@ -621,7 +621,7 @@ public:
       return CreateFloatValue(static_cast<float>(std::dynamic_pointer_cast<IntValue>(value)->Get()));
     } else if (value->GetType() == FieldType::TYPE_FLOAT) {
       if (type != FieldType::TYPE_INT) {
-        WSDB_THROW(WSDB_TYPE_MISSMATCH,
+        NJUDB_THROW(NJUDB_TYPE_MISSMATCH,
             fmt::format("Type mismatch {} != {}", FieldTypeToString(value->GetType()), FieldTypeToString(type)));
       }
       if (value->IsNull()) {
@@ -629,7 +629,7 @@ public:
       }
       return CreateIntValue(static_cast<int>(std::dynamic_pointer_cast<FloatValue>(value)->Get()));
     } else {
-      WSDB_THROW(WSDB_TYPE_MISSMATCH,
+      NJUDB_THROW(NJUDB_TYPE_MISSMATCH,
           fmt::format("Type mismatch {} != {}", FieldTypeToString(value->GetType()), FieldTypeToString(type)));
     }
   }
@@ -646,7 +646,7 @@ public:
       case TYPE_STRING:
         return CreateStringValue("", 0);
       default:
-        WSDB_THROW(WSDB_TYPE_MISSMATCH, "Unsupported field type for min value");
+        NJUDB_THROW(NJUDB_TYPE_MISSMATCH, "Unsupported field type for min value");
     }
   }
 
@@ -663,11 +663,11 @@ public:
         // Create a large string for max comparison
         return CreateStringValue("\xFF\xFF\xFF\xFF", 4);
       default:
-        WSDB_THROW(WSDB_TYPE_MISSMATCH, "Unsupported field type for max value");
+        NJUDB_THROW(NJUDB_TYPE_MISSMATCH, "Unsupported field type for max value");
     }
   }
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_VALUE_H
+#endif  // NJUDB_VALUE_H

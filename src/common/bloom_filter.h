@@ -15,14 +15,14 @@
  - along with this program.  If not, see <https://www.gnu.org/licenses/>.
  -----------------------------------------------------------------------------*/
 
-#ifndef WSDB_BLOOM_FILTER_H
-#define WSDB_BLOOM_FILTER_H
+#ifndef NJUDB_BLOOM_FILTER_H
+#define NJUDB_BLOOM_FILTER_H
 
 #include <vector>
 #include <functional>
 #include <algorithm>
 
-namespace wsdb {
+namespace njudb {
 
 /**
  * Simple Bloom Filter implementation for hash join optimization
@@ -118,6 +118,6 @@ inline auto BloomFilter::Hash(size_t value, size_t seed) const -> size_t
   return std::hash<size_t>{}(value + seed * 0x9e3779b9);
 }
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_BLOOM_FILTER_H
+#endif  // NJUDB_BLOOM_FILTER_H

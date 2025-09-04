@@ -25,13 +25,13 @@
  * 
  */
 
-#ifndef WSDB_EXECUTOR_DELETE_H
-#define WSDB_EXECUTOR_DELETE_H
+#ifndef NJUDB_EXECUTOR_DELETE_H
+#define NJUDB_EXECUTOR_DELETE_H
 
 #include "executor_abstract.h"
 #include "system/handle/database_handle.h"
 
-namespace wsdb {
+namespace njudb {
 class DeleteExecutor : public AbstractExecutor
 {
 public:
@@ -49,6 +49,6 @@ private:
   std::list<IndexHandle *> indexes_;
   bool                     is_end_;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_DELETE_H
+#endif  // NJUDB_EXECUTOR_DELETE_H

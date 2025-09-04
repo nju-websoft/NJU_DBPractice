@@ -8,22 +8,22 @@
 
 C++ 的异常处理机制提供了一种处理运行时错误的结构化方式，确保程序可以从异常中恢复，或者在处理异常时确保程序的资源被正确释放。异常处理主要使用`try`、`throw`和`catch`三个关键字来实现。其中`try`块中放置可能会抛出异常的代码，`throw`用于抛出异常，`catch`捕获异常并处理。
 
-WSDB的异常处理见文件`common/error.h`，首先在宏`WSDB_ERRORS`中定义了各种异常类型，同学们在实验过程中如果遇到了不在`WSDB_ERRORS`列表中的未知异常，请使用`WSDB_EXCEPTION_EMPTY`，并在报告中写下你遇到的特殊情况。
+NJUDB的异常处理见文件`common/error.h`，首先在宏`NJUDB_ERRORS`中定义了各种异常类型，同学们在实验过程中如果遇到了不在`NJUDB_ERRORS`列表中的未知异常，请使用`NJUDB_EXCEPTION_EMPTY`，并在报告中写下你遇到的特殊情况。
 
-C++提供了一组标准异常类（如std::exception及其派生类）来处理常见的异常情况，WSDB中基于std::exception自定义了异常类`WSDBExecption_`：
+C++提供了一组标准异常类（如std::exception及其派生类）来处理常见的异常情况，NJUDB中基于std::exception自定义了异常类`NJUDBExecption_`：
 ```c++
-class WSDBException_ : public std::exception
+class NJUDBException_ : public std::exception
 {
 public:
-  WSDBException_() = delete;
-  explicit WSDBException_(WSDBExceptionType type, std::string cname = {}, std::string fname = {}, std::string msg = {})
+  NJUDBException_() = delete;
+  explicit NJUDBException_(NJUDBExceptionType type, std::string cname = {}, std::string fname = {}, std::string msg = {})
       : type_(type), cname_(std::move(cname)), fname_(std::move(fname)), msg_(std::move(msg))
   {
     std::string info_str = msg_.empty() ? "" : ": " + msg_;
-    out_ = fmt::format("EXCEPTION <{}::{}>[{}]: {}", cname_, fname_, WSDBExceptionTypeToString(type_), info_str);
+    out_ = fmt::format("EXCEPTION <{}::{}>[{}]: {}", cname_, fname_, NJUDBExceptionTypeToString(type_), info_str);
   }
 
-  WSDBExceptionType type_;   //异常类型
+  NJUDBExceptionType type_;   //异常类型
   std::string       cname_;  //异常所在类名
   std::string       fname_;  //异常所在函数名
   std::string       msg_;    //自定义信息
@@ -34,20 +34,20 @@ public:
   // dismiss class and function name
   [[nodiscard]] auto short_what() const -> std::string
   {
-    return fmt::format("EXCEPTION [{}]: {}", WSDBExceptionTypeToString(type_), msg_);
+    return fmt::format("EXCEPTION [{}]: {}", NJUDBExceptionTypeToString(type_), msg_);
   }
 }
 ```
-下面具体介绍如何利用`WSDBExecption`类进行异常处理，我们提供了异常处理宏以获得更详细的调用信息。以异常`WSDB_FILE_EXISTS`为例，假设其发生在`DiskManager`类的`CreateFile`函数中，那么你可以在需要抛出异常的地方插入语句
+下面具体介绍如何利用`NJUDBExecption`类进行异常处理，我们提供了异常处理宏以获得更详细的调用信息。以异常`NJUDB_FILE_EXISTS`为例，假设其发生在`DiskManager`类的`CreateFile`函数中，那么你可以在需要抛出异常的地方插入语句
 ```c++
-WSDB_THROW(WSDB_FILE_EXISTS, fname);
+NJUDB_THROW(NJUDB_FILE_EXISTS, fname);
 ```
 宏展开后为
 ```c++
-throw wsdb::WSDBException_(WSDB_FILE_EXISTS, fmt::format("{}({})", "/path to wsdb/src/storage/disk/disk_manager.cpp", 33), __func__, fname)
+throw njudb::NJUDBException_(NJUDB_FILE_EXISTS, fmt::format("{}({})", "/path to njudb/src/storage/disk/disk_manager.cpp", 33), __func__, fname)
 ```
-其中`WSDBException()`的第一个参数是异常类型，第二个参数是可自定义的附加信息，在这里是待创建文件的地址。
-更多的辅助调试宏定义请参考`common/error.h`以及`common/micro.h`。我们非常建议充分使用`WSDB_ASSERT`宏来进行一些必要的断言，这能帮助你更快地发现错误。
+其中`NJUDBException()`的第一个参数是异常类型，第二个参数是可自定义的附加信息，在这里是待创建文件的地址。
+更多的辅助调试宏定义请参考`common/error.h`以及`common/micro.h`。我们非常建议充分使用`NJUDB_ASSERT`宏来进行一些必要的断言，这能帮助你更快地发现错误。
 
 
 互斥锁是多线程编程中用于保护共享资源的同步原语。通过互斥锁，保证在同一时刻只有一个线程可以访问某个共享资源，从而防止数据竞争问题。
@@ -87,13 +87,13 @@ void foo() {
 
 多态是面向对象编程中一个重要的特性，它允许在继承结构中通过父类的指针或引用调用子类重写的方法，从而实现不同的行为。C++中的多态主要通过虚函数实现。
 
-例如，在WSDB的执行器部分（`src/execution`）中，各种执行器类如`AggregateExecutor`、`FilterExecutor`等均继承自`AbstractExecutor`类，并重写了`AbstractExecutor`类的`Init()`、`Next()`和`IsEnd()`方法。
+例如，在NJUDB的执行器部分（`src/execution`）中，各种执行器类如`AggregateExecutor`、`FilterExecutor`等均继承自`AbstractExecutor`类，并重写了`AbstractExecutor`类的`Init()`、`Next()`和`IsEnd()`方法。
 
-**注意**：WSDB是单根继承，如果一定要定义多继承关系需要基类为没有成员的虚基类。
+**注意**：NJUDB是单根继承，如果一定要定义多继承关系需要基类为没有成员的虚基类。
 
 `friend`关键字允许某个函数或类访问另一个类的私有成员，`friend`关系是单向的。
 
-例如，在WSDB的`RecordSchema`类（`src/system/handle/record_handle.h`）中，将 `Record` 类声明为 `RecordSchema` 类的友元类。这样 `Record` 类中的成员函数就可以直接访问 `RecordSchema` 类中的私有成员，而不用通过公共的接口函数（如 `GetFields()`）访问，从而避免不必要的函数调用和数据拷贝。
+例如，在NJUDB的`RecordSchema`类（`src/system/handle/record_handle.h`）中，将 `Record` 类声明为 `RecordSchema` 类的友元类。这样 `Record` 类中的成员函数就可以直接访问 `RecordSchema` 类中的私有成员，而不用通过公共的接口函数（如 `GetFields()`）访问，从而避免不必要的函数调用和数据拷贝。
 
 ### 智能指针
 
@@ -205,9 +205,9 @@ b = 40;
 std::cout << lambda();  // 输出 50, 因为 a 捕获时是值（10），而 b 是引用（40）
 ```
 
-## WSDB系统介绍
+## NJUDB系统介绍
 
-WSDB是为南京大学《数据库概论》设计的课程实验，总共包含六个部分：
+NJUDB是为南京大学《数据库概论》设计的课程实验，总共包含六个部分：
 
 * 实验一：存储引擎，实现缓冲区管理器和页面管理句柄。
 * 实验二：执行器——数据库中的“增删改”，以及基本算子的实现。
@@ -218,9 +218,9 @@ WSDB是为南京大学《数据库概论》设计的课程实验，总共包含�
 
 2024秋季学期只需要完成实验一与实验二。
 
-WSDB的服务端系统架构如下图所示（位于`wsdb_root/src`文件夹下）：
+NJUDB的服务端系统架构如下图所示（位于`njudb_root/src`文件夹下）：
 
-![WSDB_arch](./00basic.assets/wsdb_arch.png)
+![NJUDB_arch](./00basic.assets/njudb_arch.png)
 
 ### SQL Engine
 
@@ -274,13 +274,13 @@ SQL 引擎负责提供用户输入的处理接口，其处理流程大致如下�
 
 锁管理器管理系统中所有层级上数据结构的锁以保证事务处理的可串行化。
 
-## WSDB客户端介绍
+## NJUDB客户端介绍
 
-完成实验2后，你可以使用WSDB的客户端对服务器程序进行测试。客户端可以自定义输入文件和输出文件，如果不指定则默认为标准输入输出。在指定输入文件时，客户端进入非交互模式运行，运行完文件中的SQL语句后自动退出。如果不指定输入文件，将进入命令行交互模式。
+完成实验2后，你可以使用NJUDB的客户端对服务器程序进行测试。客户端可以自定义输入文件和输出文件，如果不指定则默认为标准输入输出。在指定输入文件时，客户端进入非交互模式运行，运行完文件中的SQL语句后自动退出。如果不指定输入文件，将进入命令行交互模式。
 
-编译完成后，在`wsdb_root/build/bin`目录下执行指令
+编译完成后，在`njudb_root/build/bin`目录下执行指令
 ```shell
-$ ./wsdb
+$ ./njudb
 ```
 启动服务端进程后，在当前目录下再打开一个shell执行指令
 ```shell
@@ -297,7 +297,7 @@ $ ./client -h
 
 `-h`查看所有可选参数，当指定输入文件时，客户端进入非交互模式，执行完文件中的所有SQL指令后自动退出
 
-下面通过一些SQL实例带大家熟悉WSDB的客户端操作，按照顺序输入如下内容
+下面通过一些SQL实例带大家熟悉NJUDB的客户端操作，按照顺序输入如下内容
 
 ```sql
 CREATE DATABASE test;
@@ -307,9 +307,9 @@ CREATE TABLE t2 (i2 INT, s2 CHAR(10));
 SHOW TABLES;
 ```
 ```sql
-wsdb> CREATE DATABASE test;
-wsdb> OPEN DATABASE test;
-wsdb> CREATE TABLE t1 (i1 INT, s1 CHAR(10));
+njudb> CREATE DATABASE test;
+njudb> OPEN DATABASE test;
+njudb> CREATE TABLE t1 (i1 INT, s1 CHAR(10));
 
 +--------------+--------------+--------------+--------------+--------------+--------------+
 | Database     | Table        | FieldNum     | RecordLength | StorageModel | IndexNum     | 
@@ -318,7 +318,7 @@ wsdb> CREATE TABLE t1 (i1 INT, s1 CHAR(10));
 | test         | t1           | 2            | 14           | NARY_MODEL   | 0            | 
 +--------------+--------------+--------------+--------------+--------------+--------------+
 Total tuple(s): 1
-wsdb> CREATE TABLE t2 (i2 INT, s2 CHAR(10));
+njudb> CREATE TABLE t2 (i2 INT, s2 CHAR(10));
 
 +--------------+--------------+--------------+--------------+--------------+--------------+
 | Database     | Table        | FieldNum     | RecordLength | StorageModel | IndexNum     | 
@@ -327,7 +327,7 @@ wsdb> CREATE TABLE t2 (i2 INT, s2 CHAR(10));
 | test         | t2           | 2            | 14           | NARY_MODEL   | 0            | 
 +--------------+--------------+--------------+--------------+--------------+--------------+
 Total tuple(s): 1
-wsdb> SHOW TABLES;
+njudb> SHOW TABLES;
 
 +--------------+--------------+--------------+--------------+--------------+--------------+
 | Database     | Table        | FieldNum     | RecordLength | StorageModel | IndexNum     | 
@@ -345,7 +345,7 @@ Total tuple(s): 2
 DESC t1;
 ```
 ```sql
-wsdb> desc t1;
+njudb> desc t1;
 
 +--------------+--------------+--------------+
 | Field        | Type         | Null         | 
@@ -364,7 +364,7 @@ DESC 语句可以查看表的字段信息，包括字段名、字段类型和是
 explain SELECT i1, COUNT(t2.i2) FROM t1 OUTER JOIN t2 WHERE i1=i2 GROUP BY i1 HAVING i1 > 1 AND AVG(i2) > 5 USING SORT_MERGE_JOIN;
 ```
 ```sql
-wsdb> explain SELECT i1, COUNT(t2.i2) FROM t1 OUTER JOIN t2 WHERE i1=i2 GROUP BY i1 HAVING i1 > 1 AND AVG(i2) > 5 USING SORT_MERGE_JOIN;
+njudb> explain SELECT i1, COUNT(t2.i2) FROM t1 OUTER JOIN t2 WHERE i1=i2 GROUP BY i1 HAVING i1 > 1 AND AVG(i2) > 5 USING SORT_MERGE_JOIN;
 ---
 Logical Plan:
 ProjectPlan <#6.i1:TYPE_INT(4), #7.i2:TYPE_INT(4)[COUNT]>
@@ -389,7 +389,7 @@ explain 语句可以查看查询计划，包括逻辑计划和物理计划。逻
 
 
 
-## WSDB代码和格式规范
+## NJUDB代码和格式规范
 
 项目根目录下的.clang-tidy文件在配置成功后能够对整个项目进行代码格式化，关于如何使用加载.clang-tidy，请参考你使用的IDE的官方文档或者询问GPT。
 
@@ -397,19 +397,19 @@ explain 语句可以查看查询计划，包括逻辑计划和物理计划。逻
 
 ## 总结
 
-WSDB仍然处于发展初期，测试不甚完备，希望同学们发现除作业之外的框架代码出现bug后通过github
-issue或者课程qq群积极反馈，对于能提供完备bug复现方法或者测试样例的同学我们会给予奖励并加入项目的贡献者列表，同时也非常欢迎对DBMS感兴趣的同学加入到WSDB的后续开发中。为了之后的同学能有愉快的学习体验，请同学们尽量不要将代码答案直接上传到公开平台上，你可以分享自己的解题思路或者优化策略，这对学弟学妹会有更大的帮助。WSDB虽然是一个玩具数据库，但仍然有不小的代码量，我们会努力完善实验手册，争取让大家0基础上手。对于实在无法解决的问题或者实验手册中没覆盖到的你不清楚的知识点，请尽管询问群内同学或者私信助教。
+NJUDB仍然处于发展初期，测试不甚完备，希望同学们发现除作业之外的框架代码出现bug后通过github
+issue或者课程qq群积极反馈，对于能提供完备bug复现方法或者测试样例的同学我们会给予奖励并加入项目的贡献者列表，同时也非常欢迎对DBMS感兴趣的同学加入到NJUDB的后续开发中。为了之后的同学能有愉快的学习体验，请同学们尽量不要将代码答案直接上传到公开平台上，你可以分享自己的解题思路或者优化策略，这对学弟学妹会有更大的帮助。NJUDB虽然是一个玩具数据库，但仍然有不小的代码量，我们会努力完善实验手册，争取让大家0基础上手。对于实在无法解决的问题或者实验手册中没覆盖到的你不清楚的知识点，请尽管询问群内同学或者私信助教。
 
 # 附录：IDE配置
 ## 题目选择
-WSDB支持从任意题目开始作答，例如你只希望完成lab04，请使用如下命令配置项目
+NJUDB支持从任意题目开始作答，例如你只希望完成lab04，请使用如下命令配置项目
 ```shell
 bash ./configure.sh --lab01-gold --lab02-gold --clean
 ```
 关于选择性构建的更多信息，请参考[configuration guide](./00lab_configuration_guide.md)。
 如果你的电脑无法链接的共享库，请及时与助教取得联系。
 
-## 如何快速优雅地编译运行WSDB
+## 如何快速优雅地编译运行NJUDB
 
 你可以使用任意你喜欢的Linux发行版或者MacOS系统，按照README中的环境配置教程安装项目依赖的工具。如果你在使用Windows系统，可以使用WSL或者虚拟机来进行开发，我们建议使用图形化的现代IDE对代码进行调试，关于如何使用VSCode或者CLion连接WSL可以参考下面的文章：[VSCode + WSL](https://code.visualstudio.com/docs/remote/wsl)，[CLion + WSL](https://www.jetbrains.com/help/clion/how-to-use-wsl-development-environment-in-product.html#wsl-general)。
 
@@ -435,7 +435,7 @@ bash ./configure.sh --lab01-gold --lab02-gold --clean
 
 <img src="./00basic.assets/vscode2.png" alt="alt text" style="zoom:50%;" />
 
-找到wsdb，右键弹出菜单中即可编译或调试。
+找到njudb，右键弹出菜单中即可编译或调试。
 
 <img src="./00basic.assets/vscode3.png" alt="alt text" style="zoom:50%;" />
 
@@ -455,7 +455,7 @@ bash ./configure.sh --lab01-gold --lab02-gold --clean
 
 <img src="./00basic.assets/image-20240802100150772.png" alt="image-20240802100150772" style="zoom:50%;" />
 
-配置完成后，在右上角选择需要编译的目标文件，其中wsdb为服务器目标，client为客户端目标
+配置完成后，在右上角选择需要编译的目标文件，其中njudb为服务器目标，client为客户端目标
 
 <img src="./00basic.assets/image-20240802100416373.png" alt="image-20240802100416373" style="zoom:50%;" />
 

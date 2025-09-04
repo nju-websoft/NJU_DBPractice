@@ -22,12 +22,12 @@
 #include "table_manager.h"
 #include "common/page.h"
 
-namespace wsdb {
+namespace njudb {
 void TableManager::CreateTable(
     const std::string &db_name, const std::string &table_name, const RecordSchema &schema, StorageModel storage_model)
 {
   if (schema.GetRecordLength() > MAX_REC_SIZE || schema.GetRecordLength() < 1) {
-    WSDB_THROW(WSDB_RECLEN_ERROR, fmt::format("{}", schema.GetRecordLength()));
+    NJUDB_THROW(NJUDB_RECLEN_ERROR, fmt::format("{}", schema.GetRecordLength()));
   }
 
   // 1. create and open table file
@@ -103,4 +103,4 @@ auto TableManager::GetTableId(const std::string &db_name, const std::string &tab
 {
   return disk_manager_->GetFileId(FILE_NAME(db_name, table_name, TAB_SUFFIX));
 }
-}  // namespace wsdb
+}  // namespace njudb

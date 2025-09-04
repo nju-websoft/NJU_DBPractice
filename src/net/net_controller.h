@@ -19,14 +19,14 @@
 // Created by ziqi on 2024/8/7.
 //
 
-#ifndef WSDB_NET_CONTROLLER_H
-#define WSDB_NET_CONTROLLER_H
+#ifndef NJUDB_NET_CONTROLLER_H
+#define NJUDB_NET_CONTROLLER_H
 #include <unordered_map>
 
 #include "common/record.h"
 #include "../common/net/net.h"
 
-namespace wsdb {
+namespace njudb {
 
 class NetController
 {
@@ -65,6 +65,6 @@ private:
   std::unordered_map<int, net::NetPkg> client_buffer_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_NET_CONTROLLER_H
+#endif  // NJUDB_NET_CONTROLLER_H

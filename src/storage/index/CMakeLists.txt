@@ -1,5 +1,5 @@
 # Lab04: Storage Index (part of Lab04)
-wsdb_should_compile_from_source(COMPILE_FROM_SOURCE "04")
+njudb_should_compile_from_source(COMPILE_FROM_SOURCE "04")
 if(COMPILE_FROM_SOURCE)
     add_library(storage_index SHARED index_abstract.cpp index_bptree.cpp index_hash.cpp)
     target_link_libraries(storage_index storage_buffer fmt::fmt)

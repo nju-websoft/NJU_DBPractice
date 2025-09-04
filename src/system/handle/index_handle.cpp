@@ -22,7 +22,7 @@
 #include "index_handle.h"
 #include "../../../common/error.h"
 
-namespace wsdb {
+namespace njudb {
 IndexHandle::IndexHandle(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, table_id_t tid,
     idx_id_t iid, IndexType index_type, RecordSchemaUptr key_schema, std::string index_name)
     : table_id_(tid),
@@ -39,34 +39,34 @@ IndexHandle::IndexHandle(DiskManager *disk_manager, BufferPoolManager *buffer_po
       index_ = std::make_unique<HashIndex>(disk_manager, buffer_pool_manager, iid, key_schema_holder_.get());
       break;
     }
-    default: WSDB_FATAL(fmt::format("{}", static_cast<int>(index_type)));
+    default: NJUDB_FATAL(fmt::format("{}", static_cast<int>(index_type)));
   }
 }
 
 void IndexHandle::InsertRecord(const Record &rec)
 {
-  WSDB_STUDENT_TODO(l4, t2);
+  NJUDB_STUDENT_TODO(l4, t2);
 }
 
 void IndexHandle::DeleteRecord(const Record &rec)
 {
-  WSDB_STUDENT_TODO(l4, t2);
+  NJUDB_STUDENT_TODO(l4, t2);
 }
 
 void IndexHandle::UpdateRecord(const Record &old_rec, const Record &new_rec)
 {
-  WSDB_STUDENT_TODO(l4, t2);
+  NJUDB_STUDENT_TODO(l4, t2);
 }
 
 auto IndexHandle::SearchRange(const Record &low_key, const Record &high_key) -> std::vector<RID>
 {
-  WSDB_STUDENT_TODO(l4, t2);
+  NJUDB_STUDENT_TODO(l4, t2);
   return {};
 }
 
 auto IndexHandle::CheckRecordExists(const Record &record) -> bool
 {
-  WSDB_STUDENT_TODO(l4, t2);
+  NJUDB_STUDENT_TODO(l4, t2);
   return false;
 }
 
@@ -87,4 +87,4 @@ auto IndexHandle::PrintIndexStats() -> std::string
 }
 
 IndexHandle::~IndexHandle() = default;
-}  // namespace wsdb
+}  // namespace njudb

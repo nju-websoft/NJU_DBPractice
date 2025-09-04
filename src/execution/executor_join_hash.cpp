@@ -24,7 +24,7 @@
 #include "common/bloom_filter.h"
 #include <functional>
 
-namespace wsdb {
+namespace njudb {
 
 // ===== HashJoinExecutor Implementation =====
 
@@ -48,37 +48,37 @@ HashJoinExecutor::HashJoinExecutor(JoinType join_type, AbstractExecutorUptr left
 
 void HashJoinExecutor::BuildHashTable()
 {
-  WSDB_STUDENT_TODO(l3, f1);
+  NJUDB_STUDENT_TODO(l3, f1);
 }
 
 void HashJoinExecutor::InitInnerJoin()
 {
-  WSDB_STUDENT_TODO(l3, f1);
+  NJUDB_STUDENT_TODO(l3, f1);
 }
 
 void HashJoinExecutor::NextInnerJoin()
 {
-  WSDB_STUDENT_TODO(l3, f1);
+  NJUDB_STUDENT_TODO(l3, f1);
 }
 
 auto HashJoinExecutor::IsEndInnerJoin() const -> bool
 {
-  WSDB_STUDENT_TODO(l3, f1);
+  NJUDB_STUDENT_TODO(l3, f1);
 }
 
 void HashJoinExecutor::InitOuterJoin()
 {
-  WSDB_STUDENT_TODO(l3, f1);
+  NJUDB_STUDENT_TODO(l3, f1);
 }
 
 void HashJoinExecutor::NextOuterJoin()
 {
-  WSDB_STUDENT_TODO(l3, f1);
+  NJUDB_STUDENT_TODO(l3, f1);
 }
 
 auto HashJoinExecutor::IsEndOuterJoin() const -> bool
 {
-  WSDB_STUDENT_TODO(l3, f1);
+  NJUDB_STUDENT_TODO(l3, f1);
 }
 
-}  // namespace wsdb
+}  // namespace njudb

@@ -15,7 +15,7 @@
 #include <shared_mutex>
 
 #include "gtest/gtest.h"
-using namespace wsdb;
+using namespace njudb;
 
 auto GenTableSchema(int n) -> RecordSchemaUptr
 {
@@ -100,7 +100,7 @@ TEST(TableHandle, Simple)
     auto record2 = tbl->GetRecord(rid);
     ASSERT_TRUE(*record == *record2);
     tbl->DeleteRecord(rid);
-    ASSERT_THROW(tbl->GetRecord(rid), WSDBException_);
+    ASSERT_THROW(tbl->GetRecord(rid), NJUDBException_);
   }
   table_manager->CloseTable(TEST_DIR, *tbl);
   table_manager->DropTable(TEST_DIR, table_name);
@@ -158,7 +158,7 @@ TEST(TableHandle, MultiThread)
           auto rid = rids[rand() % rids.size()];
           rids.erase(std::remove(rids.begin(), rids.end(), rid), rids.end());
           tbl->DeleteRecord(rid);
-          ASSERT_THROW(tbl->GetRecord(rid), WSDBException_);
+          ASSERT_THROW(tbl->GetRecord(rid), NJUDBException_);
           rw_lock.unlock();
           cnt--;
         }
@@ -275,7 +275,7 @@ TEST(TableHandle, PAX_MultiThread)
           auto rid = rids[rand() % rids.size()];
           rids.erase(std::remove(rids.begin(), rids.end(), rid), rids.end());
           tbl->DeleteRecord(rid);
-          ASSERT_THROW(tbl->GetRecord(rid), WSDBException_);
+          ASSERT_THROW(tbl->GetRecord(rid), NJUDBException_);
           rw_lock.unlock();
           cnt--;
         }

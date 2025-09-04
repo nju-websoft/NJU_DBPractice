@@ -17,13 +17,13 @@
 // Created by ziqi on 2024/7/17.
 //
 
-#ifndef WSDB_PAGE_GUARD_H
-#define WSDB_PAGE_GUARD_H
+#ifndef NJUDB_PAGE_GUARD_H
+#define NJUDB_PAGE_GUARD_H
 
 #include "../../common/page.h"
 #include "buffer_pool_manager.h"
 
-namespace wsdb {
+namespace njudb {
 
 class BufferPoolManager;
 
@@ -205,6 +205,6 @@ public:
   void UnsetDirty();
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_PAGE_GUARD_H
+#endif  // NJUDB_PAGE_GUARD_H

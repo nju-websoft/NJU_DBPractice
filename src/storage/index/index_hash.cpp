@@ -26,16 +26,16 @@
 #include <cstring>
 #include <stdexcept>
 
-namespace wsdb {
+namespace njudb {
 
 // HashBucketPage implementation
-auto HashBucketPage::GetMaxEntries(size_t key_size) -> size_t { WSDB_STUDENT_TODO(l4, f1); }
+auto HashBucketPage::GetMaxEntries(size_t key_size) -> size_t { NJUDB_STUDENT_TODO(l4, f1); }
 
-void HashBucketPage::WriteEntry(size_t offset, const Record &key, const RID &rid) { WSDB_STUDENT_TODO(l4, f1); }
+void HashBucketPage::WriteEntry(size_t offset, const Record &key, const RID &rid) { NJUDB_STUDENT_TODO(l4, f1); }
 
 void HashBucketPage::ReadEntry(size_t offset, Record &key, RID &rid, size_t key_size) const
 {
-  WSDB_STUDENT_TODO(l4, f1);
+  NJUDB_STUDENT_TODO(l4, f1);
 }
 
 // HashIndex implementation
@@ -119,24 +119,24 @@ auto HashIndex::AllocateBucketPage() -> page_id_t
   // Allocate a new bucket page
   page_id_t new_page_id = INVALID_PAGE_ID;
 
-  WSDB_STUDENT_TODO(l4, f1);
+  NJUDB_STUDENT_TODO(l4, f1);
 
   return new_page_id;
 }
 
-void HashIndex::Insert(const Record &key, const RID &rid) { WSDB_STUDENT_TODO(l4, f1); }
+void HashIndex::Insert(const Record &key, const RID &rid) { NJUDB_STUDENT_TODO(l4, f1); }
 
-void HashIndex::InsertIntoBucket(size_t bucket_index, const Record &key, const RID &rid) { WSDB_STUDENT_TODO(l4, f1); }
+void HashIndex::InsertIntoBucket(size_t bucket_index, const Record &key, const RID &rid) { NJUDB_STUDENT_TODO(l4, f1); }
 
-auto HashIndex::Delete(const Record &key) -> bool { WSDB_STUDENT_TODO(l4, f1); }
+auto HashIndex::Delete(const Record &key) -> bool { NJUDB_STUDENT_TODO(l4, f1); }
 
-auto HashIndex::DeleteAllFromBucket(size_t bucket_index, const Record &key) -> size_t { WSDB_STUDENT_TODO(l4, f1); }
+auto HashIndex::DeleteAllFromBucket(size_t bucket_index, const Record &key) -> size_t { NJUDB_STUDENT_TODO(l4, f1); }
 
-auto HashIndex::Search(const Record &key) -> std::vector<RID> { WSDB_STUDENT_TODO(l4, f1); }
+auto HashIndex::Search(const Record &key) -> std::vector<RID> { NJUDB_STUDENT_TODO(l4, f1); }
 
 auto HashIndex::SearchInBucket(size_t bucket_index, const Record &key) -> std::vector<RID>
 {
-  WSDB_STUDENT_TODO(l4, f1);
+  NJUDB_STUDENT_TODO(l4, f1);
   return {};
 }
 
@@ -144,7 +144,7 @@ auto HashIndex::SearchRange(const Record &low_key, const Record &high_key) -> st
 {
   // Hash indexes don't support efficient range queries
   // We need to scan all buckets and filter results
-  WSDB_STUDENT_TODO(l4, f1);
+  NJUDB_STUDENT_TODO(l4, f1);
   return {};
 }
 
@@ -159,26 +159,26 @@ HashIndex::HashIterator::HashIterator(HashIndex *index, bool is_end)
 
 auto HashIndex::HashIterator::IsValid() -> bool { return !is_end_ && current_bucket_ < index_->bucket_count_; }
 
-void HashIndex::HashIterator::Next() { WSDB_STUDENT_TODO(l4, f1); }
+void HashIndex::HashIterator::Next() { NJUDB_STUDENT_TODO(l4, f1); }
 
-void HashIndex::HashIterator::FindNextValidEntry() { WSDB_STUDENT_TODO(l4, f1); }
+void HashIndex::HashIterator::FindNextValidEntry() { NJUDB_STUDENT_TODO(l4, f1); }
 
-auto HashIndex::HashIterator::GetKey() -> Record { WSDB_STUDENT_TODO(l4, f1); }
+auto HashIndex::HashIterator::GetKey() -> Record { NJUDB_STUDENT_TODO(l4, f1); }
 
-auto HashIndex::HashIterator::GetRID() -> RID { WSDB_STUDENT_TODO(l4, f1); }
+auto HashIndex::HashIterator::GetRID() -> RID { NJUDB_STUDENT_TODO(l4, f1); }
 
-auto HashIndex::Begin() -> std::unique_ptr<IIterator> { WSDB_STUDENT_TODO(l4, f1); }
+auto HashIndex::Begin() -> std::unique_ptr<IIterator> { NJUDB_STUDENT_TODO(l4, f1); }
 
 auto HashIndex::Begin(const Record &key) -> std::unique_ptr<IIterator>
 {
   // For hash index, Begin(key) is similar to Begin() since there's no ordering
   // We could optionally start from the bucket containing the key
-  WSDB_STUDENT_TODO(l4, f1);
+  NJUDB_STUDENT_TODO(l4, f1);
 }
 
 auto HashIndex::End() -> std::unique_ptr<IIterator> { return std::make_unique<HashIterator>(this, true); }
 
-void HashIndex::Clear() { WSDB_STUDENT_TODO(l4, f1); }
+void HashIndex::Clear() { NJUDB_STUDENT_TODO(l4, f1); }
 
 auto HashIndex::IsEmpty() -> bool { return total_entries_ == 0; }
 
@@ -190,4 +190,4 @@ auto HashIndex::GetHeight() -> int
   return 2;
 }
 
-}  // namespace wsdb
+}  // namespace njudb

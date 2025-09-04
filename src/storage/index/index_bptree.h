@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/28.
 //
 
-#ifndef WSDB_INDEX_BP_TREE_H
-#define WSDB_INDEX_BP_TREE_H
+#ifndef NJUDB_INDEX_BP_TREE_H
+#define NJUDB_INDEX_BP_TREE_H
 
 #include "index_abstract.h"
 #include "common/page.h"
@@ -29,7 +29,7 @@
 #include <memory>
 #include <shared_mutex>
 
-namespace wsdb {
+namespace njudb {
 
 // Forward declarations
 struct BPTreeNode;
@@ -223,6 +223,6 @@ private:
   mutable std::shared_mutex index_latch_;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_INDEX_BP_TREE_H
+#endif  // NJUDB_INDEX_BP_TREE_H

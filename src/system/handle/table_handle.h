@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/19.
 //
 
-#ifndef WSDB_TABLE_HANDLE_H
-#define WSDB_TABLE_HANDLE_H
+#ifndef NJUDB_TABLE_HANDLE_H
+#define NJUDB_TABLE_HANDLE_H
 #include <utility>
 
 #include "../../../common/micro.h"
@@ -28,7 +28,7 @@
 #include "storage/storage.h"
 #include "page_handle.h"
 
-namespace wsdb {
+namespace njudb {
 
 /**
  * Table descriptor in memory, including the column schema of the table
@@ -44,7 +44,7 @@ public:
   /**
    * Get a record by rid
    * 1. fetch the page handle by rid
-   * 2. check if there is a record in the slot using bitmap, if not, unpin the page and throw WSDB_RECORD_MISS
+   * 2. check if there is a record in the slot using bitmap, if not, unpin the page and throw NJUDB_RECORD_MISS
    * 3. read the record from the slot using page handle
    * 4. unpin the page
    * @param rid
@@ -76,8 +76,8 @@ public:
 
   /**
    * Insert a record into the table given rid
-   * 1. if rid is invalid, unpin the page and throw WSDB_PAGE_MISS
-   * 2. fetch the page handle and check the bitmap, if the slot is not empty, throw WSDB_RECORD_EXISTS
+   * 1. if rid is invalid, unpin the page and throw NJUDB_PAGE_MISS
+   * 2. fetch the page handle and check the bitmap, if the slot is not empty, throw NJUDB_RECORD_EXISTS
    * 3. do the rest of the steps in InsertRecord 3-6
    * @param rid
    * @param record
@@ -86,7 +86,7 @@ public:
 
   /**
    * Delete the record by rid
-   * 1. if the slot is empty, unpin the page and throw WSDB_RECORD_MISS
+   * 1. if the slot is empty, unpin the page and throw NJUDB_RECORD_MISS
    * 2. update the bitmap and the number of records in the page header
    * 3. if the page is not full after deleting the record, update the first free page id in the file header and the next
    * page id in the page header
@@ -97,7 +97,7 @@ public:
 
   /**
    * Update the record by rid
-   * 1. if the slot is empty, unpin the page and throw WSDB_RECORD_MISS
+   * 1. if the slot is empty, unpin the page and throw NJUDB_RECORD_MISS
    * 2. write slot
    * 3. unpin the page
    * @param rid
@@ -173,6 +173,6 @@ private:
 
 DEFINE_UNIQUE_PTR(TableHandle);
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_TABLE_HANDLE_H
+#endif  // NJUDB_TABLE_HANDLE_H

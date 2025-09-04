@@ -21,21 +21,21 @@
 
 #include "executor_aggregate.h"
 
-namespace wsdb {
+namespace njudb {
 
-AggregateExecutor::AggregateValue::AggregateValue(RecordSchema *schema) : schema_(schema) { WSDB_STUDENT_TODO(l3, t3); }
+AggregateExecutor::AggregateValue::AggregateValue(RecordSchema *schema) : schema_(schema) { NJUDB_STUDENT_TODO(l3, t3); }
 AggregateExecutor::AggregateValue::AggregateValue(RecordSchema *schema, const Record &record)
 {
-  WSDB_STUDENT_TODO(l3, t3);
+  NJUDB_STUDENT_TODO(l3, t3);
 }
 void AggregateExecutor::AggregateValue::CombineWith(const AggregateExecutor::AggregateValue &other)
 {
-  WSDB_STUDENT_TODO(l3, t3);
+  NJUDB_STUDENT_TODO(l3, t3);
 }
 
 auto AggregateExecutor::AggregateValue::Values() const -> const std::vector<ValueSptr> & { return values_; }
 
-void AggregateExecutor::AggregateValue::Finalize() { WSDB_STUDENT_TODO(l3, t3); }
+void AggregateExecutor::AggregateValue::Finalize() { NJUDB_STUDENT_TODO(l3, t3); }
 
 AggregateExecutor::AggregateExecutor(
     AbstractExecutorUptr child, RecordSchemaUptr agg_schema, RecordSchemaUptr group_schema)
@@ -54,10 +54,10 @@ AggregateExecutor::AggregateExecutor(
   out_schema_ = std::make_unique<RecordSchema>(fields);
 }
 
-void AggregateExecutor::Init() { WSDB_STUDENT_TODO(l3, t3); }
+void AggregateExecutor::Init() { NJUDB_STUDENT_TODO(l3, t3); }
 
-void AggregateExecutor::Next() { WSDB_STUDENT_TODO(l3, t3); }
+void AggregateExecutor::Next() { NJUDB_STUDENT_TODO(l3, t3); }
 
-auto AggregateExecutor::IsEnd() const -> bool { WSDB_STUDENT_TODO(l3, t3); }
+auto AggregateExecutor::IsEnd() const -> bool { NJUDB_STUDENT_TODO(l3, t3); }
 
-}  // namespace wsdb
+}  // namespace njudb

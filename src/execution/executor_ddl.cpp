@@ -22,7 +22,7 @@
 #define MAX_TABNAME_LEN 128
 
 #include "executor_ddl.h"
-namespace wsdb {
+namespace njudb {
 
 static auto MakeTableDescOutSchema(size_t sz_db_name, size_t sz_tb_name, bool include_table_id)
     -> std::unique_ptr<RecordSchema>
@@ -94,7 +94,7 @@ static auto MakeTableDescValue(const std::string &db_name, const std::string &tb
 
 /// CreateTableExecutor
 CreateTableExecutor::CreateTableExecutor(
-    std::string table_name, wsdb::RecordSchemaUptr schema, wsdb::DatabaseHandle *db, StorageModel storage)
+    std::string table_name, njudb::RecordSchemaUptr schema, njudb::DatabaseHandle *db, StorageModel storage)
     : AbstractExecutor(DDL),
       tab_name_(std::move(table_name)),
       schema_(std::move(schema)),
@@ -109,7 +109,7 @@ CreateTableExecutor::CreateTableExecutor(
 void CreateTableExecutor::Init()
 {
   if (db_->GetTable(tab_name_) != nullptr) {
-    WSDB_THROW(WSDB_TABLE_EXIST, tab_name_);
+    NJUDB_THROW(NJUDB_TABLE_EXIST, tab_name_);
   }
   db_->CreateTable(tab_name_, *schema_, storage_);
   auto values = MakeTableDescValue(db_->GetName(),
@@ -126,7 +126,7 @@ void CreateTableExecutor::Next() { is_end_ = true; }
 auto CreateTableExecutor::IsEnd() const -> bool { return is_end_; }
 
 /// DropTable Executor
-DropTableExecutor::DropTableExecutor(std::string table_name, wsdb::DatabaseHandle *db)
+DropTableExecutor::DropTableExecutor(std::string table_name, njudb::DatabaseHandle *db)
     : AbstractExecutor(DDL), tab_name_(std::move(table_name)), db_(db), is_end_(false)
 {
   out_schema_ =
@@ -137,7 +137,7 @@ void DropTableExecutor::Init()
 {
   auto tab = db_->GetTable(tab_name_);
   if (tab == nullptr) {
-    WSDB_THROW(WSDB_TABLE_MISS, tab_name_);
+    NJUDB_THROW(NJUDB_TABLE_MISS, tab_name_);
   }
   auto values = MakeTableDescValue(db_->GetName(),
       tab_name_,
@@ -155,7 +155,7 @@ auto DropTableExecutor::IsEnd() const -> bool { return is_end_; }
 
 /// DescTable Executor
 
-DescTableExecutor::DescTableExecutor(wsdb::TableHandle *tbl_hdl) : AbstractExecutor(DDL), tab_hdl_(tbl_hdl), cursor_(0)
+DescTableExecutor::DescTableExecutor(njudb::TableHandle *tbl_hdl) : AbstractExecutor(DDL), tab_hdl_(tbl_hdl), cursor_(0)
 {
   // desc table header is | Field | type | Null
   std::vector<RTField> fields(3);
@@ -172,7 +172,7 @@ DescTableExecutor::DescTableExecutor(wsdb::TableHandle *tbl_hdl) : AbstractExecu
 void DescTableExecutor::Init()
 {
   if (tab_hdl_ == nullptr) {
-    WSDB_THROW(WSDB_TABLE_MISS, "TableHandle is null");
+    NJUDB_THROW(NJUDB_TABLE_MISS, "TableHandle is null");
   }
   if (IsEnd()) {
     return;
@@ -187,7 +187,7 @@ void DescTableExecutor::Init()
           .c_str(),
       20));
   values.push_back(ValueFactory::CreateStringValue(field.field_.nullable_ ? "YES" : "NO", 10));
-  WSDB_ASSERT(values.size() == out_schema_->GetFieldCount(), "Value size not match");
+  NJUDB_ASSERT(values.size() == out_schema_->GetFieldCount(), "Value size not match");
   record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
   cursor_++;
 }
@@ -206,14 +206,14 @@ void DescTableExecutor::Next()
           .c_str(),
       20));
   values.push_back(ValueFactory::CreateStringValue(field.field_.nullable_ ? "YES" : "NO", 10));
-  WSDB_ASSERT(values.size() == out_schema_->GetFieldCount(), "Value size not match");
+  NJUDB_ASSERT(values.size() == out_schema_->GetFieldCount(), "Value size not match");
   record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
   cursor_++;
 }
 auto DescTableExecutor::IsEnd() const -> bool { return cursor_ >= tab_hdl_->GetSchema().GetFieldCount(); }
 
 /// ShowTables Executor
-ShowTablesExecutor::ShowTablesExecutor(wsdb::DatabaseHandle *db)
+ShowTablesExecutor::ShowTablesExecutor(njudb::DatabaseHandle *db)
     : AbstractExecutor(DDL), db_(db), is_end_(false), cursor_(0)
 {
   out_schema_ = MakeTableDescOutSchema(db_->GetName().size(), MAX_TABNAME_LEN, true);  // Show table ID for SHOW TABLES
@@ -243,7 +243,7 @@ void ShowTablesExecutor::Init()
 void ShowTablesExecutor::Next()
 {
   if (is_end_) {
-    WSDB_FATAL("ShowTablesExecutor is end");
+    NJUDB_FATAL("ShowTablesExecutor is end");
   }
   auto &tables = db_->GetAllTables();
   if (cursor_ >= tables.size()) {
@@ -350,7 +350,7 @@ void CreateIndexExecutor::Init()
   // Check if table exists
   auto table = db_->GetTable(table_name_);
   if (table == nullptr) {
-    WSDB_THROW(WSDB_TABLE_MISS, table_name_);
+    NJUDB_THROW(NJUDB_TABLE_MISS, table_name_);
   }
 
   // Create the index
@@ -384,7 +384,7 @@ void DropIndexExecutor::Init()
   // Check if table exists
   auto table = db_->GetTable(table_name_);
   if (table == nullptr) {
-    WSDB_THROW(WSDB_TABLE_MISS, table_name_);
+    NJUDB_THROW(NJUDB_TABLE_MISS, table_name_);
   }
 
   // Get index information before dropping it
@@ -398,7 +398,7 @@ void DropIndexExecutor::Init()
   }
 
   if (target_index == nullptr) {
-    WSDB_THROW(WSDB_INDEX_MISS, index_name_);
+    NJUDB_THROW(NJUDB_INDEX_MISS, index_name_);
   }
 
   // Create output record with index information before dropping
@@ -450,7 +450,7 @@ void ShowIndexesExecutor::Init()
     // Show indexes only for the specified table
     auto table = db_->GetTable(table_name_);
     if (table == nullptr) {
-      WSDB_THROW(WSDB_TABLE_MISS, table_name_);
+      NJUDB_THROW(NJUDB_TABLE_MISS, table_name_);
     }
     auto indexes = db_->GetIndexes(table_name_);
     indexes_to_show_.insert(indexes_to_show_.end(), indexes.begin(), indexes.end());
@@ -464,7 +464,7 @@ void ShowIndexesExecutor::Init()
   auto index = indexes_to_show_[cursor_];
   auto table = db_->GetTable(index->GetTableId());
   if (table == nullptr) {
-    WSDB_THROW(WSDB_TABLE_MISS, "Table not found for index");
+    NJUDB_THROW(NJUDB_TABLE_MISS, "Table not found for index");
   }
 
   auto values = MakeIndexDescValue(db_->GetName(),
@@ -481,7 +481,7 @@ void ShowIndexesExecutor::Init()
 void ShowIndexesExecutor::Next()
 {
   if (is_end_) {
-    WSDB_FATAL("ShowIndexesExecutor is end");
+    NJUDB_FATAL("ShowIndexesExecutor is end");
   }
 
   if (cursor_ >= indexes_to_show_.size()) {
@@ -492,7 +492,7 @@ void ShowIndexesExecutor::Next()
   auto index = indexes_to_show_[cursor_];
   auto table = db_->GetTable(index->GetTableId());
   if (table == nullptr) {
-    WSDB_THROW(WSDB_TABLE_MISS, "Table not found for index");
+    NJUDB_THROW(NJUDB_TABLE_MISS, "Table not found for index");
   }
 
   auto values = MakeIndexDescValue(db_->GetName(),
@@ -508,4 +508,4 @@ void ShowIndexesExecutor::Next()
 
 auto ShowIndexesExecutor::IsEnd() const -> bool { return is_end_; }
 
-}  // namespace wsdb
+}  // namespace njudb

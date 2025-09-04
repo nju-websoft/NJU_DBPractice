@@ -72,7 +72,7 @@ public:
       input_.open(input);
       if (!input_.is_open()) {
         err_no_ = -1;
-        WSDB_LOG("ERROR opening input file");
+        NJUDB_LOG("ERROR opening input file");
       }
       is_interactive_ = false;
     } else {
@@ -84,7 +84,7 @@ public:
       output_file_.open(output);
       if (!output_file_.is_open()) {
         err_no_ = -1;
-        WSDB_LOG("ERROR opening output file");
+        NJUDB_LOG("ERROR opening output file");
       }
       output_.copyfmt(output_file_);
       output_.clear(output_file_.rdstate());
@@ -115,7 +115,7 @@ public:
       if (is_interactive_) {
         char *line;
         if (sql.empty())
-          line = readline("wsdb> ");
+          line = readline("njudb> ");
         else
           line = readline(" ... ");
         if (line == nullptr) {
@@ -166,7 +166,7 @@ private:
   {
     sock_fd_ = socket(AF_INET, SOCK_STREAM, 0);
     if ((err_no_ = sock_fd_) < 0) {
-      WSDB_LOG("ERROR opening socket");
+      NJUDB_LOG("ERROR opening socket");
     }
     sockaddr_in serverAddress{};
     serverAddress.sin_family      = AF_INET;
@@ -175,7 +175,7 @@ private:
 
     // sending connection request
     if ((err_no_ = connect(sock_fd_, (struct sockaddr *)&serverAddress, sizeof(serverAddress))) < 0) {
-      WSDB_LOG("ERROR connecting");
+      NJUDB_LOG("ERROR connecting");
     }
   }
 
@@ -187,14 +187,14 @@ private:
     pkg_.len_  = sql.size();
     memcpy(pkg_.buf_, sql.c_str(), sql.size());
     if ((err_no_ = net::WriteNetPkg(sock_fd_, pkg_)) < 0) {
-      WSDB_LOG("ERROR writing to socket");
+      NJUDB_LOG("ERROR writing to socket");
     }
   }
 
   void Receive()
   {
     if ((err_no_ = net::ReadNetPkg(sock_fd_, pkg_)) < 0) {
-      WSDB_LOG("ERROR reading from socket");
+      NJUDB_LOG("ERROR reading from socket");
     }
   }
 
@@ -295,7 +295,7 @@ private:
 
 int main(int argc, char *argv[])
 {
-  argparse::ArgumentParser program("wsdb client");
+  argparse::ArgumentParser program("njudb client");
   program.add_argument("-v", "--version").help("show version").default_value(false).implicit_value(true);
   program.add_argument("-h", "--help").help("show help").default_value(false).implicit_value(true);
   program.add_argument("-i", "--input").required().help("input file").default_value(std::string());
@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
       return 0;
     }
     if (program.get<bool>("--version")) {
-      std::cout << "wsdb client 0.1" << std::endl;
+      std::cout << "njudb client 0.1" << std::endl;
       return 0;
     }
     client.Init(program.get<std::string>("--input"), program.get<std::string>("--output"));

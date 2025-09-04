@@ -19,15 +19,15 @@
 // Created by ziqi on 2024/8/12.
 //
 
-#ifndef WSDB_EXECUTOR_AGGREGATE_VEC_H
-#define WSDB_EXECUTOR_AGGREGATE_VEC_H
+#ifndef NJUDB_EXECUTOR_AGGREGATE_VEC_H
+#define NJUDB_EXECUTOR_AGGREGATE_VEC_H
 #include "executor_abstract.h"
 
-namespace wsdb {
+namespace njudb {
 
 class AggregateExecutorVec : public AbstractExecutor
 {};
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_AGGREGATE_VEC_H
+#endif  // NJUDB_EXECUTOR_AGGREGATE_VEC_H

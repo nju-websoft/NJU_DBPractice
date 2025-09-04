@@ -24,12 +24,12 @@
  * 
  */
 
-#ifndef WSDB_EXECUTOR_SEQSCAN_H
-#define WSDB_EXECUTOR_SEQSCAN_H
+#ifndef NJUDB_EXECUTOR_SEQSCAN_H
+#define NJUDB_EXECUTOR_SEQSCAN_H
 #include "executor_abstract.h"
 #include "system/handle/table_handle.h"
 
-namespace wsdb {
+namespace njudb {
 class SeqScanExecutor : public AbstractExecutor
 {
 public:
@@ -47,6 +47,6 @@ private:
   TableHandle *tab_;
   RID          rid_;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_EXECUTOR_SEQSCAN_H
+#endif  // NJUDB_EXECUTOR_SEQSCAN_H

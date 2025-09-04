@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/19.
 //
 
-#ifndef WSDB_TXN_MANAGER_H
-#define WSDB_TXN_MANAGER_H
+#ifndef NJUDB_TXN_MANAGER_H
+#define NJUDB_TXN_MANAGER_H
 
 #include <atomic>
 #include <mutex>
@@ -29,7 +29,7 @@
 #include "common/types.h"
 #include "log/log_manager.h"
 
-namespace wsdb {
+namespace njudb {
 
 enum class TxnState
 {
@@ -86,6 +86,6 @@ private:
 
   std::mutex latch_;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_TXN_MANAGER_H
+#endif  // NJUDB_TXN_MANAGER_H

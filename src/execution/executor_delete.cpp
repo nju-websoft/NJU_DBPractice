@@ -21,7 +21,7 @@
 
 #include "executor_delete.h"
 
-namespace wsdb {
+namespace njudb {
 ;
 DeleteExecutor::DeleteExecutor(AbstractExecutorUptr child, TableHandle *tbl, std::list<IndexHandle *> indexes)
     : AbstractExecutor(DML), child_(std::move(child)), tbl_(tbl), indexes_(std::move(indexes)), is_end_(false)
@@ -34,7 +34,7 @@ void DeleteExecutor::Init()
 {  // number of deleted records
   int count = 0;
 
-  WSDB_STUDENT_TODO(l2, t1);
+  NJUDB_STUDENT_TODO(l2, t1);
 
   std::vector<ValueSptr> values{ValueFactory::CreateIntValue(count)};
   record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
@@ -43,4 +43,4 @@ void DeleteExecutor::Init()
 void DeleteExecutor::Next() { is_end_ = true; }
 
 auto DeleteExecutor::IsEnd() const -> bool { return is_end_; }
-}  // namespace wsdb
+}  // namespace njudb

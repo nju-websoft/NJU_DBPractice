@@ -19,13 +19,13 @@
 // Created by ziqi on 2024/8/4.
 //
 
-#ifndef WSDB_CONDITION_EXPR_H
-#define WSDB_CONDITION_EXPR_H
+#ifndef NJUDB_CONDITION_EXPR_H
+#define NJUDB_CONDITION_EXPR_H
 
 #include "common/condition.h"
 #include "common/record.h"
 
-namespace wsdb {
+namespace njudb {
 
 class ConditionExpr
 {
@@ -39,6 +39,6 @@ private:
   static auto EvalCond(const Condition &condition, const Record &record) -> bool;
 };
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_CONDITION_EXPR_H
+#endif  // NJUDB_CONDITION_EXPR_H

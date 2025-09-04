@@ -19,10 +19,10 @@
 // Created by ziqi on 2024/8/12.
 //
 
-#ifndef WSDB_TEST_CONFIG_H
-#define WSDB_TEST_CONFIG_H
+#ifndef NJUDB_TEST_CONFIG_H
+#define NJUDB_TEST_CONFIG_H
 #include <string>
 const std::string TEST_DIR = "./test";
 #define SUB_TEST(name)
 
-#endif  // WSDB_TEST_CONFIG_H
+#endif  // NJUDB_TEST_CONFIG_H

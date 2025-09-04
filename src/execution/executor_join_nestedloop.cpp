@@ -22,7 +22,7 @@
 #include "executor_join_nestedloop.h"
 #include "expr/condition_expr.h"
 
-namespace wsdb {
+namespace njudb {
 NestedLoopJoinExecutor::NestedLoopJoinExecutor(
     JoinType join_type, AbstractExecutorUptr left, AbstractExecutorUptr right, ConditionVec conditions)
     : JoinExecutor(join_type, std::move(left), std::move(right), std::move(conditions))
@@ -31,27 +31,27 @@ NestedLoopJoinExecutor::NestedLoopJoinExecutor(
 /// inner join
 void NestedLoopJoinExecutor::InitInnerJoin()
 {
-  WSDB_STUDENT_TODO(l2, f1);
-  WSDB_STUDENT_TODO(l3, t1);
+  NJUDB_STUDENT_TODO(l2, f1);
+  NJUDB_STUDENT_TODO(l3, t1);
 }
 
 void NestedLoopJoinExecutor::NextInnerJoin()
 {
-  WSDB_STUDENT_TODO(l2, f1);
-  WSDB_STUDENT_TODO(l3, t1);
+  NJUDB_STUDENT_TODO(l2, f1);
+  NJUDB_STUDENT_TODO(l3, t1);
 }
 
 auto NestedLoopJoinExecutor::IsEndInnerJoin() const -> bool
 {
-  WSDB_STUDENT_TODO(l2, f1);
-  WSDB_STUDENT_TODO(l3, t1);
+  NJUDB_STUDENT_TODO(l2, f1);
+  NJUDB_STUDENT_TODO(l3, t1);
 }
 
 /// outer join
-void NestedLoopJoinExecutor::InitOuterJoin() { WSDB_STUDENT_TODO(l3, t2); }
+void NestedLoopJoinExecutor::InitOuterJoin() { NJUDB_STUDENT_TODO(l3, t2); }
 
-void NestedLoopJoinExecutor::NextOuterJoin() { WSDB_STUDENT_TODO(l3, t2); }
+void NestedLoopJoinExecutor::NextOuterJoin() { NJUDB_STUDENT_TODO(l3, t2); }
 
-auto NestedLoopJoinExecutor::IsEndOuterJoin() const -> bool { WSDB_STUDENT_TODO(l3, t2); }
+auto NestedLoopJoinExecutor::IsEndOuterJoin() const -> bool { NJUDB_STUDENT_TODO(l3, t2); }
 
-}  // namespace wsdb
+}  // namespace njudb

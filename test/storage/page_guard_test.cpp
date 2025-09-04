@@ -39,18 +39,18 @@
 
 TEST(PageGuardTest, BasicTest)
 {
-  wsdb::DiskManager       disk_manager{};
-  wsdb::BufferPoolManager buffer_pool_manager(&disk_manager);
+  njudb::DiskManager       disk_manager{};
+  njudb::BufferPoolManager buffer_pool_manager(&disk_manager);
   if (!std::filesystem::exists(TEST_DIR))
     std::filesystem::create_directory(TEST_DIR);
   std::filesystem::current_path(TEST_DIR);
   
   try {
-    wsdb::DiskManager::CreateFile("test_page_guard.tbl");
-  } catch (wsdb::WSDBException_ &e) {
+    njudb::DiskManager::CreateFile("test_page_guard.tbl");
+  } catch (njudb::NJUDBException_ &e) {
     // destroy and recreate the file
-    wsdb::DiskManager::DestroyFile("test_page_guard.tbl");
-    wsdb::DiskManager::CreateFile("test_page_guard.tbl");
+    njudb::DiskManager::DestroyFile("test_page_guard.tbl");
+    njudb::DiskManager::CreateFile("test_page_guard.tbl");
   }
 
   SUB_TEST(ReadPageGuard)
@@ -268,22 +268,22 @@ TEST(PageGuardTest, BasicTest)
   }
 
   // Clean up
-  wsdb::DiskManager::DestroyFile("test_page_guard.tbl");
+  njudb::DiskManager::DestroyFile("test_page_guard.tbl");
 }
 
 TEST(PageGuardTest, MultiThreadTest)
 {
-  wsdb::DiskManager       disk_manager{};
-  wsdb::BufferPoolManager buffer_pool_manager(&disk_manager);
+  njudb::DiskManager       disk_manager{};
+  njudb::BufferPoolManager buffer_pool_manager(&disk_manager);
   if (!std::filesystem::exists(TEST_DIR))
     std::filesystem::create_directory(TEST_DIR);
   std::filesystem::current_path(TEST_DIR);
   
   try {
-    wsdb::DiskManager::CreateFile("test_page_guard_mt.tbl");
-  } catch (wsdb::WSDBException_ &e) {
-    wsdb::DiskManager::DestroyFile("test_page_guard_mt.tbl");
-    wsdb::DiskManager::CreateFile("test_page_guard_mt.tbl");
+    njudb::DiskManager::CreateFile("test_page_guard_mt.tbl");
+  } catch (njudb::NJUDBException_ &e) {
+    njudb::DiskManager::DestroyFile("test_page_guard_mt.tbl");
+    njudb::DiskManager::CreateFile("test_page_guard_mt.tbl");
   }
 
   SUB_TEST(ConcurrentReadWrite)
@@ -317,8 +317,8 @@ TEST(PageGuardTest, MultiThreadTest)
                 successful_operations++;
               }
             }
-          } catch (wsdb::WSDBException_ &e) {
-            if (e.type_ == wsdb::WSDB_NO_FREE_FRAME) {
+          } catch (njudb::NJUDBException_ &e) {
+            if (e.type_ == njudb::NJUDB_NO_FREE_FRAME) {
               std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
           }
@@ -337,7 +337,7 @@ TEST(PageGuardTest, MultiThreadTest)
   }
 
   // Clean up
-  wsdb::DiskManager::DestroyFile("test_page_guard_mt.tbl");
+  njudb::DiskManager::DestroyFile("test_page_guard_mt.tbl");
 }
 
 int main(int argc, char **argv)

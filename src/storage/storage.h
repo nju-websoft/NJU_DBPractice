@@ -19,10 +19,10 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_STORAGE_H
-#define WSDB_STORAGE_H
+#ifndef NJUDB_STORAGE_H
+#define NJUDB_STORAGE_H
 
 #include "buffer/buffer_pool_manager.h"
 #include "disk/disk_manager.h"
 
-#endif  // WSDB_STORAGE_H
+#endif  // NJUDB_STORAGE_H

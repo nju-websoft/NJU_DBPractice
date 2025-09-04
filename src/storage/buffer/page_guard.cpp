@@ -22,7 +22,7 @@
 #include "page_guard.h"
 #include "buffer_pool_manager.h"
 
-namespace wsdb {
+namespace njudb {
 
 // PageGuard implementation
 PageGuard::PageGuard(
@@ -134,4 +134,4 @@ auto WritePageGuard::GetMutableData() -> char *
 }
 
 void WritePageGuard::UnsetDirty() { is_dirty_ = false; }
-}  // namespace wsdb
+}  // namespace njudb

@@ -19,12 +19,12 @@
 // Created by ziqi on 2024/7/19.
 //
 
-#ifndef WSDB_RID_H
-#define WSDB_RID_H
+#ifndef NJUDB_RID_H
+#define NJUDB_RID_H
 
 #include "common/types.h"
 
-namespace wsdb {
+namespace njudb {
 
 class RID
 {
@@ -61,14 +61,14 @@ private:
 
 const RID INVALID_RID = RID(INVALID_PAGE_ID, INVALID_SLOT_ID);
 
-}  // namespace wsdb
+}  // namespace njudb
 
 namespace std {
 template <>
-struct hash<wsdb::RID>
+struct hash<njudb::RID>
 {
-  auto operator()(const wsdb::RID &rid) const -> size_t { return rid.GetHash(); }
+  auto operator()(const njudb::RID &rid) const -> size_t { return rid.GetHash(); }
 };
 }  // namespace std
 
-#endif  // WSDB_RID_H
+#endif  // NJUDB_RID_H

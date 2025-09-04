@@ -1,4 +1,4 @@
-# WSDB Lab Configuration - Practical Usage Guide
+# NJUDB Lab Configuration - Practical Usage Guide
 
 ## TL;DR - Quick Reference
 

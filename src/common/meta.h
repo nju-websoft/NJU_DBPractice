@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_META_H
-#define WSDB_META_H
+#ifndef NJUDB_META_H
+#define NJUDB_META_H
 #include <string>
 #include <vector>
 #include <memory>
@@ -95,4 +95,4 @@ struct TableHeader
   size_t    nullmap_size_{0};  // null map size == BITMAP_SIZE(n_field)
 };
 
-#endif  // WSDB_META_H
+#endif  // NJUDB_META_H

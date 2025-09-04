@@ -313,7 +313,7 @@ auto leaf_node  = reinterpret_cast<const BPTreeLeafPage *>(PageContentPtr(leaf_g
 本题需要索引通过句柄和算子集成到执行器中。在确保`t1`通过测试后，删除`src/storage/index/index_bptree.cpp`第30行的宏定义`#define TEST_BPTREE`以开始实验`t2`。
 首先完成Index Handle，其最主要的任务就是根据索引的Key Schema从原始记录中提取key value，然后调用索引的插入，删除和更新。
 
-其次需要在实验2完成的插入和更新算子中加入索引的Uniqueness检查，即如果发现更新的记录违反了索引中无重复值的假设，需要抛出`WSDB_INDEX_FAIL`异常。
+其次需要在实验2完成的插入和更新算子中加入索引的Uniqueness检查，即如果发现更新的记录违反了索引中无重复值的假设，需要抛出`NJUDB_INDEX_FAIL`异常。
 
 最后，你需要实现`IdxScanExecutor`。
 在此之前你需要先了解查询优化器中索引选择的逻辑。
@@ -506,8 +506,8 @@ Hash索引使用哈希函数将索引键映射到固定数量的存储桶（buck
 
 需要完成的代码在`src/storage/index/index_hash.cpp`和`src/storage/index/index_hash.h`。
 
-#### WSDB中的Hash索引页面组织
-WSDB中的Hash索引采用三层页面结构来组织数据：
+#### NJUDB中的Hash索引页面组织
+NJUDB中的Hash索引采用三层页面结构来组织数据：
 
 1. 头部页面（Header Page）
 - **页面ID**: `FILE_HEADER_PAGE_ID` (通常为0)
@@ -538,7 +538,7 @@ WSDB中的Hash索引采用三层页面结构来组织数据：
 3. **溢出处理**: 当桶页面容量不足时，创建新的溢出页面并通过链表连接
 
 #### 哈希函数设计
-WSDB使用Record类内置的Hash()方法计算哈希值，然后对桶数量取模得到桶索引：
+NJUDB使用Record类内置的Hash()方法计算哈希值，然后对桶数量取模得到桶索引：
 ```cpp
 size_t bucket_index = key.Hash() % bucket_count_;
 ```
@@ -567,9 +567,9 @@ Hash索引的迭代器需要按桶的顺序遍历所有键值对，由于Hash索
 2. 功能分数（90%）：
     1. t1需要通过`test/storage/bptree_test.cpp`中的所有Gtest测试。
 
-    2. t2 需要<u>**顺序**</u>通过`wsdb/test/sql/lab04/basic`下的SQL测试并与`expected`输出比较，无差异获得该小题满分。
+    2. t2 需要<u>**顺序**</u>通过`njudb/test/sql/lab04/basic`下的SQL测试并与`expected`输出比较，无差异获得该小题满分。
 
-    3. f1需要通过`test/storage/hashindex_test.cpp`中的所有Gtest测试。<u>**顺序**</u>通过`wsdb/test/sql/lab04/bonus`下的SQL测试并与`expected`输出比较，无差异获得该小题满分。
+    3. f1需要通过`test/storage/hashindex_test.cpp`中的所有Gtest测试。<u>**顺序**</u>通过`njudb/test/sql/lab04/bonus`下的SQL测试并与`expected`输出比较，无差异获得该小题满分。
 
 **重要：请勿尝试抄袭代码或搬运他人实验结果，我们会严格审查，如被发现将取消大实验分数，情节严重可能会对课程总评产生影响!!!**
 
@@ -578,25 +578,25 @@ Hash索引的迭代器需要按桶的顺序遍历所有键值对，由于Hash索
 ```shell
 bash ./configure.sh --lab01-gold --lab02-gold --clean
 ```
-编译`wsdb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
+编译`njudb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
    
    ```shell
-   $ ./wsdb
+   $ ./njudb
    $ ./client
    ```
 
-   如果遇到`./wsdb`某个共享链接库的路径无法找到，可以在终端手动设置链接路径
+   如果遇到`./njudb`某个共享链接库的路径无法找到，可以在终端手动设置链接路径
    ```shell
-   cd /path/to/wsdb/build/bin && export LD_LIBRARY_PATH=/path/to/wsdb/lib-gold/linux/debug:/path/to/wsdb/build/lib:$LD_LIBRARY_PATH
+   cd /path/to/njudb/build/bin && export LD_LIBRARY_PATH=/path/to/njudb/lib-gold/linux/debug:/path/to/njudb/build/lib:$LD_LIBRARY_PATH
    ```
    
-   关于client的更多用法可参考参考[开始之前](./00basic.md)或使用-h参数查看。如果`wsdb`因为端口监听异常启动失败（通常原因是已经启用了一个wsdb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间wsdb释放资源后再重新启动。
+   关于client的更多用法可参考参考[开始之前](./00basic.md)或使用-h参数查看。如果`njudb`因为端口监听异常启动失败（通常原因是已经启用了一个njudb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间njudb释放资源后再重新启动。
 
-   * 提示：你可以cd到`wsdb/test/sql/`目录下通过脚本`evaluate.sh`进行测试。
+   * 提示：你可以cd到`njudb/test/sql/`目录下通过脚本`evaluate.sh`进行测试。
 
       ```bash
       $ bash evaluate.sh <build directory> <lab directory> <sql directory>
-      # e.g. bash evaluate.sh /path/to/wsdb/build lab03 bonus
+      # e.g. bash evaluate.sh /path/to/njudb/build lab03 bonus
       ```
 
 ### 提交材料
@@ -607,7 +607,7 @@ bash ./configure.sh --lab01-gold --lab02-gold --clean
       | -------- | ---- | ------------------------- | -------- |
    | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | t1/t2/f1/f2    |
 
-2. 代码：`wsdb/src`文件夹
+2. 代码：`njudb/src`文件夹
 
 *提交示例：请将以上两部分内容打包并命名为lab4\_学号\_姓名.zip（例如lab4_123456_张三.zip）并上传至提交平台，请确保解压后目录树如下：*
 

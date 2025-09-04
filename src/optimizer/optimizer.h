@@ -19,12 +19,12 @@
 // Created by ziqi on 2024/8/7.
 //
 
-#ifndef WSDB_OPTIMIZER_H
-#define WSDB_OPTIMIZER_H
+#ifndef NJUDB_OPTIMIZER_H
+#define NJUDB_OPTIMIZER_H
 #include "plan/plan.h"
 #include "system/handle/database_handle.h"
 
-namespace wsdb {
+namespace njudb {
 class Optimizer
 {
 public:
@@ -49,7 +49,7 @@ private:
   auto PhysicalOptimize(std::shared_ptr<AbstractPlan> plan, DatabaseHandle *db) -> std::shared_ptr<AbstractPlan>;
 
   auto PhysicalOptimizeScan(const std::shared_ptr<ScanPlan> &scan, ConditionVec &conds,
-      wsdb::DatabaseHandle *db) -> std::shared_ptr<AbstractPlan>;
+      njudb::DatabaseHandle *db) -> std::shared_ptr<AbstractPlan>;
 
   auto PhysicalOptimizeJoin(std::shared_ptr<JoinPlan> join, DatabaseHandle *db) -> std::shared_ptr<AbstractPlan>;
 
@@ -144,6 +144,6 @@ private:
    */
   auto OptimizeSortMergeJoin(std::shared_ptr<JoinPlan> join, DatabaseHandle *db) -> std::shared_ptr<AbstractPlan>;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_OPTIMIZER_H
+#endif  // NJUDB_OPTIMIZER_H

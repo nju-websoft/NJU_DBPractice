@@ -19,8 +19,8 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_ERROR_H
-#define WSDB_ERROR_H
+#ifndef NJUDB_ERROR_H
+#define NJUDB_ERROR_H
 
 #include <exception>
 #include <cassert>
@@ -31,97 +31,97 @@
 
 #include "fmt/format.h"
 
-/// usage example: throw WSDBException(WSDB_FILE_EXISTS, Q(Diskmanager), Q(CreateFile), file_name)
-/// output: Exception <Diskmanager::CreateFile>[WSDB_FILE_EXISTS]: file_name
+/// usage example: throw NJUDBException(NJUDB_FILE_EXISTS, Q(Diskmanager), Q(CreateFile), file_name)
+/// output: Exception <Diskmanager::CreateFile>[NJUDB_FILE_EXISTS]: file_name
 
-namespace wsdb {
+namespace njudb {
 
 /**
- * @brief error definitions for WSDB
- * @a WSDB_EXCEPTION_EMPTY: unreachable abstract class method, undetermined method, etc.
- * @a WSDB_FILE_EXISTS: file already exists, used for file creation check
- * @a WSDB_FILE_NOT_EXISTS: file not exists, used for file deletion check
- * @a WSDB_FILE_NOT_OPEN: file not open, disk manager needs to open file before read/write
- * @a WSDB_FILE_DELETE_ERROR: unix error when failing to unlink file
- * @a WSDB_FILE_REOPEN: file already opened, disk manager should not open file twice
- * @a WSDB_NOT_IMPLEMENTED: method not implemented, used for abstract class method
- * @a WSDB_NO_FREE_FRAME: buffer pool manager cannot find available frame to load page
- * @a WSDB_RECORD_EXISTS: record already exists, used for table manager for record insertion
- * @a WSDB_RECORD_MISS: record not exists, used for table manager for record deletion
- * @a WSDB_RECLEN_ERROR: record length error, used to check if the record length exceeds MAX_RECORD_SIZE
- * @a WSDB_PAGE_MISS: used for table manager to check if RID.page is valid
- * @a WSDB_FILE_READ_ERROR: unix error when failing to read file
- * @a WSDB_FILE_WRITE_ERROR: unix error when failing to write file
- * @a WSDB_INVALID_SQL: invalid SQL statement, syntax error
- * @a WSDB_TXN_ABORTED: transaction aborted, used for transaction manager
- * @a WSDB_DB_EXISTS: database already exists when attempting to create a new database
- * @a WSDB_DB_MISS: database not exists when attempting to open a database
- * @a WSDB_DB_NOT_OPEN: database not open, client should open a specific database before operations
- * @a WSDB_TABLE_MISS: table handler not exists
- * @a WSDB_TABLE_EXIST: table already exists when attempting to create a new table
- * @a WSDB_GRAMMAR_ERROR: SQL grammar error, check semantic error
- * @a WSDB_FIELD_MISS: field not exists in the schema
- * @a WSDB_STRING_OVERFLOW: string overflow, used for string size check
- * @a WSDB_TYPE_MISSMATCH: type mismatch in comparison
- * @a WSDB_UNSUPPORTED_OP: unsupported operation
- * @a WSDB_UNEXPECTED_NULL: unexpected null value after adequate check
- * @a WSDB_CLIENT_DOWN: client down, should close the client connection
+ * @brief error definitions for NJUDB
+ * @a NJUDB_EXCEPTION_EMPTY: unreachable abstract class method, undetermined method, etc.
+ * @a NJUDB_FILE_EXISTS: file already exists, used for file creation check
+ * @a NJUDB_FILE_NOT_EXISTS: file not exists, used for file deletion check
+ * @a NJUDB_FILE_NOT_OPEN: file not open, disk manager needs to open file before read/write
+ * @a NJUDB_FILE_DELETE_ERROR: unix error when failing to unlink file
+ * @a NJUDB_FILE_REOPEN: file already opened, disk manager should not open file twice
+ * @a NJUDB_NOT_IMPLEMENTED: method not implemented, used for abstract class method
+ * @a NJUDB_NO_FREE_FRAME: buffer pool manager cannot find available frame to load page
+ * @a NJUDB_RECORD_EXISTS: record already exists, used for table manager for record insertion
+ * @a NJUDB_RECORD_MISS: record not exists, used for table manager for record deletion
+ * @a NJUDB_RECLEN_ERROR: record length error, used to check if the record length exceeds MAX_RECORD_SIZE
+ * @a NJUDB_PAGE_MISS: used for table manager to check if RID.page is valid
+ * @a NJUDB_FILE_READ_ERROR: unix error when failing to read file
+ * @a NJUDB_FILE_WRITE_ERROR: unix error when failing to write file
+ * @a NJUDB_INVALID_SQL: invalid SQL statement, syntax error
+ * @a NJUDB_TXN_ABORTED: transaction aborted, used for transaction manager
+ * @a NJUDB_DB_EXISTS: database already exists when attempting to create a new database
+ * @a NJUDB_DB_MISS: database not exists when attempting to open a database
+ * @a NJUDB_DB_NOT_OPEN: database not open, client should open a specific database before operations
+ * @a NJUDB_TABLE_MISS: table handler not exists
+ * @a NJUDB_TABLE_EXIST: table already exists when attempting to create a new table
+ * @a NJUDB_GRAMMAR_ERROR: SQL grammar error, check semantic error
+ * @a NJUDB_FIELD_MISS: field not exists in the schema
+ * @a NJUDB_STRING_OVERFLOW: string overflow, used for string size check
+ * @a NJUDB_TYPE_MISSMATCH: type mismatch in comparison
+ * @a NJUDB_UNSUPPORTED_OP: unsupported operation
+ * @a NJUDB_UNEXPECTED_NULL: unexpected null value after adequate check
+ * @a NJUDB_CLIENT_DOWN: client down, should close the client connection
  */
 #define ENUM_ENTITIES          \
-  ENUM(WSDB_EXCEPTION_EMPTY)   \
-  ENUM(WSDB_FILE_EXISTS)       \
-  ENUM(WSDB_FILE_NOT_EXISTS)   \
-  ENUM(WSDB_FILE_NOT_OPEN)     \
-  ENUM(WSDB_FILE_DELETE_ERROR) \
-  ENUM(WSDB_FILE_REOPEN)       \
-  ENUM(WSDB_NOT_IMPLEMENTED)   \
-  ENUM(WSDB_NO_FREE_FRAME)     \
-  ENUM(WSDB_RECORD_EXISTS)     \
-  ENUM(WSDB_RECORD_MISS)       \
-  ENUM(WSDB_RECLEN_ERROR)      \
-  ENUM(WSDB_PAGE_MISS)         \
-  ENUM(WSDB_FILE_READ_ERROR)   \
-  ENUM(WSDB_FILE_WRITE_ERROR)  \
-  ENUM(WSDB_INVALID_SQL)       \
-  ENUM(WSDB_TXN_ABORTED)       \
-  ENUM(WSDB_DB_EXISTS)         \
-  ENUM(WSDB_DB_MISS)           \
-  ENUM(WSDB_DB_NOT_OPEN)       \
-  ENUM(WSDB_TABLE_MISS)        \
-  ENUM(WSDB_TABLE_EXIST)       \
-  ENUM(WSDB_INDEX_FAIL)        \
-  ENUM(WSDB_INDEX_EXISTS)      \
-  ENUM(WSDB_INDEX_MISS)        \
-  ENUM(WSDB_GRAMMAR_ERROR)     \
-  ENUM(WSDB_FIELD_MISS)        \
-  ENUM(WSDB_STRING_OVERFLOW)   \
-  ENUM(WSDB_TYPE_MISSMATCH)    \
-  ENUM(WSDB_UNSUPPORTED_OP)    \
-  ENUM(WSDB_UNEXPECTED_NULL)   \
-  ENUM(WSDB_CLIENT_DOWN)
+  ENUM(NJUDB_EXCEPTION_EMPTY)   \
+  ENUM(NJUDB_FILE_EXISTS)       \
+  ENUM(NJUDB_FILE_NOT_EXISTS)   \
+  ENUM(NJUDB_FILE_NOT_OPEN)     \
+  ENUM(NJUDB_FILE_DELETE_ERROR) \
+  ENUM(NJUDB_FILE_REOPEN)       \
+  ENUM(NJUDB_NOT_IMPLEMENTED)   \
+  ENUM(NJUDB_NO_FREE_FRAME)     \
+  ENUM(NJUDB_RECORD_EXISTS)     \
+  ENUM(NJUDB_RECORD_MISS)       \
+  ENUM(NJUDB_RECLEN_ERROR)      \
+  ENUM(NJUDB_PAGE_MISS)         \
+  ENUM(NJUDB_FILE_READ_ERROR)   \
+  ENUM(NJUDB_FILE_WRITE_ERROR)  \
+  ENUM(NJUDB_INVALID_SQL)       \
+  ENUM(NJUDB_TXN_ABORTED)       \
+  ENUM(NJUDB_DB_EXISTS)         \
+  ENUM(NJUDB_DB_MISS)           \
+  ENUM(NJUDB_DB_NOT_OPEN)       \
+  ENUM(NJUDB_TABLE_MISS)        \
+  ENUM(NJUDB_TABLE_EXIST)       \
+  ENUM(NJUDB_INDEX_FAIL)        \
+  ENUM(NJUDB_INDEX_EXISTS)      \
+  ENUM(NJUDB_INDEX_MISS)        \
+  ENUM(NJUDB_GRAMMAR_ERROR)     \
+  ENUM(NJUDB_FIELD_MISS)        \
+  ENUM(NJUDB_STRING_OVERFLOW)   \
+  ENUM(NJUDB_TYPE_MISSMATCH)    \
+  ENUM(NJUDB_UNSUPPORTED_OP)    \
+  ENUM(NJUDB_UNEXPECTED_NULL)   \
+  ENUM(NJUDB_CLIENT_DOWN)
 #define ENUM(ent) ENUMENTRY(ent)
-DECLARE_ENUM(WSDBExceptionType)
+DECLARE_ENUM(NJUDBExceptionType)
 #undef ENUM
 #define ENUM(ent) ENUM2STRING(ent)
-ENUM_TO_STRING_BODY(WSDBExceptionType)
+ENUM_TO_STRING_BODY(NJUDBExceptionType)
 #undef ENUM
 #undef ENUM_ENTITIES
 
 /// usage:
-/// throw WSDBException(WSDB_FILE_EXISTS, Q(Diskmanager), Q(CreateFile), file_name)
+/// throw NJUDBException(NJUDB_FILE_EXISTS, Q(Diskmanager), Q(CreateFile), file_name)
 
-class WSDBException_ : public std::exception
+class NJUDBException_ : public std::exception
 {
 public:
-  WSDBException_() = delete;
-  explicit WSDBException_(WSDBExceptionType type, std::string cname = {}, std::string fname = {}, std::string msg = {})
+  NJUDBException_() = delete;
+  explicit NJUDBException_(NJUDBExceptionType type, std::string cname = {}, std::string fname = {}, std::string msg = {})
       : type_(type), cname_(std::move(cname)), fname_(std::move(fname)), msg_(std::move(msg))
   {
     std::string info_str = msg_.empty() ? "" : ": " + msg_;
-    out_ = fmt::format("EXCEPTION <{}::{}>[{}]{}", cname_, fname_, WSDBExceptionTypeToString(type_), info_str);
+    out_ = fmt::format("EXCEPTION <{}::{}>[{}]{}", cname_, fname_, NJUDBExceptionTypeToString(type_), info_str);
   }
 
-  WSDBExceptionType type_;
+  NJUDBExceptionType type_;
   std::string       cname_;
   std::string       fname_;
   std::string       msg_;
@@ -133,21 +133,21 @@ public:
   [[nodiscard]] auto short_what() const -> std::string
   {
     std::string info_str = msg_.empty() ? "" : ": " + msg_;
-    return fmt::format("EXCEPTION [{}]{}", WSDBExceptionTypeToString(type_), info_str);
+    return fmt::format("EXCEPTION [{}]{}", NJUDBExceptionTypeToString(type_), info_str);
   }
 
 private:
 };
 
-#define WSDB_THROW(type, msg) throw wsdb::WSDBException_(type, fmt::format("{}({})", __FILE__, __LINE__), __func__, msg)
+#define NJUDB_THROW(type, msg) throw njudb::NJUDBException_(type, fmt::format("{}({})", __FILE__, __LINE__), __func__, msg)
 
-#define WSDB_FATAL(msg)                                                                                 \
+#define NJUDB_FATAL(msg)                                                                                 \
   do {                                                                                                  \
     std::cerr << fmt::format("Fetal <{}({})::{}>: {}", __FILE__, __LINE__, __func__, msg) << std::endl; \
     exit(1);                                                                                            \
   } while (0)
 
-#define WSDB_ASSERT(expr, msg)                                                                                        \
+#define NJUDB_ASSERT(expr, msg)                                                                                        \
   do {                                                                                                                \
     if (!(expr)) {                                                                                                    \
       std::cerr << fmt::format("Assert <{}({})::{}>[{}]: {}", __FILE__, __LINE__, __func__, #expr, msg) << std::endl; \
@@ -155,13 +155,13 @@ private:
     }                                                                                                                 \
   } while (0)
 
-#define WSDB_STUDENT_TODO(lab, q)                                                                          \
+#define NJUDB_STUDENT_TODO(lab, q)                                                                          \
   do {                                                                                                     \
     std::cerr << fmt::format("Student TODO [{}.{}]: <{}({})::{}>", #lab, #q, __FILE__, __LINE__, __func__) \
               << std::endl;                                                                                \
     exit(1);                                                                                               \
   } while (0)
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_ERROR_H
+#endif  // NJUDB_ERROR_H

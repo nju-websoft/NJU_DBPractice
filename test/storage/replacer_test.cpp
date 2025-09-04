@@ -34,7 +34,7 @@
 TEST(ReplacerTest, LRU)
 {
   std::vector<frame_id_t> frame_ids = {0, 1, 2, 3, 4, 5, 6, 7};
-  auto                    replacer  = wsdb::LRUReplacer();
+  auto                    replacer  = njudb::LRUReplacer();
   SUB_TEST(Basic)
   {
     for (auto frame_id : frame_ids) {
@@ -121,7 +121,7 @@ TEST(ReplacerTest, LRUK)
   int k = 3;
   // size of frame_ids should be greater than k and be equal to BUFFER_POOL_SIZE
   std::vector<frame_id_t> frame_ids = {0, 1, 2, 3, 4, 5, 6, 7};
-  auto                    replacer  = wsdb::LRUKReplacer(k);
+  auto                    replacer  = njudb::LRUKReplacer(k);
   SUB_TEST(Basic)
   {
     for (auto frame_id : frame_ids) {

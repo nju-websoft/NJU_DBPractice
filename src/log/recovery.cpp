@@ -21,7 +21,7 @@
 
 #include "recovery.h"
 
-namespace wsdb {
+namespace njudb {
 
 void Recovery::SetDBHandle(DatabaseHandle *db_hdl) { db_hdl_ = db_hdl; }
 
@@ -30,4 +30,4 @@ void Recovery::AnalyzeLog() {}
 void Recovery::Redo() {}
 
 void Recovery::Undo() {}
-}  // namespace wsdb
+}  // namespace njudb

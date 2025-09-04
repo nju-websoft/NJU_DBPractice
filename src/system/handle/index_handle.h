@@ -19,11 +19,11 @@
 // Created by ziqi on 2024/7/28.
 //
 
-#ifndef WSDB_INDEX_HANDLE_H
-#define WSDB_INDEX_HANDLE_H
+#ifndef NJUDB_INDEX_HANDLE_H
+#define NJUDB_INDEX_HANDLE_H
 #include "storage/index/index.h"
 
-namespace wsdb {
+namespace njudb {
 class IndexHandle
 {
 public:
@@ -111,6 +111,6 @@ private:
 
 DEFINE_UNIQUE_PTR(IndexHandle);
 
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_INDEX_HANDLE_H
+#endif  // NJUDB_INDEX_HANDLE_H

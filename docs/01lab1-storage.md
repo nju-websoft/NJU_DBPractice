@@ -2,7 +2,7 @@
 
 ## 引言
 
-数据库管理系统（RDBMS）从诞生开始只需要解决一个问题，就是如何有效地管理结构化数据从而避免重复造轮子。类比来说，一个数据库文件就好比一个Excel文件，但数据库能高效管理海量数据，其中关键优化点在于磁盘IO的优化。本次实验我们将深入WSDB的数据存储格式以及缓冲区管理器的实现。
+数据库管理系统（RDBMS）从诞生开始只需要解决一个问题，就是如何有效地管理结构化数据从而避免重复造轮子。类比来说，一个数据库文件就好比一个Excel文件，但数据库能高效管理海量数据，其中关键优化点在于磁盘IO的优化。本次实验我们将深入NJUDB的数据存储格式以及缓冲区管理器的实现。
 
 ## 磁盘管理器
 
@@ -33,7 +33,7 @@
 
 #### 记录句柄
 
-WSDB采用**定长数据**的组织形式，即在表创建时一条记录的长度就已经确定。定长记录的好处是一条记录的起始位置通过简单的偏移量计算就能获得，并且在插入删除时不会产生碎片化内存（*想想看为什么*），从而不需要额外线程清理碎片化空间。
+NJUDB采用**定长数据**的组织形式，即在表创建时一条记录的长度就已经确定。定长记录的好处是一条记录的起始位置通过简单的偏移量计算就能获得，并且在插入删除时不会产生碎片化内存（*想想看为什么*），从而不需要额外线程清理碎片化空间。
 
 对于变长记录，一条记录由记录头信息和记录数据组成。
 
@@ -43,7 +43,7 @@ WSDB采用**定长数据**的组织形式，即在表创建时一条记录的长
 
 记录句柄（Record Handle）是对一条记录的抽象，包括记录模式（Record Schema）、记录头、以及实际数据，负责管理记录数据的解析和中间结果的计算。`slot id`为当前槽的id，用于定位记录在本页面的位置；`prev_rec_off`，`next_rec_off`分别为前一条和后一条记录起始位置相对本记录起始位置的偏移，`record_lenth`为`record data`部分的长度；`nullmap`指示该记录中的哪些列为空。对于定长数据，上述页面组织形式已经能够满足数据存储和搜索的需求，对于变长数据，其页面组织形式与定长数据略有不同，会从页尾存放第一条记录，感兴趣的同学可以自行搜索了解。
 
-WSDB中一条记录也有记录头信息，但由于采取定长记录组织形式，因此上图的字段中只保留了`nullmap`字段。
+NJUDB中一条记录也有记录头信息，但由于采取定长记录组织形式，因此上图的字段中只保留了`nullmap`字段。
 
 ##### 表句柄
 
@@ -60,13 +60,13 @@ WSDB中一条记录也有记录头信息，但由于采取定长记录组织形�
 
 ## 实验要求
 
-本次实验需要同学们完成缓冲区管理器和表句柄的相关内容并通过相关单元测试。假设仓库目录名为`wsdb`，服务器代码文件均在`wsdb/src/`目录下。你只需要修改或添加`src`文件夹下的文件，如果遇到不在`WSDB_ERRORS`（`wsdb/common/errors.h`）列表中的未知异常，请使用`WSDB_EXCEPTION_EMPTY`，并在报告中写下你遇到的特殊情况。请完成所有标注`WSDB_STUDENT_TODO`宏的函数，并在完成后将宏删除。
+本次实验需要同学们完成缓冲区管理器和表句柄的相关内容并通过相关单元测试。假设仓库目录名为`njudb`，服务器代码文件均在`njudb/src/`目录下。你只需要修改或添加`src`文件夹下的文件，如果遇到不在`NJUDB_ERRORS`（`njudb/common/errors.h`）列表中的未知异常，请使用`NJUDB_EXCEPTION_EMPTY`，并在报告中写下你遇到的特殊情况。请完成所有标注`NJUDB_STUDENT_TODO`宏的函数，并在完成后将宏删除。
 
 ### t1. LRU (20 pts)
 
 LRU（Least Recently Used）是最经典也是实现相对简单的淘汰策略，具体来说，当缓冲区满时，算法会淘汰最近最少被访问的页面，以便为新的页面腾出空间。
 
-在WSDB中，页面替换策略位于`storage/buffer/replacer`文件夹下，继承自同一基类`Replacer`。
+在NJUDB中，页面替换策略位于`storage/buffer/replacer`文件夹下，继承自同一基类`Replacer`。
 
 `Replacer`需要支持如下接口：
 
@@ -155,7 +155,7 @@ virtual auto Size() -> size_t = 0;
 
 下面是你需要完成的函数，位于文件`storage/buffer/buffer_pool_manager.cpp`中：
 
-* `BufferPoolManager::BufferPoolManager(DiskManager *disk_manager, wsdb::LogManager *log_manager, size_t replacer_lru_k);`
+* `BufferPoolManager::BufferPoolManager(DiskManager *disk_manager, njudb::LogManager *log_manager, size_t replacer_lru_k);`
   补充类构造函数，对成员变量进行必要的初始化。
 
 * `auto BufferPoolManager::FetchPage(file_id_t fid, page_id_t pid) -> Page *;`
@@ -176,7 +176,7 @@ virtual auto Size() -> size_t = 0;
   将缓冲区中指定文件的所有页面写回磁盘。
 
 - `auto BufferPoolManager::GetAvailableFrame() -> frame_id_t;`
-  获取一个缓冲区中的空闲数据页面。如果没有空闲页面，执行页面替换策略，替换失败需要抛出`WSDB_NO_FREE_FRAME`异常。
+  获取一个缓冲区中的空闲数据页面。如果没有空闲页面，执行页面替换策略，替换失败需要抛出`NJUDB_NO_FREE_FRAME`异常。
 
 - `void BufferPoolManager::UpdateFrame(frame_id_t frame_id, file_id_t fid, page_id_t pid);`
   更新缓冲区中指定的页面。
@@ -252,9 +252,9 @@ $d_3^1 = 13 - 4 = 9$，$d_3^2 = 13 - 2 = 11$，$d_4^2 = +inf$。LRU K算法选�
 
 ### 附加实验 f2: PAX Page Handle (5 pts)
 
-请确保已经了解并掌握了WSDB中页面的组织形式，以更好上手本实验的内容
+请确保已经了解并掌握了NJUDB中页面的组织形式，以更好上手本实验的内容
 
-PAX存储格式是一种行列混存的格式，其优势在于能够快速访问和抽取一页中的部分列数据。在OLAP任务中，列式存储利于数据分析算子进行有效的聚合运算和向量化加速。而PAX存储相比列室存储既能快速取出某一记录，也能做到读取整列数据。在WSDB中，PAX页面格式如下（与NAry模式存储的主要区别在slot memory部分）：
+PAX存储格式是一种行列混存的格式，其优势在于能够快速访问和抽取一页中的部分列数据。在OLAP任务中，列式存储利于数据分析算子进行有效的聚合运算和向量化加速。而PAX存储相比列室存储既能快速取出某一记录，也能做到读取整列数据。在NJUDB中，PAX页面格式如下（与NAry模式存储的主要区别在slot memory部分）：
 
 ```
 |<-------------------- Page Header ------------------->|
@@ -278,12 +278,12 @@ PAX Page Handle支持整列的读取（ReadChunk），给定一个记录模式�
 ### 评分标准
 
 1. 实验报告（10%）：实现思路，优化技巧，实验结果，对框架代码和实验的建议，以及在报告中出现的思考等，请尽量避免直接粘贴代码，建议2-4页。
-2. 功能分数（90%）：需要通过`wsdb/test`目录下的单元测试，请将测试结果写在实验报告中。
-   * t1：你需要通过`wsdb/test/storage/replacer_test.cpp`中的LRU测试以获得本题目的功能分数。
-   * t2：你需要通过`wsdb/test/storage/buffer_pool_manager_test.cpp`中的测试以获得本题目的功能分数。
-   * t3：你需要通过`wsdb/test/system/table_handle_test.cpp`中Simple和MultiThread测试来获得本题目的功能分数。
-   * f1：你需要通过`wsdb/test/storage/replacer_test.cpp`中的LRUK测试以获得该题目的功能分数。
-   * f2：你需要通过`wsdb/test/system/table_handle_test.cpp`中的PAX_MultiThread测试以获得本实验的功能分数。
+2. 功能分数（90%）：需要通过`njudb/test`目录下的单元测试，请将测试结果写在实验报告中。
+   * t1：你需要通过`njudb/test/storage/replacer_test.cpp`中的LRU测试以获得本题目的功能分数。
+   * t2：你需要通过`njudb/test/storage/buffer_pool_manager_test.cpp`中的测试以获得本题目的功能分数。
+   * t3：你需要通过`njudb/test/system/table_handle_test.cpp`中Simple和MultiThread测试来获得本题目的功能分数。
+   * f1：你需要通过`njudb/test/storage/replacer_test.cpp`中的LRUK测试以获得该题目的功能分数。
+   * f2：你需要通过`njudb/test/system/table_handle_test.cpp`中的PAX_MultiThread测试以获得本实验的功能分数。
 
 **重要：请勿尝试抄袭代码或搬运他人实验结果，我们会严格审查，如被发现将取消大实验分数，情节严重可能会对课程总评产生影响!!!**
 
@@ -295,7 +295,7 @@ PAX Page Handle支持整列的读取（ReadChunk），给定一个记录模式�
    | -------- | ---- | ------------------------- | ----------- |
    | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | 1/2/3/f1/f2 |
 
-2. 代码：`wsdb/src`文件夹
+2. 代码：`njudb/src`文件夹
 
 *提交示例：请将以上两部分内容打包并命名为lab1\_学号\_姓名.zip（例如lab1_123456_张三.zip）并上传至提交平台，请确保解压后目录树如下：*
 

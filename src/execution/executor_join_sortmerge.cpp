@@ -21,7 +21,7 @@
 
 #include "executor_join_sortmerge.h"
 
-namespace wsdb {
+namespace njudb {
 SortMergeJoinExecutor::SortMergeJoinExecutor(JoinType join_type, AbstractExecutorUptr left, AbstractExecutorUptr right,
     RecordSchemaUptr left_key_schema, RecordSchemaUptr right_key_schema, CompOp join_op)
     // condition vec is not used in sort merge join, it has been converted to key schemas
@@ -31,17 +31,17 @@ SortMergeJoinExecutor::SortMergeJoinExecutor(JoinType join_type, AbstractExecuto
       join_op_(join_op)
 {}
 
-void SortMergeJoinExecutor::InitInnerJoin() { WSDB_STUDENT_TODO(l3, f2); }
+void SortMergeJoinExecutor::InitInnerJoin() { NJUDB_STUDENT_TODO(l3, f2); }
 
-void SortMergeJoinExecutor::NextInnerJoin() { WSDB_STUDENT_TODO(l3, f2); }
+void SortMergeJoinExecutor::NextInnerJoin() { NJUDB_STUDENT_TODO(l3, f2); }
 
-auto SortMergeJoinExecutor::IsEndInnerJoin() const -> bool { WSDB_STUDENT_TODO(l3, f2); }
+auto SortMergeJoinExecutor::IsEndInnerJoin() const -> bool { NJUDB_STUDENT_TODO(l3, f2); }
 
-void SortMergeJoinExecutor::InitOuterJoin() { WSDB_STUDENT_TODO(l3, f2); }
+void SortMergeJoinExecutor::InitOuterJoin() { NJUDB_STUDENT_TODO(l3, f2); }
 
-void SortMergeJoinExecutor::NextOuterJoin() { WSDB_STUDENT_TODO(l3, f2); }
+void SortMergeJoinExecutor::NextOuterJoin() { NJUDB_STUDENT_TODO(l3, f2); }
 
-auto SortMergeJoinExecutor::IsEndOuterJoin() const -> bool { WSDB_STUDENT_TODO(l3, f2); }
+auto SortMergeJoinExecutor::IsEndOuterJoin() const -> bool { NJUDB_STUDENT_TODO(l3, f2); }
 
 
-}  // namespace wsdb
+}  // namespace njudb

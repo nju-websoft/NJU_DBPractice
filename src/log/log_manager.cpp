@@ -20,10 +20,10 @@
 //
 
 #include "log_manager.h"
-namespace wsdb {
+namespace njudb {
 
 LogManager::LogManager(DiskManager *disk_manager) {}
 
 void LogManager::FlushLog() {}
 
-}  // namespace wsdb
+}  // namespace njudb

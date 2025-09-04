@@ -1,4 +1,4 @@
-# WSDB: A Toy RDBMS for NJU "Introduction to Databases" Course
+# NJUDB: A Toy RDBMS for NJU "Introduction to Databases" Course
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)    [![Github Star](https://img.shields.io/github/stars/nju-websoft/NJU_DBPractice.svg)](https://github.com/nju-websoft/NJU_DBPractice)
 
@@ -23,7 +23,7 @@ The project is mostly inspired by [Rucbase](https://github.com/ruc-deke/rucbase-
 
 ## Lab Configuration System
 
-WSDB features a flexible configuration system that allows you to choose between compiling labs from source or using pre-compiled gold-standard libraries for each lab individually.
+NJUDB features a flexible configuration system that allows you to choose between compiling labs from source or using pre-compiled gold-standard libraries for each lab individually.
 
 ### Quick Start
 
@@ -47,7 +47,7 @@ Other document references: [TiDB](https://docs.pingcap.com/), [Oracle](https://d
 
 ## System requirements
 
-We only tested WSDB on MacOS 14.5 and Ubuntu 20.04, but if it also works on other systems, please let us know by issuing
+We only tested NJUDB on MacOS 14.5 and Ubuntu 20.04, but if it also works on other systems, please let us know by issuing
 or pulling requests.
 
 ## How to build

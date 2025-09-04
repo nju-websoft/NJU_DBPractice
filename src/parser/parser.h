@@ -19,13 +19,13 @@
 // Created by ziqi on 2024/8/25.
 //
 
-#ifndef WSDB_PARSER_H
-#define WSDB_PARSER_H
+#ifndef NJUDB_PARSER_H
+#define NJUDB_PARSER_H
 
 #include "ast.h"
 #include "../common/micro.h"
 
-namespace wsdb {
+namespace njudb {
 class Parser
 {
 public:
@@ -35,6 +35,6 @@ public:
 
   [[nodiscard]] auto Parse(const std::string &sql) -> std::shared_ptr<ast::TreeNode>;
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_PARSER_H
+#endif  // NJUDB_PARSER_H

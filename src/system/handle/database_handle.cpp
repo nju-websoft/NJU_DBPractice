@@ -21,7 +21,7 @@
 
 #include "database_handle.h"
 
-namespace wsdb {
+namespace njudb {
 DatabaseHandle::DatabaseHandle(
     std::string db_name, DiskManager *disk_manager, TableManager *tbl_mgr, IndexManager *idx_mgr)
     : ref_cnt_(0), db_name_(std::move(db_name)), disk_manager_(disk_manager), tbl_mgr_(tbl_mgr), idx_mgr_(idx_mgr)
@@ -108,7 +108,7 @@ void DatabaseHandle::Close()
   // close all tables and indexes in the database
   // close tables
   for (auto &table : tables_) {
-    WSDB_LOG("close table");
+    NJUDB_LOG("close table");
     tbl_mgr_->CloseTable(db_name_, *table.second);
   }
   // close indexes
@@ -152,9 +152,9 @@ void DatabaseHandle::FlushMeta()
   disk_manager_->WriteFile(db_fd, reinterpret_cast<const char *>(&index_num), sizeof(size_t), SEEK_CUR);
   for (auto &index : indexes_) {
     // write table name length
-    WSDB_ASSERT(tab_idx_map_.find(index.second->GetTableId()) != tab_idx_map_.end(),
+    NJUDB_ASSERT(tab_idx_map_.find(index.second->GetTableId()) != tab_idx_map_.end(),
         fmt::format("Index {} does not belong to any table", index.second->GetIndexName()));
-    WSDB_ASSERT(tables_.find(index.second->GetTableId()) != tables_.end(),
+    NJUDB_ASSERT(tables_.find(index.second->GetTableId()) != tables_.end(),
         fmt::format("Table {} does not exist for index {}", index.second->GetTableId(), index.second->GetIndexName()));
     auto   table_name     = tables_[index.second->GetTableId()]->GetTableName();
     size_t table_name_len = table_name.size();
@@ -209,10 +209,10 @@ void DatabaseHandle::CreateIndex(
   auto idx_hdl = idx_mgr_->OpenIndex(db_name_, idx_name, tab_name, idx_type);
   // now insert records of the table into the index
   auto table = tables_[table_id].get();
-  WSDB_ASSERT(table != nullptr, fmt::format("Table {} does not exist", tab_name));
-  WSDB_ASSERT(table->GetTableId() == table_id,
+  NJUDB_ASSERT(table != nullptr, fmt::format("Table {} does not exist", tab_name));
+  NJUDB_ASSERT(table->GetTableId() == table_id,
       fmt::format("Table ID mismatch: expected {}, got {}", table_id, table->GetTableId()));
-  WSDB_ASSERT(table->GetTableName() == tab_name,
+  NJUDB_ASSERT(table->GetTableName() == tab_name,
       fmt::format("Table name mismatch: expected {}, got {}", tab_name, table->GetTableName()));
   // insert all records into the index
   auto tab_hdl = tables_[table_id].get();
@@ -221,13 +221,13 @@ void DatabaseHandle::CreateIndex(
       auto rec = tab_hdl->GetRecord(rid);
       idx_hdl->InsertRecord(*rec);
     }
-    // catch WSDB_INDEX_FAIL
-  } catch (const WSDBException_ &e) {
-    if (e.type_ == WSDB_INDEX_FAIL) {
+    // catch NJUDB_INDEX_FAIL
+  } catch (const NJUDBException_ &e) {
+    if (e.type_ == NJUDB_INDEX_FAIL) {
       // Handle index failure (e.g., log it, clean up, etc.) close the index file and remove it
       idx_mgr_->CloseIndex(*idx_hdl);
       idx_mgr_->DropIndex(db_name_, idx_name, tab_name);
-      WSDB_THROW(WSDB_INDEX_FAIL,
+      NJUDB_THROW(NJUDB_INDEX_FAIL,
           fmt::format("Failed to create index {} on table {}: {}", idx_name, tab_name, e.short_what()));
     } else {
       throw;
@@ -244,15 +244,15 @@ void DatabaseHandle::DropIndex(const std::string &idx_name, const std::string &t
 {
   auto table_id = tbl_mgr_->GetTableId(db_name_, tab_name);
   if (table_id == INVALID_TABLE_ID) {
-    WSDB_THROW(WSDB_TABLE_MISS, fmt::format("Table {} does not exist", tab_name));
+    NJUDB_THROW(NJUDB_TABLE_MISS, fmt::format("Table {} does not exist", tab_name));
   }
   auto idx_id = idx_mgr_->GetIndexId(db_name_, idx_name, tab_name);
   if (idx_id == INVALID_IDX_ID) {
-    WSDB_THROW(WSDB_INDEX_MISS, fmt::format("Index {} does not exist on table {}", idx_name, tab_name));
+    NJUDB_THROW(NJUDB_INDEX_MISS, fmt::format("Index {} does not exist on table {}", idx_name, tab_name));
   }
   auto index = indexes_[idx_id].get();
-  WSDB_ASSERT(index->GetTableId() == table_id, fmt::format("Index {} does not belong to table {}", idx_name, tab_name));
-  WSDB_ASSERT(index->GetIndexName() == idx_name,
+  NJUDB_ASSERT(index->GetTableId() == table_id, fmt::format("Index {} does not belong to table {}", idx_name, tab_name));
+  NJUDB_ASSERT(index->GetIndexName() == idx_name,
       fmt::format("Index name mismatch: expected {}, got {}", idx_name, index->GetIndexName()));
   idx_mgr_->CloseIndex(*index);
   idx_mgr_->DropIndex(db_name_, idx_name, tab_name);
@@ -272,25 +272,25 @@ auto DatabaseHandle::GetTable(const std::string &tab_name) -> TableHandle *
 
 auto DatabaseHandle::GetTable(table_id_t tid) -> TableHandle *
 {
-  WSDB_ASSERT(tid != INVALID_TABLE_ID, std::to_string(tid));
+  NJUDB_ASSERT(tid != INVALID_TABLE_ID, std::to_string(tid));
   return tables_[tid].get();
 }
 
 auto DatabaseHandle::GetIndexNum(table_id_t tid) -> size_t
 {
-  WSDB_ASSERT(tid != INVALID_TABLE_ID, std::to_string(tid));
+  NJUDB_ASSERT(tid != INVALID_TABLE_ID, std::to_string(tid));
   return tab_idx_map_[tid].size();
 }
 
 auto DatabaseHandle::GetIndex(idx_id_t iid) -> IndexHandle *
 {
-  WSDB_ASSERT(indexes_.find(iid) != indexes_.end(), std::to_string(iid));
+  NJUDB_ASSERT(indexes_.find(iid) != indexes_.end(), std::to_string(iid));
   return indexes_[iid].get();
 }
 
 auto DatabaseHandle::GetIndexes(table_id_t tid) -> std::list<IndexHandle *>
 {
-  WSDB_ASSERT(tid != INVALID_TABLE_ID, std::to_string(tid));
+  NJUDB_ASSERT(tid != INVALID_TABLE_ID, std::to_string(tid));
   std::list<IndexHandle *> indexes;
   for (auto &idx_id : tab_idx_map_[tid]) {
     indexes.push_back(indexes_[idx_id].get());
@@ -306,4 +306,4 @@ auto DatabaseHandle::GetIndexes(const std::string &tab_name) -> std::list<IndexH
   return GetIndexes(tid);
 }
 
-}  // namespace wsdb
+}  // namespace njudb

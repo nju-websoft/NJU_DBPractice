@@ -20,7 +20,7 @@ void yyerror(YYLTYPE *locp, const char* s) {
     std::cerr << "Parser Error at line " << locp->first_line << " column " << locp->first_column << ": " << s << std::endl;
 }
 
-using namespace wsdb;
+using namespace njudb;
 using namespace ast;
 %}
 
@@ -74,28 +74,28 @@ WHERE HAVING UPDATE SET SELECT INT CHAR FLOAT BOOL INDEX AND JOIN INNER OUTER EX
 start:
         stmt ';'
     {
-        wsdb_ast_ = $1;
+        njudb_ast_ = $1;
         YYACCEPT;
     }
     |
         EXPLAIN stmt ';'
     {
-        wsdb_ast_ = std::make_shared<Explain>($2);
+        njudb_ast_ = std::make_shared<Explain>($2);
         YYACCEPT;
     }
     |   HELP
     {
-        wsdb_ast_ = std::make_shared<Help>();
+        njudb_ast_ = std::make_shared<Help>();
         YYACCEPT;
     }
     |   EXIT
     {
-        wsdb_ast_ = nullptr;
+        njudb_ast_ = nullptr;
         YYACCEPT;
     }
     |   T_EOF
     {
-        wsdb_ast_ = nullptr;
+        njudb_ast_ = nullptr;
         YYACCEPT;
     }
     ;

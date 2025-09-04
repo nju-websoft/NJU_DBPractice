@@ -19,13 +19,13 @@
 // Created by ziqi on 2024/7/18.
 //
 
-#ifndef WSDB_RECOVERY_H
-#define WSDB_RECOVERY_H
+#ifndef NJUDB_RECOVERY_H
+#define NJUDB_RECOVERY_H
 
 #include "storage/storage.h"
 #include "system/handle/database_handle.h"
 
-namespace wsdb {
+namespace njudb {
 class Recovery
 {
 
@@ -47,6 +47,6 @@ private:
   BufferPoolManager *buffer_pool_manager_;
   DatabaseHandle    *db_hdl_{nullptr};
 };
-}  // namespace wsdb
+}  // namespace njudb
 
-#endif  // WSDB_RECOVERY_H
+#endif  // NJUDB_RECOVERY_H

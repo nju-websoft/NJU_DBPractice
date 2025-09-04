@@ -47,12 +47,12 @@ Other document references: [TiDB](https://docs.pingcap.com/), [Oracle](https://d
 
 ## System requirements
 
-We only tested NJUDB on MacOS 14.5 and Ubuntu 20.04, but if it also works on other systems, please let us know by issuing
+We only tested NJUDB on MacOS and Ubuntu, but if it also works on other systems, please let us know by issuing
 or pulling requests.
 
 ## How to build
 
-First clone the repository from github. // TODO: change repository name for public repo
+First clone the repository from github.
 
 ```shell
 $ git clone --recursive https://github.com/nju-websoft/NJU_DBPractice

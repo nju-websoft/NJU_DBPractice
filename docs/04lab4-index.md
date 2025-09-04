@@ -574,11 +574,11 @@ Hash索引的迭代器需要按桶的顺序遍历所有键值对，由于Hash索
 **重要：请勿尝试抄袭代码或搬运他人实验结果，我们会严格审查，如被发现将取消大实验分数，情节严重可能会对课程总评产生影响!!!**
 
 3. 测试方法：
-如果未完成lab01、lab02，请使用提供的gold-library
+本次实验基于lab01和lab02，如果未完成如上实验，请使用提供的gold-library。配置方法：cmake时请在项目根目录下执行以下命令：
 ```shell
 bash ./configure.sh --lab01-gold --lab02-gold --clean
 ```
-编译`njudb`，`client`，`cd`到可执行文件目录下并启动两个终端分别执行：
+编译`njudb`，`client`（`cd build && make -j`），`cd`到可执行文件目录下并启动两个终端分别执行：
    
    ```shell
    $ ./njudb
@@ -598,7 +598,31 @@ bash ./configure.sh --lab01-gold --lab02-gold --clean
       $ bash evaluate.sh <build directory> <lab directory> <sql directory>
       # e.g. bash evaluate.sh /path/to/njudb/build lab03 bonus
       ```
+  * 在执行02_select.sql文件时可能会遇到打印的索引信息KeySchema部分的索引id与所给期望输出不同，属于正常情况，不算错误。
+  例如下面两个输出是在两个不同机器上执行同一个索引构建指令，在KeySchema部分第一个索引id为6，第二个为7，两种都算对。其他id也可以，但需保证除此以外的其他输出与预期输出一致。
 
+  ```sql
+  +--------------+--------------+--------------+--------------+--------------+
+| Database     | Table        | Index        | IndexType    | KeySchema    | 
++--------------+--------------+--------------+--------------+--------------+
+| db2025       | stock        | stock_swid_i | BPTREE       | #6.s_w_id:TY | 
+|              |              | dx           |              | PE_INT(4), # | 
+|              |              |              |              | 6.s_i_id:TYP | 
+|              |              |              |              | E_INT(4)     | 
++--------------+--------------+--------------+--------------+--------------+
+Total tuple(s): 1
+
+
+  +--------------+--------------+--------------+--------------+--------------+
+| Database     | Table        | Index        | IndexType    | KeySchema    | 
++--------------+--------------+--------------+--------------+--------------+
+| db2025       | stock        | stock_swid_i | BPTREE       | #7.s_w_id:TY | 
+|              |              | dx           |              | PE_INT(4), # | 
+|              |              |              |              | 7.s_i_id:TYP | 
+|              |              |              |              | E_INT(4)     | 
++--------------+--------------+--------------+--------------+--------------+
+Total tuple(s): 1
+  ```
 ### 提交材料
 
 1. 实验报告（提交一份PDF，命名格式：lab4\_学号\_姓名.pdf）：请在报告开头写上相关信息。

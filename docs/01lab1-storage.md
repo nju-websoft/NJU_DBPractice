@@ -224,7 +224,7 @@ virtual auto Size() -> size_t = 0;
 具体实现步骤和辅助函数请参考`system/handle/table_handle.cpp`和`system/handle/table_handle.h`，建议在开始实现前阅读以下文件：
 
 * `system/handle/page_handle.h`
-* `system/handle/record_handle.h`
+* `common/record.h`
 * `common/bitmap.h`
 * `common/meta.h`
 

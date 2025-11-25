@@ -243,7 +243,8 @@ TEST(ReplacerTest, LRUK)
     ASSERT_EQ(replacer.Size(), 0);
   }
 
-  SUB_TEST(MyInfTest){
+  SUB_TEST(RandomlyAccessInf){
+    auto custom_replacer = njudb::LRUKReplacer(2, 1024);
     std::unordered_set<frame_id_t> pinned;
     std::vector<frame_id_t> pinned_list;
     int cnt=0;
@@ -257,24 +258,25 @@ TEST(ReplacerTest, LRUK)
       else continue;
       if(cnt>8){
         frame_id_t fid;
-        replacer.Victim(&fid);
+        custom_replacer.Victim(&fid);
         ASSERT_EQ(fid, pinned_list[cnt-9]);
       }
-      replacer.Pin(x);
-      replacer.Pin(x);
-      replacer.Unpin(x);
+      custom_replacer.Pin(x);
+      custom_replacer.Pin(x);
+      custom_replacer.Unpin(x);
     }
 
-    ASSERT_EQ(replacer.Size(), 8);
+    ASSERT_EQ(custom_replacer.Size(), 8);
 
     for (int i=0;i<8;i++){
       frame_id_t fid;
-      replacer.Victim(&fid);
+      custom_replacer.Victim(&fid);
       ASSERT_EQ(fid, pinned_list[pinned_list.size()-8+i]);
     }
 
-    ASSERT_EQ(replacer.Size(), 0);
+    ASSERT_EQ(custom_replacer.Size(), 0);
   }
+
 }
 
 int main(int argc, char **argv)

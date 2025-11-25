@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include <algorithm>
 #include "types.h"
 #include "../../common/error.h"
 #include "../../common/micro.h"

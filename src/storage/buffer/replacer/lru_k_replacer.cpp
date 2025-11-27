@@ -20,11 +20,12 @@
 //
 
 #include "lru_k_replacer.h"
+#include "common/config.h"
 #include "../common/error.h"
 
 namespace njudb {
 
-LRUKReplacer::LRUKReplacer(size_t k, size_t max_size) : max_size_(max_size), k_(k) {}
+LRUKReplacer::LRUKReplacer(size_t k) : max_size_(BUFFER_POOL_SIZE), k_(k) {}
 
 auto LRUKReplacer::Victim(frame_id_t *frame_id) -> bool { NJUDB_STUDENT_TODO(l1, f1); }
 

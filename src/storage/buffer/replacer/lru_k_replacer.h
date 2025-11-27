@@ -26,14 +26,13 @@
 #include <unordered_map>
 #include "replacer.h"
 #include "../common/error.h"
-#include "common/config.h"
 
 namespace njudb {
 
 class LRUKReplacer : public Replacer
 {
 public:
-  explicit LRUKReplacer(size_t k, size_t max_size = BUFFER_POOL_SIZE);
+  explicit LRUKReplacer(size_t k);
 
   ~LRUKReplacer() override = default;
 

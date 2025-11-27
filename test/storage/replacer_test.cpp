@@ -243,39 +243,40 @@ TEST(ReplacerTest, LRUK)
     ASSERT_EQ(replacer.Size(), 0);
   }
 
-  SUB_TEST(RandomlyAccessInf){
-    auto custom_replacer = njudb::LRUKReplacer(2, 1024);
-    std::unordered_set<frame_id_t> pinned;
-    std::vector<frame_id_t> pinned_list;
-    int cnt=0;
-    for (int i=1000;i>=0;i--) {
-      int x = rand()%1024;
-      if (pinned.find(x)==pinned.end()) {
-        pinned.insert(x);
-        pinned_list.push_back(x);
-        cnt++;
-      }
-      else continue;
-      if(cnt>8){
-        frame_id_t fid;
-        custom_replacer.Victim(&fid);
-        ASSERT_EQ(fid, pinned_list[cnt-9]);
-      }
-      custom_replacer.Pin(x);
-      custom_replacer.Pin(x);
-      custom_replacer.Unpin(x);
-    }
+  /// will be released in the next semester
+  // SUB_TEST(RandomlyAccessInf){
+  //   auto custom_replacer = njudb::LRUKReplacer(3, 1024);
+  //   std::unordered_set<frame_id_t> pinned;
+  //   std::vector<frame_id_t> pinned_list;
+  //   int cnt=0;
+  //   for (int i=1000;i>=0;i--) {
+  //     int x = rand()%1024;
+  //     if (pinned.find(x)==pinned.end()) {
+  //       pinned.insert(x);
+  //       pinned_list.push_back(x);
+  //       cnt++;
+  //     }
+  //     else continue;
+  //     if(cnt>8){
+  //       frame_id_t fid;
+  //       custom_replacer.Victim(&fid);
+  //       ASSERT_EQ(fid, pinned_list[cnt-9]);
+  //     }
+  //     custom_replacer.Pin(x);
+  //     custom_replacer.Pin(x);
+  //     custom_replacer.Unpin(x);
+  //   }
 
-    ASSERT_EQ(custom_replacer.Size(), 8);
+  //   ASSERT_EQ(custom_replacer.Size(), 8);
 
-    for (int i=0;i<8;i++){
-      frame_id_t fid;
-      custom_replacer.Victim(&fid);
-      ASSERT_EQ(fid, pinned_list[pinned_list.size()-8+i]);
-    }
+  //   for (int i=0;i<8;i++){
+  //     frame_id_t fid;
+  //     custom_replacer.Victim(&fid);
+  //     ASSERT_EQ(fid, pinned_list[pinned_list.size()-8+i]);
+  //   }
 
-    ASSERT_EQ(custom_replacer.Size(), 0);
-  }
+  //   ASSERT_EQ(custom_replacer.Size(), 0);
+  // }
 
 }
 

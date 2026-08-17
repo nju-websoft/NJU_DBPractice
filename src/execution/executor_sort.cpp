@@ -36,7 +36,7 @@ SortExecutor::SortExecutor(AbstractExecutorUptr child, RecordSchemaUptr key_sche
       is_merge_sort_(false),
       max_rec_num_(SORT_BUFFER_SIZE / child_->GetOutSchema()->GetRecordLength()),
       tmp_file_num_(0),
-      merge_result_file_(fmt::format("sort_result_{}", sort_result_fresh_id_++))
+      merge_result_file_(fmt::format("sort_result_{}_{}", getpid(), sort_result_fresh_id_++))
 {
   // For debugging, you can uncomment this line for more frequent sort and merge
   //  max_rec_num_ = 10;

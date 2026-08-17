@@ -19,11 +19,6 @@
 // Created by ziqi on 2024/8/4.
 //
 
-/**
- * @brief Make a nested loop join between two tables, for outer join, the left table is the outer table
- * 
- */
-
 #ifndef NJUDB_EXECUTOR_JOIN_NESTEDLOOP_H
 #define NJUDB_EXECUTOR_JOIN_NESTEDLOOP_H
 

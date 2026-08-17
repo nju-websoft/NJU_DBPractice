@@ -44,6 +44,11 @@ public:
 
   void CloseTable(const std::string &db_name, const TableHandle &table_handle);
 
+  auto FlushTable(const TableHandle &table_handle) -> bool {
+    WriteTableHeader(table_handle.GetTableId(), table_handle.GetTableHeader(), table_handle.GetSchema());
+    return buffer_pool_manager_->FlushAllPages(table_handle.GetTableId());
+  }
+
   auto GetTableId(const std::string &db_name, const std::string &table_name) -> table_id_t;
 
 private:

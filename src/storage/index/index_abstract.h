@@ -28,6 +28,7 @@
 
 namespace njudb {
 
+
 class Index
 {
 public:

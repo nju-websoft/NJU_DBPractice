@@ -27,14 +27,21 @@
 #include <mutex>  // NOLINT
 #include <vector>
 #include <array>
+#include <unordered_map>  // For GetDirtyPages return type
 #include "storage/disk/disk_manager.h"
 #include "log/log_manager.h"
+#include "common/types.h"  // For FilePageHash
+
+namespace njudb {
+
+}
 #include "replacer/replacer.h"
 #include "frame.h"
 #include "common/page.h"
 
 namespace njudb {
 
+// Forward declarations
 class ReadPageGuard;
 class WritePageGuard;
 struct fid_pid_t
@@ -72,7 +79,7 @@ public:
    * Fetch the requested page from disk.
    * 1. grant the latch
    * 2. check if the page is in the frame
-   * 3. if the page is not in the frame, GetAvailableFrame and UpdateFrame
+   * 3. if the page is not in the frame, get the frame id by GetAvailableFrame and update the frame
    * 4. else pin the frame both in the buffer and the replacer and return the page
    * @param fid file that the page belongs to
    * @param pid page id
@@ -84,7 +91,7 @@ public:
    * Unpin the page indicating that it can be victimized
    * 1. grant the latch
    * 2. if the frame is not in the buffer or the frame is not in use, return false
-   * 3. unpin the frame, after that if the frame is not in use, unpin the frame in the replacer
+   * 3. unpin the frame, if the frame is not in use, unpin the frame in the replacer
    * 4. set the frame dirty if the page is dirty
    * @param fid
    * @param pid
@@ -122,6 +129,7 @@ public:
    * @param pid
    * @return true if the page is flushed successfully
    */
+
   auto FlushPage(file_id_t fid, page_id_t pid) -> bool;
 
   /**
@@ -130,6 +138,12 @@ public:
    * @return
    */
   auto FlushAllPages(file_id_t fid) -> bool;
+
+  /**
+   * Flush all unpinned dirty pages currently in the buffer pool.
+   * @return true if every dirty page was flushed successfully.
+   */
+  auto FlushAllPages() -> bool;
 
  /**
    * Get the frame, used for test
@@ -152,6 +166,18 @@ public:
    */
   auto FetchPageWrite(file_id_t fid, page_id_t pid) -> WritePageGuard;
 
+  /**
+   * @brief Get all dirty pages in buffer pool (for checkpoint)
+   * @return Map of (filename, page_id) to recLSN (first LSN that made page dirty)
+   * 
+   * CRITICAL FIX: Returns (filename, page_id) pairs instead of (file_id, page_id)
+   * because file IDs are transient and change across system restarts.
+   * Filenames are persistent and can be resolved to current file_id during recovery.
+   * 
+   * Used by CheckpointManager to collect Dirty Page Table (DPT)
+   */
+  auto GetDirtyPages() -> std::unordered_map<std::pair<std::string, page_id_t>, lsn_t, FilePageHash>;
+
 private:
   /// sub procedures used by public APIs, should not be locked by latch
 
@@ -159,7 +185,6 @@ private:
    * Get the available frame
    * 1. if the free list is not empty, get the frame id from the free list
    * 2. else use the replacer to get the frame id
-   * 3. if no frame can be evicted, throw NJUDB_NO_FREE_FRAME
    * @return the frame id
    */
   auto GetAvailableFrame() -> frame_id_t;
@@ -175,6 +200,18 @@ private:
    * @param pid the page needs to be updated to the frame
    */
   void UpdateFrame(frame_id_t frame_id, file_id_t fid, page_id_t pid);
+
+  /**
+   * Flush one stable, unpinned frame while latch_ is held.
+   */
+  auto FlushFrameLocked(frame_id_t frame_id) -> bool;
+
+  /**
+   * Only table data pages participate in Lab 06 page WAL.
+   */
+  auto IsWALManagedPage(file_id_t fid, page_id_t pid) const -> bool;
+  
+
 
 private:
   std::mutex                                latch_;

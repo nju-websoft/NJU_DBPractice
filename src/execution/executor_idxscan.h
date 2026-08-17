@@ -25,13 +25,14 @@
 #include "executor_abstract.h"
 #include "system/handle/index_handle.h"
 #include "system/handle/table_handle.h"
+#include "system/context.h"
 #include "common/condition.h"
 
 namespace njudb {
 class IdxScanExecutor : public AbstractExecutor
 {
 public:
-  IdxScanExecutor(TableHandle *tbl, IndexHandle *idx, ConditionVec conds, bool is_ascending = true);
+  IdxScanExecutor(TableHandle *tbl, IndexHandle *idx, ConditionVec conds, bool is_ascending = true, Context *context = nullptr);
 
   void Init() override;
 
@@ -52,6 +53,7 @@ private:
   TableHandle *tbl_;            // table handle
   IndexHandle *idx_;            // index handle
   ConditionVec conds_;          // conditions
+  Context     *context_;        // execution context for transaction
   RecordUptr   low_;            // low key
   RecordUptr   high_;           // high key
   bool         is_ascending_;   // scan direction flag
@@ -66,6 +68,7 @@ private:
   
   // Helper functions
   void GenerateRangeKeys();
+  auto GetRecordWithProtocol(const RID &rid) -> RecordUptr;
 };
 }  // namespace njudb
 

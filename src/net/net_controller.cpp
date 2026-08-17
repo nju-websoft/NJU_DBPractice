@@ -21,6 +21,8 @@
 
 #include "net_controller.h"
 
+#include <cerrno>
+#include <cstring>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -33,7 +35,7 @@ NetController::NetController()
 
 auto NetController::Listen() -> int
 {
-  if (server_fd_ != 0) {
+  if (server_fd_ >= 0) {
     return -1;
   }
   struct sockaddr_in serv_addr
@@ -41,7 +43,12 @@ auto NetController::Listen() -> int
 
   server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
   if (server_fd_ < 0) {
-    NJUDB_LOG("ERROR opening socket");
+    NJUDB_LOG(std::string("ERROR opening socket: ") + strerror(errno));
+    return -1;
+  }
+  int reuse_addr = 1;
+  if (setsockopt(server_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(reuse_addr)) < 0) {
+    NJUDB_LOG("ERROR setting socket reuse address");
     return -1;
   }
   bzero((char *)&serv_addr, sizeof(serv_addr));
@@ -71,7 +78,13 @@ auto NetController::Accept() const -> int
   }
   return client_sock;
 }
-void NetController::Close() const { close(server_fd_); }
+void NetController::Close()
+{
+  if (server_fd_ >= 0) {
+    close(server_fd_);
+    server_fd_ = -1;
+  }
+}
 auto NetController::ReadSQL(int fd) -> std::string
 {
   auto &pkg_ = client_buffer_[fd];

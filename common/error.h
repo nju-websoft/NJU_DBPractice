@@ -66,6 +66,10 @@ namespace njudb {
  * @a NJUDB_UNSUPPORTED_OP: unsupported operation
  * @a NJUDB_UNEXPECTED_NULL: unexpected null value after adequate check
  * @a NJUDB_CLIENT_DOWN: client down, should close the client connection
+ * @a NJUDB_LOG_INVALID_RECORD: invalid log record type, cannot serialize or deserialize
+ * @a NJUDB_LOG_DESERIALIZATION_ERROR: log record deserialization error, size mismatch or corrupted data
+ * @a NJUDB_LOG_INVALID_HEADER: invalid log file header, magic number or version mismatch
+ * @a NJUDB_FILE_OPEN_ERROR: failed to open file for reading or writing
  */
 #define ENUM_ENTITIES          \
   ENUM(NJUDB_EXCEPTION_EMPTY)   \
@@ -74,6 +78,7 @@ namespace njudb {
   ENUM(NJUDB_FILE_NOT_OPEN)     \
   ENUM(NJUDB_FILE_DELETE_ERROR) \
   ENUM(NJUDB_FILE_REOPEN)       \
+  ENUM(NJUDB_FILE_OPEN_ERROR)       \
   ENUM(NJUDB_NOT_IMPLEMENTED)   \
   ENUM(NJUDB_NO_FREE_FRAME)     \
   ENUM(NJUDB_RECORD_EXISTS)     \
@@ -98,7 +103,11 @@ namespace njudb {
   ENUM(NJUDB_TYPE_MISSMATCH)    \
   ENUM(NJUDB_UNSUPPORTED_OP)    \
   ENUM(NJUDB_UNEXPECTED_NULL)   \
-  ENUM(NJUDB_CLIENT_DOWN)
+  ENUM(NJUDB_CLIENT_DOWN)       \
+  ENUM(NJUDB_LOG_INVALID_RECORD) \
+  ENUM(NJUDB_LOG_DESERIALIZATION_ERROR) \
+  ENUM(NJUDB_LOG_INVALID_HEADER) \
+  ENUM(NJUDB_MVCC_WRITE_CONFLICT)
 #define ENUM(ent) ENUMENTRY(ent)
 DECLARE_ENUM(NJUDBExceptionType)
 #undef ENUM

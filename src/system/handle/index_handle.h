@@ -21,6 +21,7 @@
 
 #ifndef NJUDB_INDEX_HANDLE_H
 #define NJUDB_INDEX_HANDLE_H
+#include <mutex>
 #include "storage/index/index.h"
 
 namespace njudb {
@@ -70,7 +71,7 @@ public:
    * @param key key has the same schema as the index key schema
    * @return std::vector<RID>
    */
-  auto Search(const Record &key) -> std::vector<RID> { return index_->Search(key); }
+  auto Search(const Record &key) -> std::vector<RID>;
 
   /**
    * @brief Search for records within a range defined by low_key and high_key.
@@ -107,6 +108,7 @@ private:
   std::unique_ptr<Index> index_;
   std::string            index_name_;
   RecordSchemaUptr       key_schema_holder_;
+  std::mutex             index_latch_;
 };
 
 DEFINE_UNIQUE_PTR(IndexHandle);

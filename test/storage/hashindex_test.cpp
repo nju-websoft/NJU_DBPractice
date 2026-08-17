@@ -22,6 +22,7 @@ protected:
   {
     // Create unique test file name
     test_file_name_ = "hash_index_test_" + std::to_string(rand()) + ".idx";
+    log_file_name_  = "hash_index_test_" + std::to_string(rand()) + ".log";
 
     // Create and open test disk file
     disk_manager_ = std::make_unique<DiskManager>();
@@ -32,11 +33,16 @@ protected:
     } catch (...) {
       // Ignore if file doesn't exist
     }
+    try {
+      DiskManager::DestroyFile(log_file_name_);
+    } catch (...) {
+      // Ignore if file doesn't exist
+    }
 
     DiskManager::CreateFile(test_file_name_);
     file_id_ = disk_manager_->OpenFile(test_file_name_);
 
-    log_manager_         = std::make_unique<LogManager>(disk_manager_.get());
+    log_manager_         = std::make_unique<LogManager>(disk_manager_.get(), log_file_name_);
     buffer_pool_manager_ = std::make_unique<BufferPoolManager>(disk_manager_.get(), log_manager_.get(), REPLACER_LRU_K);
 
     // Create a simple integer schema for testing
@@ -61,10 +67,16 @@ protected:
     if (file_id_ != INVALID_FILE_ID) {
       disk_manager_->CloseFile(file_id_);
     }
+    log_manager_.reset();
     disk_manager_.reset();
-    // Clean up test file
+    // Clean up test files
     try {
       DiskManager::DestroyFile(test_file_name_);
+    } catch (...) {
+      // Ignore cleanup errors
+    }
+    try {
+      DiskManager::DestroyFile(log_file_name_);
     } catch (...) {
       // Ignore cleanup errors
     }
@@ -108,6 +120,7 @@ protected:
   std::unique_ptr<HashIndex>         index_;
   file_id_t                          file_id_;
   std::string                        test_file_name_;
+  std::string                        log_file_name_;
 };
 
 // Test basic insert operation
@@ -249,7 +262,6 @@ TEST_F(HashIndexTest, Iterator)
 
   while (iter->IsValid()) {
     auto key_record = iter->GetKey();
-    auto rid        = iter->GetRID();
     int  key        = ExtractKey(key_record);
     scanned_keys.push_back(key);
     iter->Next();

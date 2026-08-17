@@ -60,7 +60,6 @@ single_op ";"|"("|")"|","|"*"|"="|">"|"<"|"."
 "BEGIN" { return TXN_BEGIN; }
 "COMMIT" { return TXN_COMMIT; }
 "ABORT" { return TXN_ABORT; }
-"ROLLBACK" { return TXN_ROLLBACK; }
 "static_checkpoint" { return STATIC_CHECKPOINT; }
 "TABLES" { return TABLES; }
 "CREATE" { return CREATE; }
@@ -110,6 +109,9 @@ single_op ";"|"("|")"|","|"*"|"="|">"|"<"|"."
 "NARY" { return NARY; }
 "PAX" { return PAX; }
 "LIMIT" { return LIMIT; }
+"CONCURRENCY_PROTOCOL" { return CONCURRENCY_PROTOCOL; }
+"MVCC" { return MVCC; }
+"2PL" { return TWO_PL; }
 "TRUE" {
     yylval->sv_bool = true;
     return VALUE_BOOL;

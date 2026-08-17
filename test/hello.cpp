@@ -8,7 +8,7 @@ TEST(HelloTest, Hello)
 {
   EXPECT_EQ(1, 1);
   NJUDB_ASSERT(1 == 1, "1 == 1");
-  NJUDB_THROW(njudb::NJUDB_FILE_EXISTS, "");
+  EXPECT_THROW(NJUDB_THROW(njudb::NJUDB_FILE_EXISTS, ""), njudb::NJUDBException_);
 }
 
 int main(int argc, char **argv)

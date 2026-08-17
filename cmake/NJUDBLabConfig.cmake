@@ -99,7 +99,8 @@ function(njudb_predeclare_gold_libraries)
                 IMPORTED_NO_SONAME ON
             )
             # Add dependencies for gold library
-            target_link_libraries(handle_table INTERFACE handle_page storage_disk storage_buffer storage_index fmt::fmt)
+            target_link_libraries(handle_table INTERFACE
+                handle_page storage_disk storage_buffer storage_index concurrency log fmt::fmt)
             message(STATUS "Pre-declared gold library for handle_table: ${GOLD_LIB_PATH}")
         else()
             message(FATAL_ERROR "Gold library not found: ${GOLD_LIB_PATH}")
@@ -117,6 +118,7 @@ function(njudb_predeclare_gold_libraries)
                 INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/src"
                 IMPORTED_NO_SONAME ON
             )
+            target_link_libraries(executor_basic INTERFACE mvcc_execution)
             message(STATUS "Pre-declared gold library for executor_basic: ${GOLD_LIB_PATH}")
         else()
             message(FATAL_ERROR "Gold library not found: ${GOLD_LIB_PATH}")
@@ -183,6 +185,69 @@ function(njudb_predeclare_gold_libraries)
             # Add dependencies for gold library
             target_link_libraries(handle_index INTERFACE storage_disk storage_buffer storage_index fmt::fmt)
             message(STATUS "Pre-declared gold library for handle_index: ${GOLD_LIB_PATH}")
+        else()
+            message(FATAL_ERROR "Gold library not found: ${GOLD_LIB_PATH}")
+        endif()
+    endif()
+
+    # Lab05: Concurrency and MVCC Bonus
+    if(USE_GOLD_LAB05)
+        set(GOLD_LIB_PATH "${LIB_GOLD_PATH}/libconcurrency.${LIB_EXT}")
+        if(EXISTS ${GOLD_LIB_PATH})
+            add_library(concurrency SHARED IMPORTED GLOBAL)
+            set_target_properties(concurrency PROPERTIES
+                IMPORTED_LOCATION ${GOLD_LIB_PATH}
+                INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/src"
+                IMPORTED_NO_SONAME ON
+            )
+            target_link_libraries(concurrency INTERFACE log fmt::fmt)
+            message(STATUS "Pre-declared gold library for concurrency: ${GOLD_LIB_PATH}")
+        else()
+            message(FATAL_ERROR "Gold library not found: ${GOLD_LIB_PATH}")
+        endif()
+
+        set(GOLD_LIB_PATH "${LIB_GOLD_PATH}/libmvcc_execution.${LIB_EXT}")
+        if(EXISTS ${GOLD_LIB_PATH})
+            add_library(mvcc_execution SHARED IMPORTED GLOBAL)
+            set_target_properties(mvcc_execution PROPERTIES
+                IMPORTED_LOCATION ${GOLD_LIB_PATH}
+                INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/src"
+                IMPORTED_NO_SONAME ON
+            )
+            target_link_libraries(mvcc_execution INTERFACE concurrency handle_db)
+            message(STATUS "Pre-declared gold library for mvcc_execution: ${GOLD_LIB_PATH}")
+        else()
+            message(FATAL_ERROR "Gold library not found: ${GOLD_LIB_PATH}")
+        endif()
+    endif()
+
+    # Lab06: WAL and Recovery
+    if(USE_GOLD_LAB06)
+        set(GOLD_LIB_PATH "${LIB_GOLD_PATH}/liblog.${LIB_EXT}")
+        if(EXISTS ${GOLD_LIB_PATH})
+            add_library(log SHARED IMPORTED GLOBAL)
+            set_target_properties(log PROPERTIES
+                IMPORTED_LOCATION ${GOLD_LIB_PATH}
+                INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/src"
+                IMPORTED_NO_SONAME ON
+            )
+            target_link_libraries(log INTERFACE storage_index fmt::fmt)
+            message(STATUS "Pre-declared gold library for log: ${GOLD_LIB_PATH}")
+        else()
+            message(FATAL_ERROR "Gold library not found: ${GOLD_LIB_PATH}")
+        endif()
+
+        set(GOLD_LIB_PATH "${LIB_GOLD_PATH}/libhandle_db.${LIB_EXT}")
+        if(EXISTS ${GOLD_LIB_PATH})
+            add_library(handle_db SHARED IMPORTED GLOBAL)
+            set_target_properties(handle_db PROPERTIES
+                IMPORTED_LOCATION ${GOLD_LIB_PATH}
+                INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/src"
+                IMPORTED_NO_SONAME ON
+            )
+            target_link_libraries(handle_db INTERFACE
+                system_table system_index handle_page handle_table handle_index)
+            message(STATUS "Pre-declared gold library for handle_db: ${GOLD_LIB_PATH}")
         else()
             message(FATAL_ERROR "Gold library not found: ${GOLD_LIB_PATH}")
         endif()

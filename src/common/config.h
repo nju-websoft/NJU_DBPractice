@@ -25,7 +25,7 @@
 /// storage
 constexpr size_t  PAGE_SIZE        = 4096;
 constexpr size_t  BUFFER_POOL_SIZE = 8;
-const std::string REPLACER         = "LRUReplacer";
+const std::string REPLACER         = "LRUKReplacer";
 // enable this to use LRUKReplacer
 const size_t REPLACER_LRU_K = 10;
 /// system
@@ -35,6 +35,8 @@ constexpr size_t MAX_REC_SIZE = 1024;
 constexpr size_t SORT_BUFFER_SIZE = 64 * 1024 * 1024;
 // 10-way merge sort, max tmp file to use in merge sort
 constexpr size_t SORT_WAY_NUM = 10;
+
+constexpr uint32_t CHECKPOINT_INTERVAL_SECONDS = 300;
 
 const std::string DB_SUFFIX  = ".db";
 const std::string TAB_SUFFIX = ".tab";

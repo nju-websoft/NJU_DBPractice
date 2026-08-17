@@ -20,9 +20,11 @@
 //
 
 #include <filesystem>
+#include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
 #include "disk_manager.h"
+#include "common/page.h"
 #include "../../common/config.h"
 #include "../../../common/error.h"
 
@@ -78,6 +80,16 @@ void DiskManager::CloseFile(file_id_t fid)
   }
 }
 
+void DiskManager::SyncFile(file_id_t fid)
+{
+  if (fid_name_map_.find(fid) == fid_name_map_.end()) {
+    NJUDB_THROW(NJUDB_FILE_NOT_OPEN, fmt::format("fid: {}", fid));
+  }
+  if (fsync(fid) != 0) {
+    NJUDB_THROW(NJUDB_FILE_WRITE_ERROR, fmt::format("fid: {}", fid));
+  }
+}
+
 void DiskManager::WritePage(file_id_t fid, page_id_t page_id, const char *data)
 {
   NJUDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), fmt::format("fid: {}", fid));
@@ -92,9 +104,16 @@ void DiskManager::ReadPage(file_id_t fid, page_id_t page_id, char *data)
 {
   NJUDB_ASSERT(fid_name_map_.find(fid) != fid_name_map_.end(), fmt::format("fid: {}", fid));
   lseek(fid, static_cast<off_t>(page_id) * static_cast<off_t>(PAGE_SIZE), SEEK_SET);
-  if (read(fid, data, PAGE_SIZE) < 0) {
+  auto bytes_read = read(fid, data, PAGE_SIZE);
+  if (bytes_read < 0) {
     NJUDB_THROW(
         NJUDB_FILE_READ_ERROR, fmt::format("fid: {}, page_id: {}", fid, page_id));
+  }
+  if (static_cast<size_t>(bytes_read) < PAGE_SIZE) {
+    memset(data + bytes_read, 0, PAGE_SIZE - static_cast<size_t>(bytes_read));
+    if (page_id != FILE_HEADER_PAGE_ID) {
+      *reinterpret_cast<lsn_t *>(data + PAGE_LSN_OFFSET) = INVALID_LSN;
+    }
   }
 }
 

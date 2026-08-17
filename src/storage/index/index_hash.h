@@ -130,6 +130,8 @@ private:
   auto DeleteAllFromBucket(size_t bucket_index, const Record &key) -> size_t;
   auto SearchInBucket(size_t bucket_index, const Record &key) -> std::vector<RID>;
 
+  void Rehash();
+
   static constexpr size_t DEFAULT_BUCKET_COUNT = 500;
   static constexpr double MAX_LOAD_FACTOR      = 0.75;
 };

@@ -22,6 +22,7 @@
 #include "executor_abstract.h"
 #include "system/handle/table_handle.h"
 #include "system/handle/index_handle.h"
+#include "system/context.h"
 
 #ifndef NJUDB_EXECUTOR_INSERT_H
 #define NJUDB_EXECUTOR_INSERT_H
@@ -30,7 +31,7 @@ namespace njudb {
 class InsertExecutor : public AbstractExecutor
 {
 public:
-  InsertExecutor(TableHandle *tbl, std::list<IndexHandle *> indexes, std::vector<RecordUptr> inserts);
+  InsertExecutor(TableHandle *tbl, std::list<IndexHandle *> indexes, std::vector<RecordUptr> inserts, Context *context = nullptr);
 
   void Init() override;
 
@@ -42,6 +43,7 @@ private:
   TableHandle             *tbl_;
   std::list<IndexHandle *> indexes_;
   std::vector<RecordUptr>  inserts_;
+  Context                 *context_;
   bool                     is_end_;
 };
 }  // namespace njudb

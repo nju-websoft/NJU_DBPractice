@@ -19,23 +19,20 @@
 // Created by ziqi on 2024/8/5.
 //
 
-/**
- * @brief set the fields in the records extracted from the child executor to the new values and update the tables and indexes
- */
-
 #ifndef NJUDB_EXECUTOR_UPDATE_H
 #define NJUDB_EXECUTOR_UPDATE_H
 
 #include "executor_abstract.h"
 #include "system/handle/table_handle.h"
 #include "system/handle/index_handle.h"
+#include "system/context.h"
 
 namespace njudb {
 class UpdateExecutor : public AbstractExecutor
 {
 public:
   UpdateExecutor(AbstractExecutorUptr child, TableHandle *tbl, std::list<IndexHandle *> indexes,
-      std::vector<std::pair<RTField, ValueSptr>> updates);
+      std::vector<std::pair<RTField, ValueSptr>> updates, Context *context = nullptr);
 
   void Init() override;
 
@@ -49,6 +46,7 @@ private:
   std::list<IndexHandle *>                   indexes_;
   std::vector<std::pair<RTField, ValueSptr>> updates_;
   std::vector<std::pair<std::unique_ptr<Record>, std::unique_ptr<Record>>> updates_to_perform_;
+  Context                                   *context_;
   bool                                       is_end_;
 };
 }  // namespace njudb

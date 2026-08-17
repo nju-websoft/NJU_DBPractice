@@ -7,14 +7,14 @@
 This repository is a toy RDBMS for NJU "Introduction to Databases" course. It is implemented in C++ and supports a
 subset of SQL queries.
 
-Four Labs are included in this repository, and the details of each lab are as follows:
+Six Labs are included in this repository, and the details of each lab are as follows:
 
 * **Lab01**: Buffer Pool - Implement the disk manager and buffer pool manager
 * **Lab02**: Executor Basic - Implement `INSERT`, `UPDATE`, `DELETE` and basic operators (filter, sort, etc.)
 * **Lab03**: Executor Analysis - Implement `JOIN` and `AGGREGATE` queries  
 * **Lab04**: Index & Storage Index - Implement B+ tree, hash index, and index scan executor
-* **Lab05** (future): Concurrency, implement SS2PL concurrency control and deadlock detection.
-* **Lab06** (future): Recovery, implement log manager and recovery manager to support WAL/ARIES recovery algorithm.
+* **Lab05**: Concurrency - implement SS2PL, lock management and deadlock handling; MVCC is bonus
+* **Lab06**: Logging & Recovery - implement WAL, checkpoints and ARIES-style crash recovery
 
 The project is mostly inspired by [Rucbase](https://github.com/ruc-deke/rucbase-lab)
 , and some components follow the design of
@@ -27,19 +27,28 @@ NJUDB features a flexible configuration system that allows you to choose between
 
 ### Quick Start
 
+Edit the student configuration block at the top of `configure.sh`. For example,
+to work only on Lab05 while using gold libraries for every other lab:
+
 ```bash
-# Safe default - compile everything from source
-./configure.sh --all-source --clean
-
-# Working on Lab01 - use gold dependencies
-./configure.sh --lab02-gold --clean
-
-# Working on Lab02 - use Lab01 as gold dependency  
-./configure.sh --lab01-gold --clean
-
-# Get help and see all options, we suggest using --clean for all configurations to avoid cmake warnings.
-./configure.sh --help
+# Inside configure.sh
+SOURCE_LABS="05"
+ENABLE_LAB05_MVCC=false
+ENABLE_LAB06_WAL=false
+BUILD_TYPE="Debug"
+CLEAN_BUILD=true
 ```
+
+Then configure and build:
+
+```bash
+./configure.sh
+cmake --build build -j
+```
+
+Use `SOURCE_LABS="all"` for all source or `SOURCE_LABS=""` for all gold.
+Existing command-line flags remain available as temporary overrides; run
+`./configure.sh --help` to list them.
 
 The project referenced [BusTub](https://github.com/cmu-db/bustub), [Rucbase](https://github.com/ruc-deke/rucbase-lab)
 ,and[MiniOB](https://github.com/oceanbase/miniob). Thanks for their great work!
@@ -72,15 +81,8 @@ For MacOS:
 $ sudo brew install clang cmake flex bison readline
 ```
 
-Then change directory into the repository foot and run
-
-```shell
-$ mkdir build && cd build
-```
-
-```shell
-cmake .. && make -j8
-```
+Then edit the student configuration block at the top of `configure.sh`, run
+`./configure.sh`, and build with `cmake --build build -j`.
 
 About how to change cmake configurations, please refer to their guide.
 
@@ -88,6 +90,15 @@ About how to change cmake configurations, please refer to their guide.
 
 The Chinese version of the lab tutorial can be found under `docs`, please read them carefully before coding if you are
 studying NJU DB course.
+
+* [Lab05：并发控制（SS2PL，MVCC Bonus）](docs/05lab5-concurrency.md)
+* [Lab06：日志系统与故障恢复](docs/06lab6-logging-recovery.md)
+
+All 23 C++ unit-test executables are registered with CTest. After building, use `ctest --test-dir build -N` to list
+them or `ctest --test-dir build --output-on-failure` to run all tests.
+
+The default server build enables the required Lab05 SS2PL path without entering unfinished MVCC or WAL code.
+Set `ENABLE_LAB05_MVCC=true` or `ENABLE_LAB06_WAL=true` in `configure.sh` for those runtime paths.
 
 ## Copyright
 
@@ -109,4 +120,3 @@ studying NJU DB course.
  - along with this program.  If not, see <https://www.gnu.org/licenses/>.
  -----------------------------------------------------------------------------*/
 ```
-

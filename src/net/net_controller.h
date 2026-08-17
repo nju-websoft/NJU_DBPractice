@@ -36,7 +36,7 @@ public:
 
   auto Accept() const -> int;
 
-  void Close() const;
+  void Close();
 
   auto ReadSQL(int fd) -> std::string;
 
@@ -59,7 +59,7 @@ public:
 
 private:
   // currently receive and send use the same pkg_
-  int                                  server_fd_{0};
+  int                                  server_fd_{-1};
   int                                  listen_port_{0};
   int                                  max_client_{0};
   std::unordered_map<int, net::NetPkg> client_buffer_;

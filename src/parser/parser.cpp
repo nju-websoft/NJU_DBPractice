@@ -27,6 +27,7 @@ namespace njudb {
 
 std::shared_ptr<ast::TreeNode> Parser::Parse(const std::string &sql)
 {
+  std::lock_guard<std::mutex> lock(parse_latch_);
   auto buf = yy_scan_string(sql.c_str());
   if (yyparse() != 0) {
     yy_delete_buffer(buf);

@@ -78,9 +78,9 @@ select s_quantity, s_dist_07 from stock where s_dist_07 = 'SCN001' order by s_i_
 -- 17. Test potential index key conflicts, 2700 should throw and 2701 does not exist.
 select s_i_id, s_w_id, s_quantity, s_order_cnt from stock order by s_i_id;
 select s_i_id, s_w_id, s_quantity, s_order_cnt from stock order by s_i_id;
-select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt from stock order by s_ytd;
-select s_i_id, s_w_id, s_quantity, s_order_cnt from stock order by s_quantity;
-select s_i_id, s_w_id, s_quantity, s_order_cnt from stock order by s_order_cnt;
+select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt from stock order by s_ytd, s_i_id;
+select s_i_id, s_w_id, s_quantity, s_order_cnt from stock order by s_quantity, s_i_id;
+select s_i_id, s_w_id, s_quantity, s_order_cnt from stock order by s_order_cnt, s_i_id;
 select s_i_id, s_w_id, s_quantity, s_order_cnt from stock where s_i_id = 2700;
 select s_i_id, s_w_id, s_quantity, s_order_cnt from stock where s_i_id = 8003;
 select s_i_id, s_w_id, s_quantity, s_order_cnt from stock where s_i_id = 8004;

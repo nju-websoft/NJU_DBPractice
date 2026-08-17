@@ -22,6 +22,8 @@
 #ifndef NJUDB_PARSER_H
 #define NJUDB_PARSER_H
 
+#include <mutex>
+
 #include "ast.h"
 #include "../common/micro.h"
 
@@ -34,6 +36,9 @@ public:
   DISABLE_COPY_MOVE_AND_ASSIGN(Parser)
 
   [[nodiscard]] auto Parse(const std::string &sql) -> std::shared_ptr<ast::TreeNode>;
+
+private:
+  std::mutex parse_latch_;
 };
 }  // namespace njudb
 

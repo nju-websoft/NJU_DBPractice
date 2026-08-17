@@ -25,6 +25,7 @@
 #include <mutex>
 #include <unordered_map>
 #include "replacer.h"
+#include "common/config.h"
 #include "../common/error.h"
 
 namespace njudb {
@@ -32,7 +33,7 @@ namespace njudb {
 class LRUKReplacer : public Replacer
 {
 public:
-  explicit LRUKReplacer(size_t k);
+  explicit LRUKReplacer(size_t k, size_t max_size = BUFFER_POOL_SIZE);
 
   ~LRUKReplacer() override = default;
 

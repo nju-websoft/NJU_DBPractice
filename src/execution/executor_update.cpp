@@ -20,17 +20,22 @@
 //
 
 #include "executor_update.h"
+#include "concurrency/lock_manager.h"
+#include "concurrency/version_manager.h"
+#include "concurrency/concurrency_protocol.h"
+#include "mvcc_write_coordinator.h"
 #include <fmt/format.h>
 
 namespace njudb {
 
 UpdateExecutor::UpdateExecutor(AbstractExecutorUptr child, TableHandle *tbl, std::list<IndexHandle *> indexes,
-    std::vector<std::pair<RTField, ValueSptr>> updates)
+    std::vector<std::pair<RTField, ValueSptr>> updates, Context *context)
     : AbstractExecutor(DML),
       child_(std::move(child)),
       tbl_(tbl),
       indexes_(std::move(indexes)),
       updates_(std::move(updates)),
+      context_(context),
       is_end_(false)
 {
   std::vector<RTField> fields(1);
@@ -40,10 +45,10 @@ UpdateExecutor::UpdateExecutor(AbstractExecutorUptr child, TableHandle *tbl, std
 
 void UpdateExecutor::Init()
 {
-  // You can skip step 2 in lab02
-  // 1: Collect all old and new records first
-  // 2: [NJUDB_STUDENT_TODO(l4, t2)] Validate ALL updates against index unique constraints BEFORE applying any
-  // 3: Do updates
+  // Lab 02 may skip Lab 04's all-or-nothing unique-index validation.
+  // 1. Build old/new record pairs.
+  // 2. Validate the complete batch. NJUDB_STUDENT_TODO(l4, t2)
+  // 3. Apply table and index updates atomically.
   NJUDB_STUDENT_TODO(l2, t1);
 }
 

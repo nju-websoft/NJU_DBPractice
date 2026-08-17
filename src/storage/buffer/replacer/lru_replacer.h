@@ -46,7 +46,7 @@ public:
    * Victimize a frame according to the LRU policy.
    * 1. grant the latch
    * 2. if there is no frame in the LRU list return false
-   * 3. get the first (least recently used) evictable frame in the LRU list
+   * 3. get the first (the least recently) evictable frame in the LRU list
    * 4. update the LRU list and hash map
    * @param frame_id
    * @return true if a victim frame was found, false otherwise
@@ -56,7 +56,8 @@ public:
   /**
    * Pin a frame, indicating that it should not be victimized until it is unpinned.
    * 1. grant the latch
-   * 2. update the LRU list and hash map
+   * 2. if the frame is not in the LRU hash map return
+   * 3. update the LRU list and hash map
    * @param frame_id
    */
   void Pin(frame_id_t frame_id) override;
@@ -73,7 +74,7 @@ public:
   /**
    * Get the number of elements in the replacer that can be victimized.
    * 1. grant the latch
-   * 2. return the number of evictable frames
+   * 2. return the size of the LRU list
    * @return the number of elements in the replacer that can be victimized
    */
   auto Size() -> size_t override;
@@ -87,8 +88,8 @@ private:
   std::unordered_map<frame_id_t, std::list<std::pair<frame_id_t, bool>>::iterator> lru_hash_;
   // number of evictable frames
   size_t cur_size_;
-  // maximum number of frames
-  size_t max_size_;
+  // maximum number of frames (reserved for future capacity checks)
+  [[maybe_unused]] size_t max_size_;
 };
 
 }  // namespace njudb

@@ -25,17 +25,16 @@
 namespace njudb {
 IndexHandle::IndexHandle(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, table_id_t tid,
     idx_id_t iid, IndexType index_type, RecordSchemaUptr key_schema, std::string index_name)
-    : table_id_(tid),
-      index_(nullptr),
-      index_name_(std::move(index_name)),
-      key_schema_holder_(std::move(key_schema))
+    : table_id_(tid), index_(nullptr), index_name_(std::move(index_name)), key_schema_holder_(std::move(key_schema))
 {
   switch (index_type) {
     case IndexType::BPTREE: {
+      // bpt_param = ParseBPTreeIndex();
       index_ = std::make_unique<BPTreeIndex>(disk_manager, buffer_pool_manager, iid, key_schema_holder_.get());
       break;
     }
     case IndexType::HASH: {
+      // hash_param = ParseHashIndex();
       index_ = std::make_unique<HashIndex>(disk_manager, buffer_pool_manager, iid, key_schema_holder_.get());
       break;
     }
@@ -61,13 +60,21 @@ void IndexHandle::UpdateRecord(const Record &old_rec, const Record &new_rec)
 auto IndexHandle::SearchRange(const Record &low_key, const Record &high_key) -> std::vector<RID>
 {
   NJUDB_STUDENT_TODO(l4, t2);
-  return {};
+}
+
+auto IndexHandle::Search(const Record &key) -> std::vector<RID>
+{
+  std::lock_guard<std::mutex> lock(index_latch_);
+  if (index_ == nullptr) {
+    NJUDB_FATAL("Index not initialized");
+  }
+
+  return index_->Search(key);
 }
 
 auto IndexHandle::CheckRecordExists(const Record &record) -> bool
 {
   NJUDB_STUDENT_TODO(l4, t2);
-  return false;
 }
 
 auto IndexHandle::PrintIndexStats() -> std::string
@@ -86,5 +93,5 @@ auto IndexHandle::PrintIndexStats() -> std::string
   return stats;
 }
 
-IndexHandle::~IndexHandle() = default;
+IndexHandle::~IndexHandle() {}
 }  // namespace njudb

@@ -27,7 +27,7 @@
 namespace njudb {
 
 // translate the plan to executor
-auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHandle *db) -> AbstractExecutorUptr
+auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHandle *db, Context *ctx) -> AbstractExecutorUptr
 {
   if (db == nullptr) {
     NJUDB_THROW(NJUDB_DB_NOT_OPEN, "");
@@ -63,56 +63,57 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
     auto                    tab = db->GetTable(insert->table_name_);
     std::vector<RecordUptr> inserts;
     inserts.emplace_back(std::make_unique<Record>(&tab->GetSchema(), insert->values_, INVALID_RID));
-    return std::make_unique<InsertExecutor>(tab, db->GetIndexes(insert->table_name_), std::move(inserts));
+    return std::make_unique<InsertExecutor>(tab, db->GetIndexes(insert->table_name_), std::move(inserts), ctx);
   } else if (const auto update = std::dynamic_pointer_cast<UpdatePlan>(plan)) {
     auto tab = db->GetTable(update->table_name_);
     if (tab == nullptr) {
       NJUDB_THROW(NJUDB_TABLE_MISS, update->table_name_);
     }
     return std::make_unique<UpdateExecutor>(
-        Translate(update->child_, db), tab, db->GetIndexes(update->table_name_), std::move(update->updates_));
+        Translate(update->child_, db, ctx), tab, db->GetIndexes(update->table_name_), std::move(update->updates_), ctx);
   } else if (const auto del = std::dynamic_pointer_cast<DeletePlan>(plan)) {
     auto tab = db->GetTable(del->table_name_);
     if (tab == nullptr) {
       NJUDB_THROW(NJUDB_TABLE_MISS, del->table_name_);
     }
-    return std::make_unique<DeleteExecutor>(Translate(del->child_, db), tab, db->GetIndexes(del->table_name_));
+    return std::make_unique<DeleteExecutor>(Translate(del->child_, db, ctx), tab, db->GetIndexes(del->table_name_), ctx);
   } else if (const auto filter = std::dynamic_pointer_cast<FilterPlan>(plan)) {
     std::function<bool(const Record &)> filter_func = [filter](const Record &record) {
       return ConditionExpr::Eval(filter->conds_, record);
     };
-    return std::make_unique<FilterExecutor>(Translate(filter->child_, db), std::move(filter_func));
+    return std::make_unique<FilterExecutor>(Translate(filter->child_, db, ctx), std::move(filter_func));
   } else if (const auto scan = std::dynamic_pointer_cast<ScanPlan>(plan)) {
     auto tab = db->GetTable(scan->table_name_);
     if (tab == nullptr) {
       NJUDB_THROW(NJUDB_TABLE_MISS, scan->table_name_);
     }
-    return std::make_unique<SeqScanExecutor>(tab);
+    return std::make_unique<SeqScanExecutor>(tab, ctx);
   } else if (const auto idx_scan = std::dynamic_pointer_cast<IdxScanPlan>(plan)) {
     return std::make_unique<IdxScanExecutor>(db->GetTable(idx_scan->table_name_),
         db->GetIndex(idx_scan->idx_id_),
         idx_scan->conds_,
-        true);  // Default to ascending order
+        true,  // Default to ascending order
+        ctx);  // Pass context for transaction
   } else if (const auto sort_plan = std::dynamic_pointer_cast<SortPlan>(plan)) {
     return std::make_unique<SortExecutor>(
-        Translate(sort_plan->child_, db), std::move(sort_plan->key_schema_), sort_plan->is_desc_);
+        Translate(sort_plan->child_, db, ctx), std::move(sort_plan->key_schema_), sort_plan->is_desc_);
   } else if (const auto proj_plan = std::dynamic_pointer_cast<ProjectPlan>(plan)) {
-    return std::make_unique<ProjectionExecutor>(Translate(proj_plan->child_, db), std::move(proj_plan->schema_));
+    return std::make_unique<ProjectionExecutor>(Translate(proj_plan->child_, db, ctx), std::move(proj_plan->schema_));
   } else if (const auto join_plan = std::dynamic_pointer_cast<JoinPlan>(plan)) {
     if (join_plan->strategy_ == NESTED_LOOP) {
       return std::make_unique<NestedLoopJoinExecutor>(
-          join_plan->type_, Translate(join_plan->left_, db), Translate(join_plan->right_, db), join_plan->conds_);
+          join_plan->type_, Translate(join_plan->left_, db, ctx), Translate(join_plan->right_, db, ctx), join_plan->conds_);
     } else if (join_plan->strategy_ == HASH_JOIN) {
       return std::make_unique<HashJoinExecutor>(join_plan->type_,
-          Translate(join_plan->left_, db),
-          Translate(join_plan->right_, db),
+          Translate(join_plan->left_, db, ctx),
+          Translate(join_plan->right_, db, ctx),
           std::move(join_plan->left_key_schema_),
           std::move(join_plan->right_key_schema_),
           std::move(join_plan->conds_));
     } else if (join_plan->strategy_ == SORT_MERGE) {
       return std::make_unique<SortMergeJoinExecutor>(join_plan->type_,
-          Translate(join_plan->left_, db),
-          Translate(join_plan->right_, db),
+          Translate(join_plan->left_, db, ctx),
+          Translate(join_plan->right_, db, ctx),
           std::move(join_plan->left_key_schema_),
           std::move(join_plan->right_key_schema_),
           join_plan->join_op_);
@@ -121,10 +122,9 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
     auto agg_schema   = std::make_unique<RecordSchema>(agg_plan->agg_fields);
     auto group_schema = std::make_unique<RecordSchema>(agg_plan->group_fields_);
     return std::make_unique<AggregateExecutor>(
-        Translate(agg_plan->child_, db), std::move(agg_schema), std::move(group_schema));
+        Translate(agg_plan->child_, db, ctx), std::move(agg_schema), std::move(group_schema));
   } else if (const auto lim = std::dynamic_pointer_cast<LimitPlan>(plan)) {
-    return std::make_unique<LimitExecutor>(Translate(lim->child_, db), lim->limit_);
-
+    return std::make_unique<LimitExecutor>(Translate(lim->child_, db, ctx), lim->limit_);
   } else {
     NJUDB_FATAL("Unknown plan type");
   }
@@ -133,18 +133,16 @@ auto Executor::Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHand
 
 void Executor::Execute(const AbstractExecutorUptr &executor, Context *ctx)
 {
-  if (executor->GetType() == TXN) {
-    // do transaction executor if implemented
-  } else {
-    auto header = executor->GetOutSchema();
-    ctx->nt_ctl_->SendRecHeader(ctx->client_fd_, header);
-    for (executor->Init(); !executor->IsEnd(); executor->Next()) {
-      auto rec = executor->GetRecord();
-      NJUDB_ASSERT(rec != nullptr, "");
-      ctx->nt_ctl_->SendRec(ctx->client_fd_, rec.get());
-    }
-    ctx->nt_ctl_->SendRecFinish(ctx->client_fd_);
+  // Note: Transaction commands (BEGIN, COMMIT, ABORT, etc.) are handled by SystemManager
+  // and never reach this execution path
+  auto header = executor->GetOutSchema();
+  ctx->nt_ctl_->SendRecHeader(ctx->client_fd_, header);
+  for (executor->Init(); !executor->IsEnd(); executor->Next()) {
+    auto rec = executor->GetRecord();
+    NJUDB_ASSERT(rec != nullptr, "");
+    ctx->nt_ctl_->SendRec(ctx->client_fd_, rec.get());
   }
+  ctx->nt_ctl_->SendRecFinish(ctx->client_fd_);
 }
 
 }  // namespace njudb

@@ -25,66 +25,159 @@
 #include <atomic>
 #include <mutex>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "common/types.h"
+#include "concurrency/transaction.h"
 #include "log/log_manager.h"
 
 namespace njudb {
 
-enum class TxnState
-{
-  INVALID   = 0,
-  GROWING   = 1,
-  SHIRNKING = 2,
-  COMMITTED = 3,
-  ABORTED   = 4
-};
+// Forward declarations
+class LockManager;
+class DatabaseHandle;
+class TimestampOracle;
 
-class Transaction
-{
-public:
-  Transaction() = default;
-  explicit Transaction(txn_id_t txn_id) : txn_id_(txn_id) {}
-  virtual ~Transaction() = default;
-
-  [[nodiscard]] auto GetTxnId() const -> txn_id_t { return txn_id_; }
-
-  [[nodiscard]] auto GetState() const -> TxnState { return state_; }
-
-  void SetState(TxnState state) { state_ = state; }
-
-  [[nodiscard]] auto IsExplicit() const -> bool { return is_explcit_; }
-
-private:
-  txn_id_t txn_id_{INVALID_TXN_ID};
-  TxnState state_{TxnState::INVALID};
-  // whether the transaction is explicit, i.e. started by begin command.
-  bool is_explcit_{false};
-};
-
+/**
+ * @brief Manages the lifecycle of all transactions
+ *
+ * Responsibilities:
+ *  - Transaction creation and destruction
+ *  - Lock coordination with LockManager
+ *  - Write set rollback
+ *  - Transaction ID and timestamp generation
+ */
 class TxnManager
 {
 public:
   TxnManager() = delete;
-  explicit TxnManager(LogManager *log_manager) : log_manager_(log_manager) {}
+
+  /**
+   * @brief Construct transaction manager
+   * @param log_manager Log manager for recovery
+   * @param lock_manager Lock manager for concurrency control (optional for testing)
+   * @param timestamp_oracle Timestamp oracle for MVCC. MVCC requires a non-null oracle.
+   */
+  explicit TxnManager(
+      LogManager *log_manager, LockManager *lock_manager = nullptr, TimestampOracle *timestamp_oracle = nullptr)
+      : log_manager_(log_manager),
+        lock_manager_(lock_manager),
+        timestamp_oracle_(timestamp_oracle)
+  {}
+
   virtual ~TxnManager() = default;
 
-  void Begin(txn_id_t txn_id);
+  void SetLockManager(LockManager *lock_manager) { lock_manager_ = lock_manager; }
 
+  //===--------------------------------------------------------------------===//
+  // Transaction Lifecycle
+  //===--------------------------------------------------------------------===//
+
+  /**
+   * @brief Begin a new transaction with specified isolation level and concurrency protocol
+   * @param txn_id Transaction identifier
+   * @param isolation_level Isolation level (default: REPEATABLE_READ)
+   * @param protocol Concurrency control protocol (default: TWO_PHASE_LOCKING)
+   *
+   * Creates transaction in GROWING state, assigns timestamps
+   */
+  void Begin(txn_id_t txn_id, IsolationLevel isolation_level = IsolationLevel::REPEATABLE_READ,
+      ConcurrencyProtocol protocol = ConcurrencyProtocol::TWO_PHASE_LOCKING);
+
+  /**
+   * @brief Commit a transaction
+   * @param txn_id Transaction identifier
+   *
+   * Steps:
+   *  1. Validate transaction state (GROWING or SHRINKING)
+   *  2. Assign commit timestamp (MVCC)
+   *  3. Log COMMIT record
+   *  4. Release all locks
+   *  5. Update state to COMMITTED
+   *  6. Remove from active transactions
+   */
   void Commit(txn_id_t txn_id);
 
-  void Abort(txn_id_t txn_id);
+  /**
+   * @brief Abort a transaction
+   * @param txn_id Transaction identifier
+   * @param db_handle DatabaseHandle for rollback (required if transaction has modifications)
+   *
+   * Steps:
+   *  1. Validate transaction state (cannot abort committed txn)
+   *  2. Rollback all table and index modifications (requires db_handle if write set non-empty)
+   *  3. Log ABORT record
+   *  4. Release all locks
+   *  5. Set state to ABORTED
+   *  6. Remove from active transactions
+   */
+  void Abort(
+      txn_id_t txn_id, DatabaseHandle *db_handle =
+                           nullptr);  //===--------------------------------------------------------------------===//
+  // Transaction Access
+  //===--------------------------------------------------------------------===//
 
+  /**
+   * @brief Set the current transaction in context (for thread-local storage)
+   * @param txn Transaction pointer
+   */
   void SetTransaction(Transaction *txn);
 
+  /**
+   * @brief Get a transaction by its ID
+   * @param txn_id Transaction ID
+   * @return Pointer to transaction, or nullptr if not found
+   */
+  auto GetTransaction(txn_id_t txn_id) -> Transaction *;
+
+  /**
+   * @brief Get a stable transaction handle.
+   *
+   * The returned shared_ptr keeps the transaction alive even if it is removed
+   * from the active transaction map by Commit or Abort.
+   */
+  auto GetTransactionShared(txn_id_t txn_id) -> std::shared_ptr<Transaction>;
+
+  /**
+   * @brief Get all active transactions (for checkpoint)
+   * @return Vector of pointers to active transactions
+   */
+  auto GetActiveTransactions() -> std::vector<Transaction *>;
+
+  //===--------------------------------------------------------------------===//
+  // ID and Timestamp Generation
+  //===--------------------------------------------------------------------===//
+
+  /**
+   * @brief Generate next unique transaction ID
+   * @return New transaction ID
+   */
+  auto GetNextTxnId() -> txn_id_t { return next_tid_.fetch_add(1); }
+
+  /**
+   * @brief Generate next unique timestamp
+   * @return New timestamp
+   *
+   * Used for:
+   *  - Deadlock prevention (Wait-Die, Wound-Wait)
+   *  - MVCC snapshot isolation
+   */
+  auto GetNextTimestamp() -> timestamp_t { return next_ts_.fetch_add(1); }
+
 private:
-  std::atomic<txn_id_t>                                      next_tid_{0};
-  std::atomic<txn_id_t>                                      next_ts_{0};
-  std::unordered_map<txn_id_t, std::unique_ptr<Transaction>> tid_to_ts_;
+  auto ClaimTransactionForEnd(txn_id_t txn_id) -> std::shared_ptr<Transaction>;
+  void FinishTransaction(txn_id_t txn_id);
 
-  LogManager *log_manager_;
+  std::atomic<txn_id_t>    next_tid_{0};  // Next transaction ID
+  std::atomic<timestamp_t> next_ts_{0};   // Next timestamp for standalone 2PL without TimestampOracle
 
-  std::mutex latch_;
+  std::unordered_map<txn_id_t, std::shared_ptr<Transaction>> tid_to_ts_;  // Active transactions
+  std::unordered_set<txn_id_t> ending_txns_;  // Transactions currently being committed or aborted
+
+  LogManager      *log_manager_;       // For recovery (WAL)
+  LockManager     *lock_manager_;      // For concurrency control (2PL/MVCC writes)
+  TimestampOracle *timestamp_oracle_;  // For MVCC timestamp generation (optional)
+  std::mutex latch_;  // Protects tid_to_ts_ map
 };
 }  // namespace njudb
 

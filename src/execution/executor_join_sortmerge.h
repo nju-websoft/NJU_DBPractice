@@ -19,11 +19,6 @@
 // Created by ziqi on 2024/8/7.
 //
 
-/**
- * @brief Join the two ordered tables by sort-merge join
- *
- */
-
 #ifndef NJUDB_EXECUTOR_JOIN_SORTMERGE_H
 #define NJUDB_EXECUTOR_JOIN_SORTMERGE_H
 
@@ -55,32 +50,38 @@ private:
    */
   [[nodiscard]] auto Compare(const Record &left, const Record &right) const -> int;
 
-  // Tip: you can define these Helper methods for different join types
-  // void InitInequalityJoinLessFamily();
-  // void InitInequalityJoinGreaterFamily();
-  // void NextInequalityJoinLessFamily();
-  // void NextInequalityJoinGreaterFamily();
-  // void InitEqualityJoin();
-  // void NextEqualityJoin();
+  // Helper methods for inequality joins
+  void InitInequalityJoinLessFamily();
+  void InitInequalityJoinGreaterFamily();
+  void NextInequalityJoinLessFamily();
+  void NextInequalityJoinGreaterFamily();
+
+  /**
+   * Evaluate whether all key values can satisfy the join operation
+   */
+  bool EvaluateJoinCondition(const Record &left, const Record &right) const;
+  
+  // Helper methods for equality joins
+  void InitEqualityJoin();
+  void NextEqualityJoin();
 
 private:
   RecordSchemaUptr left_key_schema_;
   RecordSchemaUptr right_key_schema_;
-  CompOp           join_op_;  // Join operation type (OP_EQ, OP_LT, OP_GT, OP_LE, OP_GE)
+  CompOp join_op_;  // Join operation type (OP_EQ, OP_LT, OP_GT, OP_LE, OP_GE)
 
   // temporarily store record from the left executor
   RecordUptr left_rec_;
   // buffer to store matching values in right executor (for all join types)
-  size_t right_idx_{0};
-  // TODO: this right buffer can be optimized into an outer memory structure
+  size_t                               right_idx_{0};
+  // this right buffer can be optimized into an outer memory structure
   std::vector<std::shared_ptr<Record>> right_buffer_;
-  // for outer join, indicates whether a valid right value is found, if not, we need to generate all null values for the
-  // right.
+  // for outer join, indicates whether a valid right value is found
   bool need_gen_null_{false};
-
+  
   // For inequality joins: track right iterator position
   RecordUptr right_rec_;
-  bool       right_exhausted_{false};
+  bool right_exhausted_{false};
 };
 }  // namespace njudb
 

@@ -52,6 +52,89 @@ public:
   [[nodiscard]] auto GetPage() -> Page * { return page_; }
 
   [[nodiscard]] auto GetBitmap() -> char * { return bitmap_; }
+  
+  //===--------------------------------------------------------------------===//
+  // Tuple Header Access Methods (recovery/diagnostic metadata)
+  //===--------------------------------------------------------------------===//
+  
+  /**
+   * @brief Get pointer to tuple header for a slot
+   * @param slot_id Slot ID
+   * @return Pointer to tuple header
+   */
+  virtual auto GetRecordHeader(size_t slot_id) -> char*;
+  
+  /**
+   * @brief Get const pointer to tuple header for a slot
+   * @param slot_id Slot ID
+   * @return Const pointer to tuple header
+   */
+  virtual auto GetRecordHeader(size_t slot_id) const -> const char*;
+  
+  /**
+   * @brief Set xmin for a tuple (creator transaction ID)
+   * @param slot_id Slot ID
+   * @param xmin Transaction ID
+   */
+  void SetXmin(size_t slot_id, txn_id_t xmin);
+  
+  /**
+   * @brief Set xmax for a tuple (deleter/updater transaction ID)
+   * @param slot_id Slot ID
+   * @param xmax Transaction ID
+   */
+  void SetXmax(size_t slot_id, txn_id_t xmax);
+  
+  /**
+   * @brief Get xmin from tuple
+   * @param slot_id Slot ID
+   * @return Creator transaction ID
+   */
+  auto GetXmin(size_t slot_id) const -> txn_id_t;
+  
+  /**
+   * @brief Get xmax from tuple
+   * @param slot_id Slot ID
+   * @return Deleter/updater transaction ID
+   */
+  auto GetXmax(size_t slot_id) const -> txn_id_t;
+  
+  /**
+   * @brief Mark xmin as committed
+   * @param slot_id Slot ID
+   */
+  void SetXminCommitted(size_t slot_id);
+  
+  /**
+   * @brief Mark xmax as committed
+   * @param slot_id Slot ID
+   */
+  void SetXmaxCommitted(size_t slot_id);
+  
+  /**
+   * @brief Mark xmin as invalid (aborted)
+   * @param slot_id Slot ID
+   */
+  void SetXminInvalid(size_t slot_id);
+  
+  /**
+   * @brief Mark xmax as invalid (aborted)
+   * @param slot_id Slot ID
+   */
+  void SetXmaxInvalid(size_t slot_id);
+  
+  /**
+   * @brief Legacy tuple-header visibility approximation
+   * @param slot_id Slot ID
+   * @param txn_id Transaction ID
+   * @return true if visible
+   *
+   * Runtime MVCC reads must use TableHandle::ReadVersionAware() and
+   * VersionManager::ResolveVisibility(). Tuple headers do not contain snapshot
+   * timestamps or the undo history needed to make a correct runtime decision.
+   */
+  [[deprecated("Runtime MVCC reads must use VersionManager::ResolveVisibility")]]
+  auto IsTupleVisible(size_t slot_id, txn_id_t txn_id) const -> bool;
 
 protected:
   const TableHeader *tab_hdr_{nullptr};
@@ -70,6 +153,9 @@ public:
   void WriteSlot(size_t slot_id, const char *null_map, const char *data, bool update) override;
 
   void ReadSlot(size_t slot_id, char *null_map, char *data) override;
+  
+  auto GetRecordHeader(size_t slot_id) -> char* override;
+  auto GetRecordHeader(size_t slot_id) const -> const char* override;
 };
 
 /**
@@ -97,6 +183,9 @@ public:
   void ReadSlot(size_t slot_id, char *null_map, char *data) override;
 
   auto ReadChunk(const RecordSchema *chunk_schema) -> ChunkUptr override;
+  
+  auto GetRecordHeader(size_t slot_id) -> char* override;
+  auto GetRecordHeader(size_t slot_id) const -> const char* override;
 
 private:
   const RecordSchema        *schema_;

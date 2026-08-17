@@ -20,9 +20,9 @@ select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock w
 select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_quantity = 10 and s_i_id > 9864 order by s_i_id;
 select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt = 5 and s_i_id = 9864;
 select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt = 5 and s_i_id > 9864 order by s_i_id;
-select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_remote_cnt = 3 and s_ytd >= 4 and s_ytd <= 6 order by s_ytd;
-select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt = 30 and s_remote_cnt = 27 and s_ytd >= 4 and s_ytd <= 6 order by s_order_cnt, s_remote_cnt, s_ytd;
-select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt = 30 and s_remote_cnt = 27 and s_ytd >= 4 and s_ytd <= 6 order by s_order_cnt, s_remote_cnt, s_ytd;
-select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt > 30 and s_remote_cnt = 27 and s_ytd >= 4 and s_ytd <= 6 order by s_order_cnt, s_remote_cnt, s_ytd;
-select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt > 30 and s_remote_cnt > 27 and s_ytd >= 4 and s_ytd <= 6 order by s_order_cnt, s_remote_cnt, s_ytd;
-select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt > 30 and s_order_cnt < 50 and s_remote_cnt >= 10 order by s_order_cnt, s_remote_cnt, s_ytd;
+select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_remote_cnt = 3 and s_ytd >= 4 and s_ytd <= 6 order by s_ytd, s_i_id;
+select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt = 30 and s_remote_cnt = 27 and s_ytd >= 4 and s_ytd <= 6 order by s_order_cnt, s_remote_cnt, s_ytd, s_i_id;
+select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt = 30 and s_remote_cnt = 27 and s_ytd >= 4 and s_ytd <= 6 order by s_order_cnt, s_remote_cnt, s_ytd, s_i_id;
+select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt > 30 and s_remote_cnt = 27 and s_ytd >= 4 and s_ytd <= 6 order by s_order_cnt, s_remote_cnt, s_ytd, s_i_id;
+select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt > 30 and s_remote_cnt > 27 and s_ytd >= 4 and s_ytd <= 6 order by s_order_cnt, s_remote_cnt, s_ytd, s_i_id;
+select s_i_id, s_w_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt from stock where s_order_cnt > 30 and s_order_cnt < 50 and s_remote_cnt >= 10 order by s_order_cnt, s_remote_cnt, s_ytd, s_i_id;

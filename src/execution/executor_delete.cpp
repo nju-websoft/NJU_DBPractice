@@ -20,27 +20,23 @@
 //
 
 #include "executor_delete.h"
+#include "concurrency/lock_manager.h"
+#include "concurrency/version_manager.h"
+#include "concurrency/concurrency_protocol.h"
+#include "mvcc_write_coordinator.h"
 
 namespace njudb {
-;
-DeleteExecutor::DeleteExecutor(AbstractExecutorUptr child, TableHandle *tbl, std::list<IndexHandle *> indexes)
-    : AbstractExecutor(DML), child_(std::move(child)), tbl_(tbl), indexes_(std::move(indexes)), is_end_(false)
+DeleteExecutor::DeleteExecutor(AbstractExecutorUptr child, TableHandle *tbl, std::list<IndexHandle *> indexes, Context *context)
+    : AbstractExecutor(DML), child_(std::move(child)), tbl_(tbl), indexes_(std::move(indexes)), context_(context), is_end_(false)
 {
   std::vector<RTField> fields(1);
   fields[0]   = RTField{.field_ = {.field_name_ = "deleted", .field_size_ = sizeof(int), .field_type_ = TYPE_INT}};
   out_schema_ = std::make_unique<RecordSchema>(fields);
 }
 void DeleteExecutor::Init()
-{  // number of deleted records
-  int count = 0;
-
+{
   NJUDB_STUDENT_TODO(l2, t1);
-
-  std::vector<ValueSptr> values{ValueFactory::CreateIntValue(count)};
-  record_ = std::make_unique<Record>(out_schema_.get(), values, INVALID_RID);
 }
-
 void DeleteExecutor::Next() { is_end_ = true; }
-
 auto DeleteExecutor::IsEnd() const -> bool { return is_end_; }
 }  // namespace njudb

@@ -28,6 +28,7 @@
 #include <memory>
 
 #include "common/types.h"
+#include "concurrency/concurrency_protocol.h"
 
 namespace njudb {
 
@@ -71,8 +72,12 @@ struct TxnCommit : public TreeNode
 struct TxnAbort : public TreeNode
 {};
 
-struct TxnRollback : public TreeNode
-{};
+struct SetConcurrencyProtocol : public TreeNode
+{
+  ConcurrencyProtocol protocol_;
+
+  explicit SetConcurrencyProtocol(ConcurrencyProtocol protocol) : protocol_(protocol) {}
+};
 
 struct LogStaticCheckpoint : public TreeNode
 {};

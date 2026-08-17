@@ -27,16 +27,28 @@
 #include "net/net_controller.h"
 
 namespace njudb {
+
+// Forward declarations
+class VersionManager;
+class TimestampOracle;
+
 struct Context
 {
-  Transaction    *txn;
-  LogManager     *log_manager;
-  DatabaseHandle *db_;
-  NetController  *nt_ctl_;
-  int             client_fd_;
+  Transaction      *txn;
+  LogManager       *log_manager;
+  DatabaseHandle   *db_;
+  NetController    *nt_ctl_;
+  int               client_fd_;
+  LockManager      *lock_mgr_;
+  VersionManager   *version_mgr_;
+  TimestampOracle  *timestamp_oracle_;
+  ConcurrencyProtocol database_creation_protocol_{ConcurrencyProtocol::TWO_PHASE_LOCKING};
 
-  Context(Transaction *txn, LogManager *log_manager, DatabaseHandle *db_hdl, NetController *nt_ctl_, int client_fd)
-      : txn(txn), log_manager(log_manager), db_(db_hdl), nt_ctl_(nt_ctl_), client_fd_(client_fd)
+  Context(Transaction *txn, LogManager *log_manager, DatabaseHandle *db_hdl, NetController *nt_ctl_, int client_fd, 
+          LockManager *lock_mgr = nullptr, VersionManager *version_mgr = nullptr, 
+          TimestampOracle *timestamp_oracle = nullptr)
+      : txn(txn), log_manager(log_manager), db_(db_hdl), nt_ctl_(nt_ctl_), client_fd_(client_fd), 
+        lock_mgr_(lock_mgr), version_mgr_(version_mgr), timestamp_oracle_(timestamp_oracle)
   {}
 };
 }  // namespace njudb

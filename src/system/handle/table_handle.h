@@ -21,14 +21,23 @@
 
 #ifndef NJUDB_TABLE_HANDLE_H
 #define NJUDB_TABLE_HANDLE_H
+#include <functional>
+#include <mutex>
 #include <utility>
 
 #include "../../../common/micro.h"
 #include "common/page.h"
 #include "storage/storage.h"
 #include "page_handle.h"
+#include "concurrency/lock_manager.h"
+#include "log/log_record.h"
 
 namespace njudb {
+
+// Forward declarations for concurrency control
+class Transaction;
+class VersionManager;
+class LogManager;
 
 /**
  * Table descriptor in memory, including the column schema of the table
@@ -44,13 +53,14 @@ public:
   /**
    * Get a record by rid
    * 1. fetch the page handle by rid
-   * 2. check if there is a record in the slot using bitmap, if not, unpin the page and throw NJUDB_RECORD_MISS
-   * 3. read the record from the slot using page handle
+   * 2. check if there is a record in the slot, if not, unpin the page and throw NJUDB_RECORD_MISS
+   * 3. read the record from the slot
    * 4. unpin the page
    * @param rid
+   * @param txn Transaction context for concurrency control (nullptr for no transaction)
    * @return record
    */
-  auto GetRecord(const RID &rid) -> RecordUptr;
+  auto GetRecord(const RID &rid, Transaction *txn = nullptr) -> RecordUptr;
 
   /**
    * Get a chunk in page using record schema indicating which columns should be loaded
@@ -70,9 +80,17 @@ public:
    * next page id of the current page
    * 6. unpin the page
    * @param record
+   * @param txn Transaction context for concurrency control (nullptr for no transaction)
    * @return rid of the inserted record
    */
-  auto InsertRecord(const Record &record) -> RID;
+  auto InsertRecord(const Record &record, Transaction *txn = nullptr) -> RID;
+
+  /**
+   * Insert while invoking a coordinator callback after RID allocation but
+   * before the tuple becomes visible on the page.
+   */
+  auto InsertRecordBeforePageWrite(const Record &record, Transaction *txn,
+      const std::function<void(const RID &)> &before_page_write) -> RID;
 
   /**
    * Insert a record into the table given rid
@@ -81,8 +99,9 @@ public:
    * 3. do the rest of the steps in InsertRecord 3-6
    * @param rid
    * @param record
+   * @param txn Transaction context for concurrency control (nullptr for no transaction)
    */
-  void InsertRecord(const RID &rid, const Record &record);
+  void InsertRecord(const RID &rid, const Record &record, Transaction *txn = nullptr);
 
   /**
    * Delete the record by rid
@@ -92,8 +111,9 @@ public:
    * page id in the page header
    * 4. unpin the page
    * @param rid
+   * @param txn Transaction context for concurrency control (nullptr for no transaction)
    */
-  void DeleteRecord(const RID &rid);
+  void DeleteRecord(const RID &rid, Transaction *txn = nullptr);
 
   /**
    * Update the record by rid
@@ -102,8 +122,9 @@ public:
    * 3. unpin the page
    * @param rid
    * @param record
+   * @param txn Transaction context for concurrency control (nullptr for no transaction)
    */
-  void UpdateRecord(const RID &rid, const Record &record);
+  void UpdateRecord(const RID &rid, const Record &record, Transaction *txn = nullptr);
 
   [[nodiscard]] auto GetTableId() const -> table_id_t;
 
@@ -113,6 +134,8 @@ public:
 
   [[nodiscard]] auto GetTableName() const -> std::string;
 
+  [[nodiscard]] auto GetTableFileName() const -> std::string;
+
   [[nodiscard]] auto GetStorageModel() const -> StorageModel;
 
   [[nodiscard]] auto GetFirstRID() -> RID;
@@ -121,7 +144,128 @@ public:
 
   [[nodiscard]] auto HasField(const std::string &field_name) const -> bool;
 
+  /**
+   * @brief Set lock manager for this table handle
+   * @param lock_manager Lock manager instance
+   */
+  void SetLockManager(LockManager *lock_manager) {
+    lock_manager_ = lock_manager;
+  }
+  
+  /**
+   * @brief Set version manager for MVCC support
+   * @param version_manager Version manager instance
+   */
+  void SetVersionManager(VersionManager *version_manager) {
+    version_manager_ = version_manager;
+  }
+  
+  /**
+   * @brief Set log manager for WAL support
+   * @param log_manager Log manager instance
+   */
+  void SetLogManager(LogManager *log_manager) {
+    log_manager_ = log_manager;
+  }
+  
+  /**
+   * @brief Get log manager (for rollback CLR generation)
+   * @return Log manager instance
+   */
+  auto GetLogManager() const -> LogManager* {
+    return log_manager_;
+  }
+  
+  //===--------------------------------------------------------------------===//
+  // Recovery Support (Lab06 Phase 4)
+  //===--------------------------------------------------------------------===//
+  
+  /**
+   * Apply one UPDATE/CLR operation atomically on a single fetched page.
+   * The operation updates tuple contents, bitmap, record count, free-list
+   * metadata, and pageLSN before releasing the page.
+   */
+  auto ApplyRecoveryOperation(page_id_t page_id, uint32_t slot_id, DataOperationType operation,
+                              const std::vector<char> &image, lsn_t lsn,
+                              bool force_delete_if_visible = false) -> bool;
+
 private:
+  /**
+   * @brief Read record directly from page (no locking, no version check)
+   * @param rid Record identifier
+   * @return Record pointer
+   * 
+   * Internal helper method used by protocol-specific implementations
+   */
+  auto ReadDirectFromPage(const RID &rid) -> RecordUptr;
+
+  /**
+   * @brief Read the version visible to a transaction, falling back to the page
+   * @param rid Record identifier
+   * @param txn Transaction whose read timestamp determines visibility
+   * @return Visible record
+   *
+   * This helper is only used by MVCC transactions. A database run uses one
+   * concurrency protocol, so 2PL transactions never inspect MVCC versions.
+   */
+  auto ReadVersionAware(const RID &rid, Transaction *txn) -> RecordUptr;
+  
+  //===--------------------------------------------------------------------===//
+  // WAL Integration (Protocol-Agnostic)
+  //===--------------------------------------------------------------------===//
+  
+  /**
+   * @brief Log page modification for WAL (protocol-agnostic)
+   * @param txn Transaction performing the modification
+   * @param rid Record identifier being modified
+   * @param old_data Previous data (nullptr for INSERT)
+   * @param new_data New data (nullptr for DELETE)
+   * @param length Data length
+   * 
+   * This method doesn't check txn->GetProtocol() because logging is identical!
+   * Both 2PL and MVCC log physical page changes the same way.
+   */
+  void LogPageModification(Transaction *txn, const RID &rid,
+                          const char *old_data, const char *new_data,
+                          uint32_t length);
+  
+  //===--------------------------------------------------------------------===//
+  // Helper Methods for Lock Acquisition (2PL)
+  //===--------------------------------------------------------------------===//
+  
+  /**
+   * @brief Acquire table-level lock for 2PL
+   * @param txn Transaction requesting lock
+   * @param lock_mode Lock mode to acquire
+   * @return true if successful, false if deadlock
+   * @throws std::exception if deadlock detected
+   */
+  auto AcquireTableLock(Transaction *txn, LockMode lock_mode) -> bool;
+  
+  /**
+   * @brief Acquire tuple-level lock for 2PL
+   * @param txn Transaction requesting lock
+   * @param lock_mode Lock mode to acquire
+   * @param rid Record identifier
+   * @return true if successful, false if deadlock
+   * @throws std::exception if deadlock detected
+   */
+  auto AcquireTupleLock(Transaction *txn, LockMode lock_mode, const RID &rid) -> bool;
+  
+  /**
+   * @brief Check if transaction should acquire read locks based on isolation level
+   * @param txn Transaction context
+   * @return true if should acquire S locks for reads
+   */
+  auto ShouldAcquireReadLock(Transaction *txn) -> bool;
+  
+  /**
+   * @brief Release tuple lock immediately (for READ_COMMITTED)
+   * @param txn Transaction context
+   * @param rid Record identifier
+   */
+  void ReleaseTupleLockImmediately(Transaction *txn, const RID &rid);
+  
   /**
    * Fetch the page handle by page id
    * @param page_id
@@ -148,6 +292,12 @@ private:
    */
   auto WrapPageHandle(Page *page) -> PageHandleUptr;
 
+  auto IsPageInFreeList(page_id_t page_id) -> bool;
+
+  void AddPageToFreeListIfMissing(page_id_t page_id, Page *page);
+
+  void RemovePageFromFreeList(page_id_t page_id, Page *target_page);
+
 private:
   TableHeader tab_hdr_;
   table_id_t  table_id_;
@@ -159,7 +309,7 @@ private:
   StorageModel     storage_model_;
 
   /// field below is available when storage model is pax
-  // field offsets is the offset of each field stored in page
+  /// field offsets is the offset of each field stored in page
   // pax model is stored like below, field_offset can be calculated by Record Schema
   // | page header | bitmap |
   // slot memery begins
@@ -169,6 +319,12 @@ private:
   // ...
   // | field_m_1, field_m_2, ... , field_m_n |
   std::vector<size_t> field_offset_;
+
+  std::mutex record_latch_;
+
+  LockManager *lock_manager_{nullptr};     // Lock manager for concurrency control
+  VersionManager *version_manager_{nullptr}; // Version manager for MVCC
+  LogManager *log_manager_{nullptr};       // Log manager for WAL
 };
 
 DEFINE_UNIQUE_PTR(TableHandle);

@@ -33,7 +33,7 @@ using namespace ast;
 
 // keywords
 %token EXPLAIN SHOW TABLES CREATE TABLE DROP DESC INSERT INTO VALUES DELETE FROM OPEN DATABASE ON ASC AS ORDER GROUP BY SUM AVG MAX MIN COUNT IN STATIC_CHECKPOINT USING LOOP MERGE INDEX_BPTREE HASH_KWD
-WHERE HAVING UPDATE SET SELECT INT CHAR FLOAT BOOL INDEX AND JOIN INNER OUTER EXIT HELP TXN_BEGIN TXN_COMMIT TXN_ABORT TXN_ROLLBACK ORDER_BY ENABLE_NESTLOOP ENABLE_SORTMERGE STORAGE PAX NARY LIMIT
+WHERE HAVING UPDATE SET SELECT INT CHAR FLOAT BOOL INDEX AND JOIN INNER OUTER EXIT HELP TXN_BEGIN TXN_COMMIT TXN_ABORT ORDER_BY ENABLE_NESTLOOP ENABLE_SORTMERGE STORAGE PAX NARY LIMIT CONCURRENCY_PROTOCOL MVCC TWO_PL
 // non-keywords
 %token LEQ NEQ GEQ T_EOF
 
@@ -44,7 +44,7 @@ WHERE HAVING UPDATE SET SELECT INT CHAR FLOAT BOOL INDEX AND JOIN INNER OUTER EX
 %token <sv_bool> VALUE_BOOL
 
 // specify types for non-terminal symbol
-%type <sv_node> stmt dbStmt ddl dml txnStmt indexStmt logStmt table
+%type <sv_node> stmt dbStmt ddl dml txnStmt indexStmt logStmt systemStmt table
 %type <sv_sel> selectStmt
 %type <sv_field> field
 %type <sv_fields> fieldList
@@ -107,6 +107,7 @@ stmt:
     |   txnStmt
     |   indexStmt
     |   logStmt
+    |   systemStmt
     |   /*empty*/ { $$ = nullptr; }
     ;
 
@@ -123,10 +124,6 @@ txnStmt:
     {
         $$ = std::make_shared<TxnAbort>();
     }
-    | TXN_ROLLBACK
-    {
-        $$ = std::make_shared<TxnRollback>();
-    }
     ;
 
 logStmt:
@@ -134,6 +131,18 @@ logStmt:
     {
         $$ = std::make_shared<LogStaticCheckpoint>();
     }
+    ;
+
+systemStmt:
+        SET CONCURRENCY_PROTOCOL '=' MVCC
+    {
+        $$ = std::make_shared<SetConcurrencyProtocol>(ConcurrencyProtocol::MVCC);
+    }
+    |   SET CONCURRENCY_PROTOCOL '=' TWO_PL
+    {
+        $$ = std::make_shared<SetConcurrencyProtocol>(ConcurrencyProtocol::TWO_PHASE_LOCKING);
+    }
+    ;
 
 dbStmt:
         SHOW TABLES

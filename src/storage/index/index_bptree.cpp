@@ -177,7 +177,7 @@ void BPTreeLeafPage::MoveHalfTo(BPTreeLeafPage *recipient) { NJUDB_STUDENT_TODO(
 
 void BPTreeLeafPage::CopyNFrom(const char *keys, const RID *values, int size) { NJUDB_STUDENT_TODO(l4, t1); }
 
-auto BPTreeLeafPage::RemoveRecord(const Record &key, const RecordSchema *schema) -> int
+auto BPTreeLeafPage::RemoveAndDeleteRecord(const Record &key, const RecordSchema *schema) -> int
 {
   NJUDB_STUDENT_TODO(l4, t1);
   return -1;  // Key-RID pair not found

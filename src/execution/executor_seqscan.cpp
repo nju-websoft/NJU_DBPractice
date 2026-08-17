@@ -20,19 +20,39 @@
 //
 
 #include "executor_seqscan.h"
+#include "concurrency/lock_manager.h"
+#include "concurrency/version_manager.h"
+#include "concurrency/concurrency_protocol.h"
 
 namespace njudb {
 
-SeqScanExecutor::SeqScanExecutor(TableHandle *tab) : AbstractExecutor(Basic), tab_(tab) {}
+SeqScanExecutor::SeqScanExecutor(TableHandle *tab, Context *context) 
+    : AbstractExecutor(Basic), tab_(tab), context_(context) {}
 
 void SeqScanExecutor::Init()
 {
   rid_ = tab_->GetFirstRID();
-  
   NJUDB_STUDENT_TODO(l2, t1);
 }
 
 void SeqScanExecutor::Next() { NJUDB_STUDENT_TODO(l2, t1); }
+
+void SeqScanExecutor::LoadCurrentVisibleRecord()
+{
+  while (!IsEnd()) {
+    try {
+      record_ = tab_->GetRecord(rid_, context_ != nullptr ? context_->txn : nullptr);
+      return;
+    } catch (const NJUDBException_ &e) {
+      if (e.type_ != NJUDB_RECORD_MISS) {
+        throw;
+      }
+      rid_ = tab_->GetNextRID(rid_);
+    }
+  }
+
+  record_ = nullptr;
+}
 
 auto SeqScanExecutor::IsEnd() const -> bool { NJUDB_STUDENT_TODO(l2, t1); }
 

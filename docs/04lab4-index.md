@@ -574,9 +574,17 @@ Hash索引的迭代器需要按桶的顺序遍历所有键值对，由于Hash索
 **重要：请勿尝试抄袭代码或搬运他人实验结果，我们会严格审查，如被发现将取消大实验分数，情节严重可能会对课程总评产生影响!!!**
 
 3. 测试方法：
-本次实验基于lab01和lab02，如果未完成如上实验，请使用提供的gold-library。配置方法：cmake时请在项目根目录下执行以下命令：
+本次实验基于 Lab01 和 Lab02，如果未完成依赖实验，请使用提供的 gold library。修改 `configure.sh` 顶部配置：
+
 ```shell
-bash ./configure.sh --lab01-gold --lab02-gold --clean
+SOURCE_LABS="04"
+CLEAN_BUILD=true
+```
+
+然后在项目根目录执行：
+
+```shell
+./configure.sh
 ```
 编译`njudb`，`client`（`cd build && make -j`），`cd`到可执行文件目录下并启动两个终端分别执行：
    

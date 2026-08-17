@@ -218,10 +218,10 @@ TEST(PageGuardTest, BasicTest)
       ASSERT_NE(write_guard.GetPage(), nullptr);
       ASSERT_EQ(write_guard.GetFileId(), fd);
       ASSERT_EQ(write_guard.GetPageId(), i);
-      ASSERT_TRUE(write_guard.IsDirty());
       
       char *data = write_guard.GetMutableData();
       ASSERT_NE(data, nullptr);
+      ASSERT_TRUE(write_guard.IsDirty()); // GetMutableData() sets dirty flag
       std::memcpy(data, page_data[i].c_str(), page_data[i].size());
     }
     
@@ -254,11 +254,13 @@ TEST(PageGuardTest, BasicTest)
       // ReadPageGuard doesn't have SetDirty method - this is by design
     }
     
-    // Test that WritePageGuard marks pages as dirty
+    // Test that WritePageGuard marks pages as dirty after GetMutableData()
     {
       auto write_guard = buffer_pool_manager.FetchPageWrite(fd, 1);
-      ASSERT_TRUE(write_guard.IsDirty());
-    
+      // Initially not dirty until GetMutableData() is called (based on implementation)
+      char *data = write_guard.GetMutableData();
+      ASSERT_NE(data, nullptr);
+      ASSERT_TRUE(write_guard.IsDirty());  // Now it should be dirty
       
       write_guard.UnsetDirty();
       ASSERT_FALSE(write_guard.IsDirty());

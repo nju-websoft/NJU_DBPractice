@@ -95,6 +95,7 @@ public:
     fid_ = INVALID_FILE_ID;
     pid_ = INVALID_PAGE_ID;
     memset(data_, 0, PAGE_SIZE);
+    *reinterpret_cast<lsn_t *>(data_ + PAGE_LSN_OFFSET) = INVALID_LSN;
   }
 
 private:

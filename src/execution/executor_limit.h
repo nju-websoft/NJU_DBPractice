@@ -19,11 +19,6 @@
 // Created by ziqi on 2024/8/10.
 //
 
-/**
- * @brief Limit the number of records returned by the child executor
- *
- */
-
 #ifndef NJUDB_EXECUTOR_LIMIT_H
 #define NJUDB_EXECUTOR_LIMIT_H
 
@@ -45,10 +40,8 @@ public:
 
 private:
   AbstractExecutorUptr child_;
-  // max number of records to return
-  int limit_;
-  // current number of records returned
-  int count_;
+  int                  limit_;
+  int                  count_;
 };
 }  // namespace njudb
 

@@ -25,6 +25,7 @@
 
 #include "common/record.h"
 #include "common/condition.h"
+#include "concurrency/concurrency_protocol.h"
 
 #define TAB_STR(level) std::string(2 * level, ' ')
 
@@ -112,6 +113,9 @@ class ShowTablesPlan : public AbstractPlan
 {
   auto ToString(int level) const -> std::string override { return fmt::format("{}ShowTablesPlan", TAB_STR(level)); }
 };
+
+// Note: Transaction-related commands (BEGIN, COMMIT, ABORT, ROLLBACK, SET CONCURRENCY_PROTOCOL)
+// are handled directly by SystemManager, not through the plan/executor pipeline
 
 class CreateIndexPlan : public AbstractPlan
 {

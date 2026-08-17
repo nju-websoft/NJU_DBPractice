@@ -60,6 +60,9 @@ private:
 
   // Hash join specific methods
   void BuildHashTable();
+  void StartProbing();
+  [[nodiscard]] auto ComputeHash(const Record &record, bool is_left_side) const -> size_t;
+  [[nodiscard]] auto CheckJoinCondition(const Record &left_record, const Record &right_record) const -> bool;
 
 private:
   // Key schemas for extracting join keys (like sort-merge join)

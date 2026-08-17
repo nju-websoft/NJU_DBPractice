@@ -108,15 +108,15 @@ auto Planner::PlanAST(const std::shared_ptr<ast::TreeNode> &ast, DatabaseHandle 
   } else if (const auto sidx = std::dynamic_pointer_cast<ast::ShowIndexes>(ast)) {
     return std::make_shared<ShowIndexesPlan>(sidx->tab_name_);
   }
-  /// transaction related
+  /// transaction related - handled directly by SystemManager, not through plans
   if (const auto txnbeg = std::dynamic_pointer_cast<ast::TxnBegin>(ast)) {
-
+    return nullptr;  // SystemManager handles this
   } else if (const auto txncom = std::dynamic_pointer_cast<ast::TxnCommit>(ast)) {
-
+    return nullptr;  // SystemManager handles this
   } else if (const auto txnabt = std::dynamic_pointer_cast<ast::TxnAbort>(ast)) {
-
-  } else if (const auto txnback = std::dynamic_pointer_cast<ast::TxnRollback>(ast)) {
-
+    return nullptr;  // SystemManager handles this
+  } else if (const auto setprot = std::dynamic_pointer_cast<ast::SetConcurrencyProtocol>(ast)) {
+    return nullptr;  // SystemManager handles this
   } else {
     NJUDB_FATAL("Invalid AST node");
   }

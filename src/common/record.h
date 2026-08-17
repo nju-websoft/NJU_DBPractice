@@ -486,6 +486,16 @@ public:
   /// Get the RID of this record
   [[nodiscard]] auto GetRID() const -> RID { return rid_; }
 
+  /**
+   * @brief Create a deep copy of this record
+   * @return Unique pointer to the cloned record
+   * 
+   * Used by MVCC to copy tuple data into version chains
+   */
+  [[nodiscard]] auto Clone() const -> std::unique_ptr<Record> {
+    return std::make_unique<Record>(*this);
+  }
+
   [[nodiscard]] auto GetValueAt(size_t index) const -> ValueSptr
   {
     NJUDB_ASSERT(index < schema_->GetFieldCount(), "Index out of range");

@@ -51,6 +51,8 @@ PageGuard::PageGuard(PageGuard &&other) noexcept
       is_valid_(other.is_valid_)
 {
   other.is_valid_ = false;
+  other.page_ = nullptr;
+  other.buffer_pool_manager_ = nullptr;
 }
 
 PageGuard &PageGuard::operator=(PageGuard &&other) noexcept
@@ -68,6 +70,8 @@ PageGuard &PageGuard::operator=(PageGuard &&other) noexcept
     is_valid_            = other.is_valid_;
 
     other.is_valid_ = false;
+    other.page_ = nullptr;
+    other.buffer_pool_manager_ = nullptr;
   }
   return *this;
 }
@@ -89,6 +93,8 @@ void PageGuard::Drop()
   if (is_valid_ && buffer_pool_manager_ != nullptr && page_ != nullptr) {
     buffer_pool_manager_->UnpinPage(file_id_, page_id_, is_dirty_);
     is_valid_ = false;
+    page_ = nullptr;
+    buffer_pool_manager_ = nullptr;
   }
 }
 

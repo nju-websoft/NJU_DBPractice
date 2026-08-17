@@ -38,13 +38,21 @@ void TableManager::CreateTable(
   table_header.page_num_        = 1;
   table_header.first_free_page_ = INVALID_PAGE_ID;
   table_header.rec_num_         = 0;
-  table_header.rec_size_        = schema.GetRecordLength();
+  table_header.rec_size_        = schema.GetRecordLength();  // Pure data size
+  table_header.field_num_       = schema.GetFieldCount();
   table_header.nullmap_size_    = BITMAP_SIZE(schema.GetFieldCount());
-  // n = rec_per_page, PAGE_HDR_SIZE + BITMAP_SIZE(n) + n * (rec_size + nullmap_size) <= PAGE_SIZE
-  table_header.rec_per_page_ = (BITMAP_WIDTH * (PAGE_SIZE - PAGE_HEADER_SIZE - 1) + 1) /
-                               (1 + (table_header.rec_size_ + table_header.nullmap_size_) * BITMAP_WIDTH);
-  table_header.field_num_   = schema.GetFieldCount();
+  table_header.tuple_header_size_ = RecordHeader::GetHeaderSize(schema.GetFieldCount());
+  
+  // Calculate records per page with tuple headers
+  // PAGE_HDR_SIZE + BITMAP_SIZE(n) + n * (tuple_header_size + rec_size) <= PAGE_SIZE
+  // Solving for n:
+  // n * (tuple_header_size + rec_size + 1/BITMAP_WIDTH) <= PAGE_SIZE - PAGE_HEADER_SIZE
+  size_t rec_full_size = table_header.tuple_header_size_ + table_header.rec_size_;
+  table_header.rec_per_page_ = (BITMAP_WIDTH * (PAGE_SIZE - PAGE_HEADER_SIZE - 1)) /
+                               (rec_full_size * BITMAP_WIDTH + 1);
+  
   table_header.bitmap_size_ = BITMAP_SIZE(table_header.rec_per_page_);
+  
   // 3. write table header to the zero page
   WriteTableHeader(table_file, table_header, schema);
   // 4. close table file

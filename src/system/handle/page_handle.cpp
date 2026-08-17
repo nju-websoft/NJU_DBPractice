@@ -29,6 +29,7 @@ PageHandle::PageHandle(const TableHeader *tab_hdr, Page *page, char *bit_map, ch
 {
   NJUDB_ASSERT(BITMAP_SIZE(tab_hdr->rec_per_page_) == tab_hdr->bitmap_size_, "bitmap size not match");
 }
+
 void PageHandle::WriteSlot(size_t slot_id, const char *null_map, const char *data, bool update)
 {
   NJUDB_THROW(NJUDB_EXCEPTION_EMPTY, "");
@@ -36,6 +37,65 @@ void PageHandle::WriteSlot(size_t slot_id, const char *null_map, const char *dat
 
 void PageHandle::ReadSlot(size_t slot_id, char *null_map, char *data) { NJUDB_THROW(NJUDB_EXCEPTION_EMPTY, ""); }
 auto PageHandle::ReadChunk(const RecordSchema *chunk_schema) -> ChunkUptr { NJUDB_THROW(NJUDB_EXCEPTION_EMPTY, ""); }
+
+auto PageHandle::GetRecordHeader(size_t slot_id) -> char* {
+  NJUDB_THROW(NJUDB_EXCEPTION_EMPTY, "GetRecordHeader must be implemented by subclass");
+}
+
+auto PageHandle::GetRecordHeader(size_t slot_id) const -> const char* {
+  NJUDB_THROW(NJUDB_EXCEPTION_EMPTY, "GetRecordHeader must be implemented by subclass");
+}
+
+void PageHandle::SetXmin(size_t slot_id, txn_id_t xmin) {
+  char *header = GetRecordHeader(slot_id);
+  auto *hdr = reinterpret_cast<RecordHeader*>(header);
+  hdr->xmin_ = xmin;
+}
+
+void PageHandle::SetXmax(size_t slot_id, txn_id_t xmax) {
+  char *header = GetRecordHeader(slot_id);
+  auto *hdr = reinterpret_cast<RecordHeader*>(header);
+  hdr->xmax_ = xmax;
+}
+
+auto PageHandle::GetXmin(size_t slot_id) const -> txn_id_t {
+  const char *header = GetRecordHeader(slot_id);
+  auto *hdr = reinterpret_cast<const RecordHeader*>(header);
+  return hdr->xmin_;
+}
+
+auto PageHandle::GetXmax(size_t slot_id) const -> txn_id_t {
+  const char *header = GetRecordHeader(slot_id);
+  auto *hdr = reinterpret_cast<const RecordHeader*>(header);
+  return hdr->xmax_;
+}
+
+void PageHandle::SetXminCommitted(size_t slot_id) {
+  char *header = GetRecordHeader(slot_id);
+  RecordHeader::SetCommitted(header, true);
+}
+
+void PageHandle::SetXmaxCommitted(size_t slot_id) {
+  char *header = GetRecordHeader(slot_id);
+  RecordHeader::SetCommitted(header, false);
+}
+
+void PageHandle::SetXminInvalid(size_t slot_id) {
+  char *header = GetRecordHeader(slot_id);
+  RecordHeader::SetInvalid(header, true);
+}
+
+void PageHandle::SetXmaxInvalid(size_t slot_id) {
+  char *header = GetRecordHeader(slot_id);
+  RecordHeader::SetInvalid(header, false);
+}
+
+auto PageHandle::IsTupleVisible(size_t slot_id, txn_id_t txn_id) const -> bool {
+  const char *header = GetRecordHeader(slot_id);
+  // Kept only for recovery/diagnostic compatibility. Runtime MVCC reads use
+  // TableHandle::ReadVersionAware() and the undo-version chain.
+  return RecordHeader::IsVisible(header, txn_id);
+}
 
 NAryPageHandle::NAryPageHandle(const TableHeader *tab_hdr, Page *page)
     : PageHandle(
@@ -46,19 +106,51 @@ void NAryPageHandle::WriteSlot(size_t slot_id, const char *null_map, const char 
 {
   NJUDB_ASSERT(slot_id < tab_hdr_->rec_per_page_, "slot_id out of range");
   NJUDB_ASSERT(BitMap::GetBit(bitmap_, slot_id) == update, fmt::format("update: {}", update));
-  // a record consists of null map and data
-  size_t rec_full_size = tab_hdr_->nullmap_size_ + tab_hdr_->rec_size_;
-  memcpy(slots_mem_ + slot_id * rec_full_size, null_map, tab_hdr_->nullmap_size_);
-  memcpy(slots_mem_ + slot_id * rec_full_size + tab_hdr_->nullmap_size_, data, tab_hdr_->rec_size_);
+  
+  // Calculate slot offset: each slot contains [RecordHeader + Data]
+  size_t rec_full_size = tab_hdr_->tuple_header_size_ + tab_hdr_->rec_size_;
+  char *slot_ptr = slots_mem_ + slot_id * rec_full_size;
+  
+  if (!update) {
+    // New tuple: initialize header with INVALID_TXN_ID (will be set by caller)
+    RecordHeader::Initialize(slot_ptr, INVALID_TXN_ID, tab_hdr_->field_num_);
+  }
+  
+  // Copy nullmap into tuple header
+  char *header_nullmap = RecordHeader::GetNullMapPtr(slot_ptr);
+  memcpy(header_nullmap, null_map, tab_hdr_->nullmap_size_);
+  
+  // Copy data after tuple header
+  memcpy(slot_ptr + tab_hdr_->tuple_header_size_, data, tab_hdr_->rec_size_);
 }
 
 void NAryPageHandle::ReadSlot(size_t slot_id, char *null_map, char *data)
 {
   NJUDB_ASSERT(slot_id < tab_hdr_->rec_per_page_, "slot_id out of range");
   NJUDB_ASSERT(BitMap::GetBit(bitmap_, slot_id) == true, "slot is empty");
-  size_t rec_full_size = tab_hdr_->nullmap_size_ + tab_hdr_->rec_size_;
-  memcpy(null_map, slots_mem_ + slot_id * rec_full_size, tab_hdr_->nullmap_size_);
-  memcpy(data, slots_mem_ + slot_id * rec_full_size + tab_hdr_->nullmap_size_, tab_hdr_->rec_size_);
+  
+  // Calculate slot offset
+  size_t rec_full_size = tab_hdr_->tuple_header_size_ + tab_hdr_->rec_size_;
+  const char *slot_ptr = slots_mem_ + slot_id * rec_full_size;
+  
+  // Read nullmap from tuple header
+  const char *header_nullmap = RecordHeader::GetNullMapPtr(slot_ptr);
+  memcpy(null_map, header_nullmap, tab_hdr_->nullmap_size_);
+  
+  // Read data after tuple header
+  memcpy(data, slot_ptr + tab_hdr_->tuple_header_size_, tab_hdr_->rec_size_);
+}
+
+auto NAryPageHandle::GetRecordHeader(size_t slot_id) -> char* {
+  NJUDB_ASSERT(slot_id < tab_hdr_->rec_per_page_, "slot_id out of range");
+  size_t rec_full_size = tab_hdr_->tuple_header_size_ + tab_hdr_->rec_size_;
+  return slots_mem_ + slot_id * rec_full_size;
+}
+
+auto NAryPageHandle::GetRecordHeader(size_t slot_id) const -> const char* {
+  NJUDB_ASSERT(slot_id < tab_hdr_->rec_per_page_, "slot_id out of range");
+  size_t rec_full_size = tab_hdr_->tuple_header_size_ + tab_hdr_->rec_size_;
+  return slots_mem_ + slot_id * rec_full_size;
 }
 
 PAXPageHandle::PAXPageHandle(
@@ -71,25 +163,40 @@ PAXPageHandle::PAXPageHandle(
 
 PAXPageHandle::~PAXPageHandle() = default;
 
-// slot memery
-// | nullmap_1, nullmap_2, ... , nullmap_n|
-// | field_1_1, field_1_2, ... , field_1_n |
-// | field_2_1, field_2_2, ... , field_2_n |
+// PAX slot memory layout with tuple headers:
+// | RecordHeader_1 | RecordHeader_2 | ... | RecordHeader_n |
+// | field_1_1 | field_1_2 | ... | field_1_n |
+// | field_2_1 | field_2_2 | ... | field_2_n |
 // ...
-// | field_m_1, field_m_2, ... , field_m_n |
+// | field_m_1 | field_m_2 | ... | field_m_n |
 void PAXPageHandle::WriteSlot(size_t slot_id, const char *null_map, const char *data, bool update)
 {
   NJUDB_STUDENT_TODO(l1, f2);
 }
 
-void PAXPageHandle::ReadSlot(size_t slot_id, char *null_map, char *data) { NJUDB_STUDENT_TODO(l1, f2); }
+void PAXPageHandle::ReadSlot(size_t slot_id, char *null_map, char *data)
+{
+  NJUDB_STUDENT_TODO(l1, f2);
+}
 
 auto PAXPageHandle::ReadChunk(const RecordSchema *chunk_schema) -> ChunkUptr
 {
   std::vector<ArrayValueSptr> col_arrs;
   col_arrs.reserve(chunk_schema->GetFieldCount());
-  // read data each field and construct ArrayValue
   NJUDB_STUDENT_TODO(l1, f2);
   return std::make_unique<Chunk>(chunk_schema, std::move(col_arrs));
 }
+
+auto PAXPageHandle::GetRecordHeader(size_t slot_id) -> char* {
+  NJUDB_ASSERT(slot_id < tab_hdr_->rec_per_page_, "slot_id out of range");
+  // Headers are at the beginning of slots_mem in PAX layout
+  return slots_mem_ + slot_id * tab_hdr_->tuple_header_size_;
+}
+
+auto PAXPageHandle::GetRecordHeader(size_t slot_id) const -> const char* {
+  NJUDB_ASSERT(slot_id < tab_hdr_->rec_per_page_, "slot_id out of range");
+  // Headers are at the beginning of slots_mem in PAX layout
+  return slots_mem_ + slot_id * tab_hdr_->tuple_header_size_;
+}
+
 }  // namespace njudb

@@ -1,2 +1,10 @@
-add_library(log SHARED log_manager.cpp recovery.cpp)
-target_link_libraries(log storage_index fmt::fmt)
+njudb_should_compile_from_source(COMPILE_LOG_FROM_SOURCE "06")
+if(COMPILE_LOG_FROM_SOURCE)
+  add_library(log SHARED log_record.cpp log_manager.cpp checkpoint_manager.cpp recovery.cpp)
+  target_link_libraries(log storage_index fmt::fmt)
+
+  # Allow undefined symbols for TxnManager and BufferPoolManager (resolved at runtime)
+  if(APPLE)
+    target_link_options(log PRIVATE -undefined dynamic_lookup)
+  endif()
+endif()

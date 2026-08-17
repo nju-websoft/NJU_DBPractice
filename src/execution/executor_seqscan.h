@@ -19,21 +19,17 @@
 // Created by ziqi on 2024/8/4.
 //
 
-/**
- * @brief Iterate over all records in the table, check TableHandle for more details
- * 
- */
-
 #ifndef NJUDB_EXECUTOR_SEQSCAN_H
 #define NJUDB_EXECUTOR_SEQSCAN_H
 #include "executor_abstract.h"
 #include "system/handle/table_handle.h"
+#include "system/context.h"
 
 namespace njudb {
 class SeqScanExecutor : public AbstractExecutor
 {
 public:
-  explicit SeqScanExecutor(TableHandle *tab);
+  explicit SeqScanExecutor(TableHandle *tab, Context *context = nullptr);
 
   void Init() override;
 
@@ -44,7 +40,10 @@ public:
   [[nodiscard]] auto GetOutSchema() const -> const RecordSchema * override;
 
 private:
+  void LoadCurrentVisibleRecord();
+
   TableHandle *tab_;
+  Context     *context_;
   RID          rid_;
 };
 }  // namespace njudb

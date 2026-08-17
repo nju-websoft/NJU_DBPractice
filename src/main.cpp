@@ -20,7 +20,6 @@
 //
 
 #include "storage/storage.h"
-#include <iostream>
 #include "system/system.h"
 
 int main()

@@ -20,11 +20,6 @@
 // Created by ziqi on 2024/8/4.
 //
 
-/**
- * @brief abstract class for join executor
- *
- */
-
 #ifndef NJUDB_EXECUTOR_JOIN_H
 #define NJUDB_EXECUTOR_JOIN_H
 

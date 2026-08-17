@@ -32,7 +32,7 @@ class Executor
 public:
   Executor() = default;
 
-  auto Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHandle *db) -> AbstractExecutorUptr;
+  auto Translate(const std::shared_ptr<AbstractPlan> &plan, DatabaseHandle *db, Context *ctx = nullptr) -> AbstractExecutorUptr;
 
   void Execute(const AbstractExecutorUptr &executor, Context *ctx);
 };

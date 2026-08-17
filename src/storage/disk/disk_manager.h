@@ -62,6 +62,8 @@ public:
    */
   void CloseFile(file_id_t fid);
 
+  void SyncFile(file_id_t fid);
+
   void WritePage(file_id_t fid, page_id_t page_id, const char *data);
 
   void ReadPage(file_id_t fid, page_id_t page_id, char *data);

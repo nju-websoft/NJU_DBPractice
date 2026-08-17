@@ -1,3 +1,11 @@
+# Lab05 Bonus: MVCC write coordination remains at its original source path but
+# is built independently from Lab02 so either lab can use source or gold.
+njudb_should_compile_from_source(COMPILE_MVCC_EXECUTION_FROM_SOURCE "05")
+if(COMPILE_MVCC_EXECUTION_FROM_SOURCE)
+    add_library(mvcc_execution SHARED mvcc_write_coordinator.cpp)
+    target_link_libraries(mvcc_execution concurrency handle_db)
+endif()
+
 # Lab02: Executor Basic
 njudb_should_compile_from_source(COMPILE_BASIC_FROM_SOURCE "02")
 if(COMPILE_BASIC_FROM_SOURCE)
@@ -14,7 +22,7 @@ if(COMPILE_BASIC_FROM_SOURCE)
     )
 
     add_library(executor_basic SHARED ${BASIC_SOURCES})
-    target_link_libraries(executor_basic handle_db)
+    target_link_libraries(executor_basic handle_db mvcc_execution)
 endif()
 
 # Lab03: Executor Analysis
@@ -47,7 +55,7 @@ endif()
 add_library(execution SHARED executor.cpp)
 
 # Always link to basic dependencies first
-target_link_libraries(execution server_net expr handle_db)
+target_link_libraries(execution server_net expr handle_db mvcc_execution)
 
 # Determine which executor libraries are available and link appropriately
 # This avoids circular dependency issues by not mixing gold and source library paths

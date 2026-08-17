@@ -24,6 +24,22 @@ option(USE_GOLD_LAB01 "Use gold library for Lab01 (Buffer Pool)" OFF)
 option(USE_GOLD_LAB02 "Use gold library for Lab02 (Executor Basic)" OFF)
 option(USE_GOLD_LAB03 "Use gold library for Lab03 (Executor Analysis)" OFF)
 option(USE_GOLD_LAB04 "Use gold library for Lab04 (Executor Index & Storage Index)" OFF)
+option(USE_GOLD_LAB05 "Use gold libraries for Lab05 (Concurrency and MVCC Bonus)" OFF)
+option(USE_GOLD_LAB06 "Use gold libraries for Lab06 (WAL and Recovery)" OFF)
+option(ENABLE_LAB05_MVCC "Enable the Lab05 MVCC bonus in the NJUDB server" OFF)
+option(ENABLE_LAB06_WAL "Enable Lab06 WAL, checkpoint and recovery in the NJUDB server" OFF)
+
+if(ENABLE_LAB05_MVCC)
+    add_compile_definitions(NJUDB_ENABLE_LAB05_MVCC=1)
+else()
+    add_compile_definitions(NJUDB_ENABLE_LAB05_MVCC=0)
+endif()
+
+if(ENABLE_LAB06_WAL)
+    add_compile_definitions(NJUDB_ENABLE_LAB06_WAL=1)
+else()
+    add_compile_definitions(NJUDB_ENABLE_LAB06_WAL=0)
+endif()
 
 # Detect platform
 if(APPLE)
@@ -39,13 +55,15 @@ string(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE_LOWER)
 set(LIB_GOLD_PATH "${CMAKE_SOURCE_DIR}/lib-gold/${LIB_GOLD_PLATFORM}/${BUILD_TYPE_LOWER}")
 
 # Check if gold libraries exist when needed
-if(USE_GOLD_LAB01 OR USE_GOLD_LAB02 OR USE_GOLD_LAB03 OR USE_GOLD_LAB04)
+if(USE_GOLD_LAB01 OR USE_GOLD_LAB02 OR USE_GOLD_LAB03 OR USE_GOLD_LAB04 OR USE_GOLD_LAB05 OR USE_GOLD_LAB06)
     if(NOT EXISTS ${LIB_GOLD_PATH})
         message(FATAL_ERROR "Gold library path does not exist: ${LIB_GOLD_PATH}")
     endif()
     
     # Add gold library path to RPATH for runtime library resolution
-    # Prioritize locally built libraries by putting CMAKE_LIBRARY_OUTPUT_DIRECTORY first
+    # Prefer a target compiled in this build. Gold libraries may themselves
+    # depend on another lab's logical target name; putting the gold directory
+    # first would silently replace the source lab under test at load time.
     set(CMAKE_INSTALL_RPATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY};${LIB_GOLD_PATH}")
     set(CMAKE_BUILD_RPATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY};${LIB_GOLD_PATH}")
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -61,10 +79,15 @@ message(STATUS "  Lab01 (Buffer Pool): ${USE_GOLD_LAB01}")
 message(STATUS "  Lab02 (Executor Basic): ${USE_GOLD_LAB02}")
 message(STATUS "  Lab03 (Executor Analysis): ${USE_GOLD_LAB03}")
 message(STATUS "  Lab04 (Executor Index & Storage Index): ${USE_GOLD_LAB04}")
+message(STATUS "  Lab05 (Concurrency and MVCC Bonus): ${USE_GOLD_LAB05}")
+message(STATUS "  Lab06 (WAL and Recovery): ${USE_GOLD_LAB06}")
+message(STATUS "  Lab05 MVCC Bonus: ${ENABLE_LAB05_MVCC}")
+message(STATUS "  Lab06 WAL/Recovery: ${ENABLE_LAB06_WAL}")
 message(STATUS "  Platform: ${LIB_GOLD_PLATFORM}")
 message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
-if(USE_GOLD_LAB01 OR USE_GOLD_LAB02 OR USE_GOLD_LAB03 OR USE_GOLD_LAB04)
+if(USE_GOLD_LAB01 OR USE_GOLD_LAB02 OR USE_GOLD_LAB03 OR USE_GOLD_LAB04 OR USE_GOLD_LAB05 OR USE_GOLD_LAB06)
     message(STATUS "  Gold Library Path: ${LIB_GOLD_PATH}")
+    message(STATUS "  Note: RPATH warnings about circular dependencies are generally safe and can be ignored")
 endif()
 
 # Include the lab configuration helper

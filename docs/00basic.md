@@ -213,10 +213,11 @@ NJUDB是为南京大学《数据库概论》设计的课程实验，总共包含
 * 实验二：执行器——数据库中的“增删改”，以及基本算子的实现。
 * 实验三：执行器——数据库中的“查”，数据分析相关算子（JOIN、AGGREGATE等）的实现。
 * 实验四：索引管理器以及B+树索引的实现。
-* 实验五（开发中）：事务管理器，锁管理器以及并发控制。
-* 实验六（开发中）：日志管理与故障恢复。
+* 实验五：事务管理器、锁管理器与 SS2PL 并发控制；MVCC 为 Bonus。
+* 实验六：预写日志、检查点与 ARIES 风格故障恢复。
 
-2025秋季学期只需要完成实验一与实验四。
+各学期的必做范围以当学期课程通知为准。Lab05 和 Lab06 的实现要求及完整测试入口分别见
+`docs/05lab5-concurrency.md` 与 `docs/06lab6-logging-recovery.md`。
 
 NJUDB的服务端系统架构如下图所示（位于`njudb_root/src`文件夹下）：
 
@@ -402,9 +403,17 @@ issue或者课程qq群积极反馈，对于能提供完备bug复现方法或者�
 
 # 附录：IDE配置
 ## 题目选择
-NJUDB支持从任意题目开始作答，例如你只希望完成lab04，请使用如下命令配置项目
+NJUDB支持从任意题目开始作答。例如只完成 Lab04，请修改 `configure.sh` 顶部配置：
+
 ```shell
-bash ./configure.sh --lab01-gold --lab02-gold --clean
+SOURCE_LABS="04"
+CLEAN_BUILD=true
+```
+
+然后运行：
+
+```shell
+./configure.sh
 ```
 关于选择性构建的更多信息，请参考[configuration guide](./00lab_configuration_guide.md)。
 如果你的电脑无法链接的共享库，请及时与助教取得联系。

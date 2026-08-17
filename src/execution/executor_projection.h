@@ -19,11 +19,6 @@
 // Created by ziqi on 2024/8/4.
 //
 
-/**
- * @brief Project the records returned by the child executor, keep the columns and their relative orders in the projection schema
- * Hint: use Record(proj_schema, child_rec) to do the projection
- */
-
 #ifndef NJUDB_EXECUTOR_PROJECTION_H
 #define NJUDB_EXECUTOR_PROJECTION_H
 

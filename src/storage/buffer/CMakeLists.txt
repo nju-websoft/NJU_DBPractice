@@ -11,4 +11,9 @@ if(COMPILE_FROM_SOURCE)
 
     add_library(storage_buffer SHARED ${SOURCES})
     target_link_libraries(storage_buffer storage_disk fmt::fmt)
+    
+    # Allow undefined symbols for LogManager (resolved at runtime by libraries that link both)
+    if(APPLE)
+        target_link_options(storage_buffer PRIVATE "-undefined" "dynamic_lookup")
+    endif()
 endif()

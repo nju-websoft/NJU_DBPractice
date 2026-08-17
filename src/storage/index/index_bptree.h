@@ -102,7 +102,6 @@ struct BPTreeInternalPage : public BPTreePage
   void CopyNFrom(const char *keys, const page_id_t *values, int size, BufferPoolManager *buffer_pool_manager);
 
 private:
-  // Helpers to locate the position of children and keys inside the page.
   auto GetChildrenArray() -> page_id_t * { return reinterpret_cast<page_id_t *>(data_); }
   auto GetKeysArray() -> char * { return data_ + (max_size_ + 1) * sizeof(page_id_t); }
   auto GetChildrenArray() const -> const page_id_t * { return reinterpret_cast<const page_id_t *>(data_); }
@@ -131,7 +130,7 @@ struct BPTreeLeafPage : public BPTreePage
   auto Insert(const Record &key, const RID &value, const RecordSchema *schema) -> int;
   void MoveHalfTo(BPTreeLeafPage *recipient);
   void MoveAllTo(BPTreeLeafPage *recipient);
-  auto RemoveRecord(const Record &key, const RecordSchema *schema) -> int;
+  auto RemoveAndDeleteRecord(const Record &key, const RecordSchema *schema) -> int;
   void CopyNFrom(const char *keys, const RID *values, int size);
 
 private:
@@ -212,6 +211,7 @@ private:
   void Redistribute(BPTreePage *neighbor_node, BPTreePage *node, int index);
   auto AdjustRoot(BPTreePage *old_root_node) -> bool;
   void ClearPage(page_id_t page_id);
+  auto CompareKeys(const Record &key1, const Record &key2) const -> int;
 
   // Constants
   static constexpr int LEAF_PAGE_SIZE     = PAGE_SIZE;

@@ -39,7 +39,17 @@ public:
 
   [[nodiscard]] inline auto IsDirty() const -> bool { return is_dirty_; }
 
-  inline void SetDirty(bool dirty) { is_dirty_ = dirty; }
+  inline void SetDirty(bool dirty)
+  {
+    if (dirty && (!is_dirty_ || rec_lsn_ == INVALID_LSN)) {
+      rec_lsn_ = page_.GetPageId() == FILE_HEADER_PAGE_ID ? INVALID_LSN : page_.GetLsn();
+    } else if (!dirty) {
+      rec_lsn_ = INVALID_LSN;
+    }
+    is_dirty_ = dirty;
+  }
+
+  [[nodiscard]] inline auto GetRecLSN() const -> lsn_t { return rec_lsn_; }
 
   [[nodiscard]] inline auto GetPinCount() const -> int { return pin_count_; }
 
@@ -55,12 +65,14 @@ public:
   {
     page_.Clear();
     is_dirty_  = false;
+    rec_lsn_   = INVALID_LSN;
     pin_count_ = 0;
   }
 
 private:
   Page page_{};
   bool is_dirty_{false};
+  lsn_t rec_lsn_{INVALID_LSN};
   int  pin_count_{0};
 };
 

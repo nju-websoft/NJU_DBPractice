@@ -38,9 +38,16 @@ public:
   void CreateIndex(
       const std::string &db_name, const std::string &index_name, const std::string &table_name, const RecordSchema &schema, IndexType index_type);
 
+  void CreateIndexFile(const std::string &db_name, const std::string &physical_index_name,
+      const std::string &logical_index_name, const std::string &table_name, const RecordSchema &schema,
+      IndexType index_type);
+
   void DropIndex(const std::string &db_name, const std::string &index_name, const std::string &table_name);
 
   auto OpenIndex(const std::string &db_name, const std::string &index_name, const std::string table_name, IndexType index_type) -> IndexHandleUptr;
+
+  auto OpenIndexFile(const std::string &db_name, const std::string &physical_index_name,
+      const std::string &logical_index_name, const std::string &table_name, IndexType index_type) -> IndexHandleUptr;
 
   void CloseIndex(const IndexHandle &index_handle);
 
@@ -51,9 +58,6 @@ public:
   
   // Metadata management
   auto ListIndexes(const std::string &db_name) -> std::vector<std::string>;
-
-  // Bulk operations
-  void RebuildIndex(const std::string &db_name, const std::string &index_name);
 
 private:
   DiskManager       *disk_manager_;

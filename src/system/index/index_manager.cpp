@@ -28,8 +28,15 @@ namespace njudb {
 void IndexManager::CreateIndex(const std::string &db_name, const std::string &index_name, const std::string &table_name,
     const RecordSchema &schema, IndexType index_type)
 {
+  CreateIndexFile(db_name, index_name, index_name, table_name, schema, index_type);
+}
+
+void IndexManager::CreateIndexFile(const std::string &db_name, const std::string &physical_index_name,
+    const std::string &logical_index_name, const std::string &table_name, const RecordSchema &schema,
+    IndexType index_type)
+{
   // Generate index name based on table and columns
-  auto index_file_name = table_name + "_" + index_name;
+  auto index_file_name = table_name + "_" + physical_index_name;
 
   // Create the index file
   auto full_path = FILE_NAME(db_name, index_file_name, IDX_SUFFIX);
@@ -55,10 +62,10 @@ void IndexManager::CreateIndex(const std::string &db_name, const std::string &in
   // Write index name (null-terminated)
   size_t offset = index_header_size + schema_raw_size;
   {
-    auto              index_name_size = index_name.size() + 1;  // +1 for null terminator
+    auto              index_name_size = logical_index_name.size() + 1;  // +1 for null terminator
     std::vector<char> index_name_data(index_name_size);
-    std::memcpy(index_name_data.data(), index_name.c_str(), index_name.size());
-    index_name_data[index_name.size()] = '\0';  // Explicit null termination
+    std::memcpy(index_name_data.data(), logical_index_name.c_str(), logical_index_name.size());
+    index_name_data[logical_index_name.size()] = '\0';  // Explicit null termination
     disk_manager_->WriteFile(index_fd, index_name_data.data(), index_name_size, SEEK_SET, offset);
     offset += index_name_size;
   }
@@ -77,7 +84,10 @@ void IndexManager::CreateIndex(const std::string &db_name, const std::string &in
   }
 
   // Close the index file
-  buffer_pool_manager_->FlushAllPages(index_fd);
+  if (!buffer_pool_manager_->FlushAllPages(index_fd) || !buffer_pool_manager_->DeleteAllPages(index_fd)) {
+    NJUDB_THROW(NJUDB_FILE_WRITE_ERROR, fmt::format("Failed to persist newly created index {}", full_path));
+  }
+  disk_manager_->SyncFile(index_fd);
   disk_manager_->CloseFile(index_fd);
 }
 
@@ -94,8 +104,14 @@ void IndexManager::DropIndex(const std::string &db_name, const std::string &inde
 IndexHandleUptr IndexManager::OpenIndex(
     const std::string &db_name, const std::string &index_name, const std::string table_name, IndexType index_type)
 {
+  return OpenIndexFile(db_name, index_name, index_name, table_name, index_type);
+}
+
+IndexHandleUptr IndexManager::OpenIndexFile(const std::string &db_name, const std::string &physical_index_name,
+    const std::string &logical_index_name, const std::string &table_name, IndexType index_type)
+{
   // Check if index exists
-  auto index_file_name = table_name + "_" + index_name;
+  auto index_file_name = table_name + "_" + physical_index_name;
 
   // Open the index file
   auto full_path = FILE_NAME(db_name, index_file_name, IDX_SUFFIX);
@@ -128,19 +144,24 @@ IndexHandleUptr IndexManager::OpenIndex(
   // check if the index name and type match
   NJUDB_ASSERT(index_type_dummy == index_type,
       fmt::format("Expected index type {}, got {}", static_cast<int>(index_type), index_type_data));
-  NJUDB_ASSERT(
-      index_name_dummy == index_name, fmt::format("Expected index name {}, got {}", index_name, index_name_dummy));
+  NJUDB_ASSERT(index_name_dummy == logical_index_name,
+      fmt::format("Expected index name {}, got {}", logical_index_name, index_name_dummy));
 
   return std::make_unique<IndexHandle>(
-      disk_manager_, buffer_pool_manager_, table_fd, index_fd, index_type, std::move(schema), index_name);
+      disk_manager_, buffer_pool_manager_, table_fd, index_fd, index_type, std::move(schema), logical_index_name);
 }
 
 void IndexManager::CloseIndex(const IndexHandle &index_handle)
 {
   // Flush all pages in the index file
-  buffer_pool_manager_->FlushAllPages(index_handle.GetIndexId());
+  if (!buffer_pool_manager_->FlushAllPages(index_handle.GetIndexId())) {
+    NJUDB_THROW(NJUDB_FILE_WRITE_ERROR, fmt::format("Failed to flush index {}", index_handle.GetIndexName()));
+  }
   // delete all pages in the index file
-  buffer_pool_manager_->DeleteAllPages(index_handle.GetIndexId());
+  if (!buffer_pool_manager_->DeleteAllPages(index_handle.GetIndexId())) {
+    NJUDB_THROW(NJUDB_FILE_WRITE_ERROR, fmt::format("Failed to release index {}", index_handle.GetIndexName()));
+  }
+  disk_manager_->SyncFile(index_handle.GetIndexId());
   // Close the underlying index file
   disk_manager_->CloseFile(index_handle.GetIndexId());
 }
@@ -180,17 +201,6 @@ auto IndexManager::ListIndexes(const std::string &db_name) -> std::vector<std::s
   }
 
   return indexes;
-}
-
-void IndexManager::RebuildIndex(const std::string &db_name, const std::string &index_name)
-{
-  // This is a placeholder for index rebuild functionality
-  // In practice, this would:
-  // 1. Read all records from the table
-  // 2. Clear the existing index
-  // 3. Re-insert all records into the index
-
-  NJUDB_THROW(NJUDB_NOT_IMPLEMENTED, "RebuildIndex not yet implemented");
 }
 
 }  // namespace njudb

@@ -23,6 +23,8 @@
 #define NJUDB_TYPES_H
 #include <cstddef>
 #include <atomic>
+#include <utility>  // for std::pair
+#include <functional>  // for std::hash
 #include "../common/micro.h"
 
 /// basic types definitions
@@ -44,6 +46,21 @@ constexpr int32_t INVALID_IDX_ID   = -1;
 constexpr int32_t INVALID_FRAME_ID = -1;
 constexpr int32_t INVALID_TXN_ID   = -1;
 constexpr int32_t INVALID_FILE_ID  = -1;
+constexpr int32_t INVALID_LSN      = -1;
+
+/**
+ * @brief Hash function for (filename, page_id) pairs used in DPT and checkpoints
+ * 
+ * CRITICAL: Uses filename instead of file_id because file IDs are transient
+ * and change between system restarts. Filenames are persistent and stable.
+ * 
+ * Used by Recovery and Checkpoint components for Dirty Page Table.
+ */
+struct FilePageHash {
+  std::size_t operator()(const std::pair<std::string, page_id_t>& p) const {
+    return std::hash<std::string>()(p.first) ^ (std::hash<page_id_t>()(p.second) << 1);
+  }
+};
 
 
 #define ENUM_ENTITIES \

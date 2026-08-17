@@ -19,23 +19,18 @@
 // Created by ziqi on 2024/8/5.
 //
 
-/**
- * @brief delete the records returned by the child executor
- * should delete the records both in the table and the indexes
- * 
- */
-
 #ifndef NJUDB_EXECUTOR_DELETE_H
 #define NJUDB_EXECUTOR_DELETE_H
 
 #include "executor_abstract.h"
 #include "system/handle/database_handle.h"
+#include "system/context.h"
 
 namespace njudb {
 class DeleteExecutor : public AbstractExecutor
 {
 public:
-  DeleteExecutor(AbstractExecutorUptr child, TableHandle *tbl, std::list<IndexHandle *> indexes);
+  DeleteExecutor(AbstractExecutorUptr child, TableHandle *tbl, std::list<IndexHandle *> indexes, Context *context = nullptr);
 
   void Init() override;
 
@@ -47,6 +42,7 @@ private:
   AbstractExecutorUptr     child_;
   TableHandle             *tbl_;
   std::list<IndexHandle *> indexes_;
+  Context                 *context_;
   bool                     is_end_;
 };
 }  // namespace njudb

@@ -1,4 +1,37 @@
-# 实验 1: 存储管理
+# 实验1: 存储管理
+
+## 实验前置要求与准备知识
+
+开始本实验前，请先完成[开始之前](./00basic.md)中的环境配置，能够独立编译NJUDB、运行GoogleTest，并使用调试器观察对象状态。你还需要具备以下基础：
+
+- 熟悉C++类、智能指针、RAII、互斥锁和条件变量的基本用法；
+- 理解磁盘页、内存帧、页面编号以及磁盘I/O的基本概念；
+- 理解缓冲池中page、frame、pin count、dirty flag之间的关系；
+- 了解LRU等页面置换策略，以及并发访问共享状态时需要维护的不变量；
+- 能沿着`DiskManager`、`BufferPoolManager`、`PageHandle`和`TableHandle`的接口追踪一次记录访问。
+
+本实验是后续实验的存储基础，不要求先完成其他Lab，但建议先阅读`storage/disk`、`storage/buffer`和`system/handle`目录中的头文件，再开始填写TODO。
+
+## 仅完成本实验时的配置
+
+如果只完成Lab01，请编辑仓库根目录`configure.sh`顶部的学生配置区：
+
+```bash
+SOURCE_LABS="01"
+ENABLE_LAB05_MVCC=false
+ENABLE_LAB06_WAL=false
+BUILD_TYPE="Debug"
+CLEAN_BUILD=true
+```
+
+然后运行：
+
+```bash
+./configure.sh
+cmake --build build -j
+```
+
+此配置只从源码编译Lab01，其他实验使用gold libraries。首次从其他实验切换到Lab01时保留`CLEAN_BUILD=true`；成功完成一次干净配置后可改回`false`，避免每次删除构建目录。
 
 ## 引言
 
@@ -101,15 +134,15 @@ virtual auto Size() -> size_t = 0;
 
 `LRUReplacer`类中定义的成员变量如下：
 
-- `std::mutex latch_` 用于并发控制。
+- `std::mutex latch_`用于并发控制。
 
-- `std::list<std::pair<frame_id_t, bool>> lru_list_` 存储帧的id以及记录该帧是否可被淘汰的标志位。
+- `std::list<std::pair<frame_id_t, bool>> lru_list_`存储帧的id以及记录该帧是否可被淘汰的标志位。
 
-- `std::unordered_map<frame_id_t, std::list<std::pair<frame_id_t, bool>>::iterator> lru_hash_` 维护所有帧id到`lru_list_`上的迭代器的映射。
+- `std::unordered_map<frame_id_t, std::list<std::pair<frame_id_t, bool>>::iterator> lru_hash_`维护所有帧id到`lru_list_`上的迭代器的映射。
 
-- `size_t cur_size_` 表示当前**可被淘汰**的帧的数量。
+- `size_t cur_size_`表示当前**可被淘汰**的帧的数量。
 
-- `size_t max_size_` 表示帧的最大数量。
+- `size_t max_size_`表示帧的最大数量。
 
 下面是你需要完成的函数，位于文件`storage/buffer/replacer/lru_replacer.cpp`中：
 
@@ -127,11 +160,11 @@ virtual auto Size() -> size_t = 0;
 
 下面列举一些例子，对期望你实现的LRU策略进行说明：
 
-* 例1： 假设对于一组页面{0,1,2,3,4,5,6,7}的一个访问序列为[pin(3),unpin(3),pin(2),unpin(2),pin(5),unpin(5),pin(3),unpin(3),pin(2),unpin(2),pin(6),unpin(6),pin(7)]，如果缓冲区大小为4帧，则在序列执行到最后一项pin(7)时，会将5号页面淘汰并将7号页面的数据加载到内存中，此时缓冲区中LRU优先级序列为[7,6,2,3]，序列中页面靠前表示其更近被使用。
+* 例1：假设对于一组页面{0,1,2,3,4,5,6,7}的一个访问序列为[pin(3),unpin(3),pin(2),unpin(2),pin(5),unpin(5),pin(3),unpin(3),pin(2),unpin(2),pin(6),unpin(6),pin(7)]，如果缓冲区大小为4帧，则在序列执行到最后一项pin(7)时，会将5号页面淘汰并将7号页面的数据加载到内存中，此时缓冲区中LRU优先级序列为[7,6,2,3]，序列中页面靠前表示其更近被使用。
 
-* 例2： 假设对于一组页面{0,1,2,3,4,5,6,7}的一个访问序列为[pin(3),pin(2),unpin(2),pin(5),unpin(5),pin(6),unpin(6),pin(4)]，如果缓冲区大小为4帧，则在序列执行到最后一项pin(4)时，会将2号页面淘汰并将4号页面的数据加载到内存中，此时缓冲区中LRU优先级序列为[4,6,5,3]。
+* 例2：假设对于一组页面{0,1,2,3,4,5,6,7}的一个访问序列为[pin(3),pin(2),unpin(2),pin(5),unpin(5),pin(6),unpin(6),pin(4)]，如果缓冲区大小为4帧，则在序列执行到最后一项pin(4)时，会将2号页面淘汰并将4号页面的数据加载到内存中，此时缓冲区中LRU优先级序列为[4,6,5,3]。
 
-* 例3： 假设对于一组页面{0,1,2,3,4,5,6,7}的一个序列为[pin(3),pin(2),pin(5),pin(6),unpin(6),pin(7)]，如果缓冲区大小为4帧，则在序列执行到最后一项pin(7)时，会将6号页面淘汰并将7号页面的数据加载到内存中，此时缓冲区中LRU优先级序列为[7,5,2,3]。
+* 例3：假设对于一组页面{0,1,2,3,4,5,6,7}的一个序列为[pin(3),pin(2),pin(5),pin(6),unpin(6),pin(7)]，如果缓冲区大小为4帧，则在序列执行到最后一项pin(7)时，会将6号页面淘汰并将7号页面的数据加载到内存中，此时缓冲区中LRU优先级序列为[7,5,2,3]。
 
 ### t2. Buffer Pool Manager (30 pts)
 
@@ -139,19 +172,19 @@ virtual auto Size() -> size_t = 0;
 
 `BufferPoolManager`类中定义了以下类成员变量：
 
-- `std::mutex latch_` 用于并发控制。
+- `std::mutex latch_`用于并发控制。
 
-- `DiskManager *disk_manager_` 磁盘管理器，提供磁盘和缓冲区之间的页面读写接口。
+- `DiskManager *disk_manager_`磁盘管理器，提供磁盘和缓冲区之间的页面读写接口。
 
-- `LogManager *log_manager_` 日志管理器。
+- `LogManager *log_manager_`日志管理器。
 
-- `std::unique_ptr<Replacer> replacer_` 页面替换策略，调用你在t1中实现的接口。
+- `std::unique_ptr<Replacer> replacer_`页面替换策略，调用你在t1中实现的接口。
 
-- `std::array<Frame, BUFFER_POOL_SIZE> frames_` 用于存储缓冲区中的数据页面。
+- `std::array<Frame, BUFFER_POOL_SIZE> frames_`用于存储缓冲区中的数据页面。
 
-- `std::list<frame_id_t> free_list_` 用于记录缓冲区中空闲数据页面的标识符。
+- `std::list<frame_id_t> free_list_`用于记录缓冲区中空闲数据页面的标识符。
 
-- `std::unordered_map<fid_pid_t, frame_id_t> page_frame_lookup_` 维护磁盘页面标识符（file id和page id）到缓冲区中数据页面标识符（frame id）的映射。
+- `std::unordered_map<fid_pid_t, frame_id_t> page_frame_lookup_`维护磁盘页面标识符（file id和page id）到缓冲区中数据页面标识符（frame id）的映射。
 
 下面是你需要完成的函数，位于文件`storage/buffer/buffer_pool_manager.cpp`中：
 
@@ -205,7 +238,7 @@ virtual auto Size() -> size_t = 0;
 
 - `buffer_pool_manager_`为缓冲区管理器。
 
-- `schema_` 为表中存储的记录的模式
+- `schema_`为表中存储的记录的模式
 
 你需要完成以下几个函数：
 
@@ -228,7 +261,7 @@ virtual auto Size() -> size_t = 0;
 * `common/bitmap.h`
 * `common/meta.h`
 
-### 附加实验 f1：LRU K Replacer (5 pts)
+### 附加实验f1：LRU K Replacer (5 pts)
 
 LRU替换算法可能导致页面震荡，具体来说，对于一批周期性出现的页面访问序列[5,2,3,1,5,2,3,1,5,2,3,1,5]，如果缓冲区只有3帧，则从第四次页面访问开始（此时访问1号页面），每一次都会出现缺失。
 
@@ -236,7 +269,7 @@ LRU K就是为解决这一问题提出的改进版LRU算法，其规则如下：
 
 **定义**：数列中，相对当前访问的索引位置，一个数字$e$最后一次出现记为$backward_1^e$，倒数第k次出现记为$backward_k^e$。
 
-例如，上述访问序列中，索引指向序列最后一位（第13位，索引从1起）页面1的$backward_1^1= 12$ ，$backward_2^1 = 8$，$backward_3^1 = 4$，$backward_4^1 = na$。
+例如，上述访问序列中，索引指向序列最后一位（第13位，索引从1起）页面1的$backward_1^1= 12$，$backward_2^1 = 8$，$backward_3^1 = 4$，$backward_4^1 = na$。
 
 **定义**：数列具有时间访问顺序，对于一组顺序访问的序列，在当前访问的索引位置为$i_c$定义某个数$e$的backward k distance为如下函数
 
@@ -250,7 +283,7 @@ $d_3^1 = 13 - 4 = 9$，$d_3^2 = 13 - 2 = 11$，$d_4^2 = +inf$。LRU K算法选�
 
 请完成`storage/buffer/replacer/lru_k_replacer.cpp`，`storage/buffer/replacer/lru_k_replacer.h`中的公有函数，实现方式和相关数据结构定义仅供参考，除公有函数的声明之外，其余数据结构可以随意修改。
 
-### 附加实验 f2: PAX Page Handle (5 pts)
+### 附加实验f2: PAX Page Handle (5 pts)
 
 请确保已经了解并掌握了NJUDB中页面的组织形式，以更好上手本实验的内容
 
@@ -273,12 +306,19 @@ PAX Page Handle支持整列的读取（ReadChunk），给定一个记录模式�
 
 更多实现细节参考`system/handle/page_handle.cpp`，`system/handle/page_handle.h`中`PAXPageHandle`相关的内容。
 
+## 实验问题
+
+请结合你的实现、调用链和测试现象回答以下问题：
+
+1. 选择一次页面读取或写回操作，说明page、frame、pin count和dirty flag在完整调用链中的变化；如果漏掉一次`UnpinPage`或错误设置dirty flag，会出现什么可观察现象？
+2. 你的replacer如何保证只淘汰当前允许被淘汰的frame？请给出一个并发或边界场景，说明相关状态在什么位置更新。
+
 ## 作业评分与提交
 
 ### 评分标准
 
-1. 实验报告（10%）：实现思路，优化技巧，实验结果，对框架代码和实验的建议，以及在报告中出现的思考等，请尽量避免直接粘贴代码，建议2-4页。
-2. 功能分数（90%）：需要通过`njudb/test`目录下的单元测试，请将测试结果写在实验报告中。
+1. 实验报告：实现思路，优化技巧，实验结果，对框架代码和实验的建议，以及在报告中出现的思考等，请尽量避免直接粘贴代码，建议2-4页。
+2. 代码测试：需要通过`njudb/test`目录下的单元测试，请将测试结果写在实验报告中。
    * t1：你需要通过`njudb/test/storage/replacer_test.cpp`中的LRU测试以获得本题目的功能分数。
    * t2：你需要通过`njudb/test/storage/buffer_pool_manager_test.cpp`中的测试以获得本题目的功能分数。
    * t3：你需要通过`njudb/test/system/table_handle_test.cpp`中Simple和MultiThread测试来获得本题目的功能分数。
@@ -297,7 +337,7 @@ PAX Page Handle支持整列的读取（ReadChunk），给定一个记录模式�
 
 2. 代码：`njudb/src`文件夹
 
-*提交示例：请将以上两部分内容打包并命名为lab1\_学号\_姓名.zip（例如lab1_123456_张三.zip）并上传至提交平台，请确保解压后目录树如下：*
+* 提交示例：请将以上两部分内容打包并命名为lab1\_学号\_姓名.zip（例如lab1_123456_张三.zip）并上传至提交平台，请确保解压后目录树如下：*
 
 ```
 ├── lab1_123456_张三.pdf

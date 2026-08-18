@@ -1,662 +1,351 @@
-# 实验4: 索引
-> 本次实验有一定难度，建议尽早开始。
-## B+树
+# 实验4：索引
 
-B+树是一种多路平衡查找树，广泛应用于数据库系统的索引结构。其基本结构包括内部节点和叶子节点。所有的关键字都存储在叶子节点中，内部节点只存储用于导航的键值。叶子节点之间通过指针相连，便于范围查询。
+本实验实现NJUDB的页式B+树索引，并将索引接入记录写入和查询执行路径。必做部分包括B+树、`IndexHandle`、索引扫描执行器和唯一键校验；附加题实现基于固定桶目录和溢出页链的哈希索引。
 
-B+树的主要操作包括插入、删除和查找。插入和删除操作会在必要时分裂或合并节点，以保持树的平衡。查找操作从根节点开始，根据键值逐层向下，最终在叶子节点找到目标数据或确定其不存在。B+树能够高效地支持大量数据的动态插入和范围查询，是数据库索引的常用实现方式。
+## 实验前置要求与准备知识
 
+开始前请先完成Lab01和Lab02，或确认对应gold libraries能支持缓冲池、表记录访问和基本执行器。你需要掌握：
 
-## 查询优化器
-查询优化器的物理优化可以根据当前查询谓词的特性以及在查询表格上是否建有索引，将顺序遍历（Sequential Scan, SeqScan）优化为索引扫描（Index Scan, IdxScan）。这种优化策略能够大幅提升需要排序的SQL和有约束的过滤查询的执行效率。
+- page、frame、page ID、pin count和dirty flag的关系；
+- `Record`、`RecordSchema`、RID和复合键的内存表示；
+- 二分查找、有序数组插入与删除、B+树分裂与合并；
+- 哈希函数、桶目录、冲突和溢出链；
+- executor的`Init`、`Next`和`IsEnd`生命周期；
+- 表记录与索引项在INSERT、UPDATE和DELETE中的一致性。
 
-对于复合列索引（即索引建立在多个列上），查询优化器会根据查询条件选择最优的索引匹配方式。一般来说，只有查询条件中包含索引的前缀列（即索引定义时最左边的一个或多个列），才能有效利用该复合索引。这被称为“最左前缀匹配原则”。例如，若有索引`(a, b, c)`，则查询条件中包含`a`或`a, b`，甚至`a, b, c`时，索引都可以被利用；但如果只包含`b`或`c`，则无法使用该索引。
+实验代码使用`NJUDB_STUDENT_TODO(l4, t1)`、`NJUDB_STUDENT_TODO(l4, t2)`和`NJUDB_STUDENT_TODO(l4, f1)`标记学生任务。建议先阅读`index_abstract.h`、`index_bptree.h`、`index_handle.h`和`executor_idxscan.h`，再按本文的阶段顺序实现。
 
-此外，查询优化器还会根据谓词的选择性（即过滤数据的比例）、索引的类型（如B+树索引、哈希索引等）、表的大小以及统计信息等因素，综合判断是否采用索引扫描。对于高选择性的查询（即能过滤掉大量数据的条件），索引扫描通常更优；而对于低选择性的查询，顺序扫描可能更高效。
+## 仅完成本实验时的配置
 
-总之，查询优化器通过分析查询条件和表的索引结构，智能地选择最优的物理执行计划，从而提升数据库查询的整体性能。
+修改`configure.sh`顶部配置，让Lab04从源码构建，其余实验使用gold libraries：
 
-## 实验要求
-
-### t1: B+树（80 pts）
-
-本实验要求你实现一个完整的B+树索引，如上所述，B+树具有以下特点：
-- 所有数据都存储在叶子节点中
-- 内部节点只存储键值用于导航
-- 叶子节点通过链表连接，支持范围查询
-- 树的高度保持平衡，保证查询性能
-
-开始之前，我们建议使用[可视化工具](https://www.cs.usfca.edu/~galles/visualization/BPlusTree.html)熟悉B+树的插入与删除操作，重点理解插入后的内部节点和叶节点如何分裂（Split），以及删除某个键值导致叶节点或内部节点重新分布（Redistribute）。**不需要考虑重复值**。
-
-需要实现的所有代码均在`src/storage/index/index_bptree.cpp`和`src/storage/index/index_bptree.h`中。
-
-#### 页面结构
-- **BPTreePage**: 所有节点的基类，包含基本的页面信息
-- **BPTreeLeafPage**: 叶子节点，存储实际的键值对
-- **BPTreeInternalPage**: 内部节点，存储键值和子节点指针
-- **BPTreeIndexHeader**: 索引头部信息，存储在文件的第一页
-
-#### 核心类
-- **BPTreeIndex**: B+树索引的主要实现类，提供插入、删除、查询等操作
-
-#### 第一部分：基础页面操作 (BPTreePage)
-
-#### 1. `Init` 方法
-**功能**: 初始化B+树页面的基本信息
-**要点**:
-- 设置索引ID、页面ID、父页面ID
-- 设置节点类型（叶子或内部节点）
-- 初始化大小为0，设置最大容量
-
-#### 2. 基本属性方法
-- `IsLeaf()`: 检查节点类型是否为叶子节点
-- `IsRoot()`: 检查父页面ID是否为无效值
-- `GetSize()/SetSize()`: 获取/设置当前存储的键值对数量
-- `GetMaxSize()`: 获取节点的最大容量
-- `GetPageId()/GetParentPageId()/SetParentPageId()`: 页面ID相关操作
-
-#### 3. `IsSafe` 方法
-**功能**: 判断当前操作是否会引起节点分裂或合并
-**逻辑**:
-- 插入操作：检查插入后是否会超过最大容量
-- 删除操作：检查删除后是否会低于最小容量（通常是最大容量的一半）
-
-#### 第二部分：叶子节点操作 (BPTreeLeafPage)
-
-#### 1. `Init` 方法
-**功能**: 初始化叶子节点
-**要点**:
-- 调用父类的Init方法，指定节点类型为LEAF
-- 设置下一个叶子节点的页面ID为无效值
-- 设置键的大小
-
-#### 2. 数据访问方法
-- `KeyAt(index)`: 返回指定位置的键
-- `ValueAt(index)`: 返回指定位置的值（RID）
-- `SetKeyAt(index, key)`: 设置指定位置的键
-- `SetValueAt(index, value)`: 设置指定位置的值
-
-#### 3. `KeyIndex` 方法
-**功能**: 查找键应该插入的位置
-**逻辑**:
-- 使用二分查找找到第一个大于等于目标键的位置
-- 如果所有键都小于目标键，返回size_
-
-#### 4. `LowerBound` 和 `UpperBound` 方法
-**功能**: 支持范围查询的边界查找
-- `LowerBound`: 找到第一个大于等于目标键的位置
-- `UpperBound`: 找到第一个大于目标键的位置
-
-#### 5. `Lookup` 方法
-**功能**: 查找指定键的所有值
-**逻辑**:
-- 使用KeyIndex找到起始位置
-- 向后遍历所有相等的键，收集对应的RID
-
-#### 6. `Insert` 方法
-**功能**: 插入键值对
-**逻辑**:
-1. 找到插入位置
-2. 将该位置之后的所有元素向后移动
-3. 在指定位置插入新的键值对
-4. 增加size_
-
-#### 7. `RemoveRecord` 方法
-**功能**: 删除指定的键
-**逻辑**:
-1. 找到要删除的键的位置
-2. 将该位置之后的所有元素向前移动
-3. 减少size_
-
-#### 8. 节点分裂和合并方法
-- `MoveHalfTo`: 将当前节点的一半数据移动到新节点
-- `MoveAllTo`: 将当前节点的所有数据移动到目标节点
-- `CopyNFrom`: 从给定的数组复制指定数量的数据
-
-#### 第三部分：内部节点操作 (BPTreeInternalPage)
-
-#### 1. `Init` 方法
-**功能**: 初始化内部节点
-**要点**:
-- 调用父类的Init方法，指定节点类型为INTERNAL
-- 设置键的大小
-
-#### 2. 数据访问方法
-类似叶子节点，但值类型是page_id_t而不是RID
-
-#### 3. `Lookup` 方法
-**功能**: 根据键找到对应的子页面ID
-**逻辑**:
-- 从索引1开始遍历（索引0的键是无效的）
-- 找到第一个大于目标键的位置
-- 返回前一个位置对应的子页面ID
-
-#### 4. `LookupForLowerBound` 和 `LookupForUpperBound`
-**功能**: 支持范围查询的子页面查找
-
-#### 5. `PopulateNewRoot` 方法
-**功能**: 当创建新根节点时初始化其内容
-**逻辑**:
-- 设置第一个子指针指向旧根
-- 设置分隔键
-- 设置第二个子指针指向新页面
-
-#### 6. `InsertNodeAfter` 方法
-**功能**: 在指定子页面之后插入新的键值对
-**逻辑**:
-1. 找到旧值的位置
-2. 将该位置之后的元素向后移动
-3. 插入新的键值对
-
-#### 7. 节点操作方法
-- `MoveHalfTo`: 移动一半数据到新节点，需要更新子页面的父指针
-- `MoveAllTo`: 移动所有数据，包括来自父节点的中间键
-- `CopyNFrom`: 复制数据并更新父指针
-
-#### 第四部分：B+树主要操作 (BPTreeIndex)
-
-#### 1. 页面管理
-
-##### `NewPage` 方法
-**功能**: 分配新页面
-**逻辑**:
-- 检查是否有空闲页面可重用
-- 如果没有，分配新的页面
-- 更新头部信息中的页面数量
-
-请注意Page Header跟BPTree Page Header在页面中的位置。
-
-##### `DeletePage` 方法
-**功能**: 释放页面并加入空闲列表
-
-#### 2. 页面查找
-
-##### `FindLeafPage` 方法
-**功能**: 从根节点开始找到包含指定键的叶子页面
-**逻辑**:
-1. 从根页面开始
-2. 如果是叶子节点，直接返回
-3. 如果是内部节点，使用Lookup找到下一层页面
-4. 重复直到找到叶子节点
-
-##### `FindLeafPageForRange` 方法
-**功能**: 支持范围查询的叶子页面查找
-
-#### 3. 插入操作
-
-##### `Insert` 方法
-**功能**: 插入键值对的入口方法
-**逻辑**:
-- 如果树为空，调用StartNewTree
-- 否则调用InsertIntoLeaf
-
-##### `StartNewTree` 方法
-**功能**: 创建只有一个叶子节点的新树
-**逻辑**:
-1. 分配新页面作为根
-2. 初始化为叶子节点
-3. 插入第一个键值对
-4. 更新头部信息
-
-##### `InsertIntoLeaf` 方法
-**功能**: 向叶子节点插入键值对
-**逻辑**:
-1. 找到目标叶子页面
-2. 如果有空间，直接插入
-3. 如果没有空间，需要分裂：
-   - 创建新叶子节点
-   - 将所有数据（包括新插入的）重新分配
-   - 调用InsertIntoParent处理父节点
-
-##### `InsertIntoParent` 方法
-**功能**: 处理节点分裂后的父节点更新
-**逻辑**:
-1. 如果旧节点是根，调用InsertIntoNewRoot
-2. 否则在现有父节点中插入新的键值对
-3. 如果父节点也需要分裂，递归处理
-
-##### `InsertIntoNewRoot` 方法
-**功能**: 创建新的根节点
-**逻辑**:
-1. 分配新页面作为根
-2. 初始化为内部节点
-3. 设置两个子指针和分隔键
-4. 更新所有相关页面的父指针
-
-#### 4. 删除操作
-
-##### `Delete` 方法
-**功能**: 删除指定键的入口方法
-**逻辑**:
-1. 找到包含键的叶子页面
-2. 删除键值对
-3. 如果节点变得过小，调用CoalesceOrRedistribute
-
-##### `CoalesceOrRedistribute` 方法
-**功能**: 处理删除后可能的节点合并或重分布
-**逻辑**:
-1. 检查节点是否过小
-2. 找到兄弟节点
-3. 如果兄弟节点有多余元素，进行重分布
-4. 否则进行合并
-
-##### `Coalesce` 方法
-**功能**: 合并两个相邻节点
-**逻辑**:
-1. 确定左右节点
-2. 将右节点的所有数据移动到左节点
-3. 从父节点删除对应的键和指针
-4. 递归处理父节点
-
-##### `AdjustRoot` 方法
-**功能**: 处理根节点的特殊情况
-**逻辑**:
-- 如果根节点为空叶子节点，树变空
-- 如果根节点是只有一个子节点的内部节点，子节点成为新根
-
-#### 5. 查询操作
-
-##### `Search` 方法
-**功能**: 查找指定键的所有值
-**逻辑**:
-1. 找到包含键的叶子页面
-2. 调用叶子节点的Lookup方法
-
-##### `SearchRange` 方法
-**功能**: 范围查询
-**逻辑**:
-1. 找到包含低键的叶子页面
-2. 从该页面开始遍历
-3. 收集范围内的所有值
-4. 通过叶子节点链表继续到下一页面
-
-#### 6. 迭代器实现
-
-##### `BPTreeIterator` 类
-**功能**: 提供顺序遍历B+树的能力
-**方法**:
-- `IsValid()`: 检查迭代器是否有效
-- `Next()`: 移动到下一个键值对
-- `GetKey()/GetRID()`: 获取当前位置的键和值
-
-#### 实现建议
-
-##### 1. 实现顺序
-建议按以下顺序实现：
-1. BPTreePage的基本方法
-2. BPTreeLeafPage的数据访问和查找方法
-3. BPTreeInternalPage的基本方法
-4. 简单的查询操作（Search）
-5. 插入操作（从简单到复杂）
-6. 删除操作
-7. 迭代器
-
-#### 2. 调试技巧
-- 利用提供的DebugPrint函数输出节点内容
-- 在TEST_BPTREE模式下使用较小的节点大小便于调试
-- 逐步测试，确保每个方法都正确实现
-
-#### 3. 常见错误
-- 忘记更新父指针
-- 数组越界访问
-- 页面pinning/unpinning不匹配：建议使用`PageGuard`类，可以在析构函数中自动释放页面。例如，你可以使用下面的代码访问leaf page：
-```c++
-auto leaf_guard = tree_->buffer_pool_manager_->FetchPageRead(tree_->index_id_, leaf_page_id_);
-auto leaf_node  = reinterpret_cast<const BPTreeLeafPage *>(PageContentPtr(leaf_guard.GetData()));
-```
-- 二分查找的边界条件错误：建议可以先用朴素遍历确保逻辑是正确的。
-
-#### 4. 并发
-为了简化实现，在做读写操作时只需要将整个索引锁住即可。对于更高效的并发控制算法，感兴趣的同学可以了解一下`latch crabbing`，实现更高效的并发算法。
-
-### t2: 索引句柄（Index Handle）和索引扫描算子（IdxScanExecutor）（10 pts）
-本题需要索引通过句柄和算子集成到执行器中。在确保`t1`通过测试后，删除`src/storage/index/index_bptree.cpp`第30行的宏定义`#define TEST_BPTREE`以开始实验`t2`。
-首先完成Index Handle，其最主要的任务就是根据索引的Key Schema从原始记录中提取key value，然后调用索引的插入，删除和更新。
-
-其次需要在实验2完成的插入和更新算子中加入索引的Uniqueness检查，即如果发现更新的记录违反了索引中无重复值的假设，需要抛出`NJUDB_INDEX_FAIL`异常。
-
-最后，你需要实现`IdxScanExecutor`。
-在此之前你需要先了解查询优化器中索引选择的逻辑。
-举个例子，假设有一个员工表 `employees`，包含以下字段：
-- `emp_id` (INT)
-- `department` (VARCHAR)
-- `salary` (INT)
-- `age` (INT)
-- `city` (VARCHAR)
-
-#### 索引定义
-```sql
--- 索引1：单列索引
-CREATE INDEX idx_emp_id ON employees(emp_id);
-
--- 索引2：复合索引
-CREATE INDEX idx_dept_salary ON employees(department, salary);
-
--- 索引3：三列复合索引
-CREATE INDEX idx_dept_salary_age ON employees(department, salary, age);
-```
-
-#### 查询条件示例
-
-##### 场景1：部分匹配复合索引
-```sql
-WHERE department = 'IT' AND salary > 50000 AND city = 'Beijing'
-```
-
-**条件向量 (conds)**：
-```cpp
-conds = [
-    Condition(department, OP_EQ, 'IT'),      // 位置0
-    Condition(salary, OP_GT, 50000),         // 位置1
-    Condition(city, OP_EQ, 'Beijing')        // 位置2
-]
-```
-
-**索引分析**：
-- `idx_emp_id`: 无匹配条件，匹配数 = 0
-- `idx_dept_salary`: 
-  - department = 'IT' (OP_EQ) ✓
-  - salary > 50000 (OP_GT) ✓
-  - 匹配数 = 2
-- `idx_dept_salary_age`:
-  - department = 'IT' (OP_EQ) ✓
-  - salary > 50000 (OP_GT) ✓
-  - age 字段无条件，但前两个字段已匹配
-  - 匹配数 = 2
-
-**选择结果**：选择 `idx_dept_salary` 或 `idx_dept_salary_age`（取决于实现，通常选择第一个找到的）
-
-**最终结果**：
-```cpp
-// 选择 idx_dept_salary
-index_conds = [
-    Condition(department, OP_EQ, 'IT'),
-    Condition(salary, OP_GT, 50000)
-]
-
-// 剩余条件
-conds = [
-    Condition(city, OP_EQ, 'Beijing')  // 需要额外的Filter操作
-]
-```
-
-##### 场景2：范围条件阻断后续字段
-```sql
-WHERE department = 'IT' AND salary > 50000 AND age = 25
-```
-
-**条件向量 (conds)**：
-```cpp
-conds = [
-    Condition(department, OP_EQ, 'IT'),      // 位置0
-    Condition(salary, OP_GT, 50000),         // 位置1
-    Condition(age, OP_EQ, 25)                // 位置2
-]
-```
-
-**索引分析**：
-- `idx_dept_salary_age`:
-  - department = 'IT' (OP_EQ) ✓
-  - salary > 50000 (OP_GT) ✓ (范围条件)
-  - age = 25：由于salary是范围条件，age字段无法使用
-  - 匹配数 = 2
-
-**选择结果**：
-```cpp
-index_conds = [
-    Condition(department, OP_EQ, 'IT'),
-    Condition(salary, OP_GT, 50000)
-]
-
-conds = [
-    Condition(age, OP_EQ, 25)  // 需要Filter操作
-]
-```
-
-##### 场景3：完全匹配
-```sql
-WHERE department = 'IT' AND salary = 60000 AND age = 30
-```
-
-**条件向量 (conds)**：
-```cpp
-conds = [
-    Condition(department, OP_EQ, 'IT'),      // 位置0
-    Condition(salary, OP_EQ, 60000),         // 位置1
-    Condition(age, OP_EQ, 30)                // 位置2
-]
-```
-
-**索引分析**：
-- `idx_dept_salary_age`:
-  - department = 'IT' (OP_EQ) ✓
-  - salary = 60000 (OP_EQ) ✓ (等值条件)
-  - age = 30 (OP_EQ) ✓ (前面都是等值，可以使用)
-  - 匹配数 = 3
-
-**选择结果**：
-```cpp
-index_conds = [
-    Condition(department, OP_EQ, 'IT'),
-    Condition(salary, OP_EQ, 60000),
-    Condition(age, OP_EQ, 30)
-]
-
-conds = []  // 所有条件都被索引处理，无需额外Filter
-```
-
-#### 场景4：哈希索引示例
-假设有哈希索引：
-```sql
-CREATE HASH INDEX idx_hash_dept_salary ON employees(department, salary);
-```
-
-查询：
-```sql
-WHERE department = 'IT' AND salary = 60000 AND age > 25
-```
-
-**哈希索引分析**：
-- 需要 department 和 salary 都有等值条件
-- department = 'IT' ✓
-- salary = 60000 ✓
-- 可以使用哈希索引
-
-**选择结果**：
-```cpp
-index_conds = [
-    Condition(department, OP_EQ, 'IT'),
-    Condition(salary, OP_EQ, 60000)
-]
-
-conds = [
-    Condition(age, OP_GT, 25)
-]
-```
-
-在Init阶段，你需要根据传入的index_conds正确地生成对应的Low Key和High Key。并且需要能够正确处理`<`和`>`的情况。 
-比如，对于下面的条件：
-```C++
-// 选择 idx_dept_salary
-index_conds = [
-    Condition(department, OP_EQ, 'IT'),
-    Condition(salary, OP_GT, 50000)
-]
-
-// 剩余条件
-conds = [
-    Condition(city, OP_EQ, 'Beijing')  // 需要额外的Filter操作
-]
-```
-生成的Low key为`<'IT',50000>`，High key为`<String.Max(), Integer.Max()>`。加入表中刚好存在`<'IT',50000>`，由于比较符号中存在OP_GT(`>`)，所以该值应该被过滤。
-
-### 附加题f1: 哈希索引
-
-Hash索引是数据库系统中另一种重要的索引结构，与B+树索引相比具有不同的特点和适用场景。Hash索引基于哈希函数将键映射到存储桶中，提供O(1)的平均查找时间复杂度，但不支持范围查询和有序遍历。
-
-#### 核心思想
-Hash索引使用哈希函数将索引键映射到固定数量的存储桶（bucket）中。每个存储桶可以存储多个键值对，当发生哈希冲突时，同一个桶中的多个条目通过链式存储或开放寻址等方式处理。
-**Hash索引需要支持插入重复值**
-
-#### 主要特点
-- **等值查询高效**：通过哈希函数直接定位到目标桶，平均时间复杂度为O(1)
-- **不支持范围查询**：由于哈希函数的随机性，相邻的键可能被映射到完全不同的桶中
-- **不支持有序遍历**：键在桶中的存储顺序与原始键的顺序无关
-- **冲突处理**：当多个键映射到同一个桶时，需要通过链式存储等方式解决冲突
-
-需要完成的代码在`src/storage/index/index_hash.cpp`和`src/storage/index/index_hash.h`。
-
-#### NJUDB中的Hash索引页面组织
-NJUDB中的Hash索引采用三层页面结构来组织数据：
-
-1. 头部页面（Header Page）
-- **页面ID**: `FILE_HEADER_PAGE_ID` (通常为0)
-- **作用**: 存储Hash索引的全局元信息
-- **主要字段**:
-  - `bucket_count_`: 桶的总数量
-  - `total_entries_`: 索引中键值对的总数
-  - `next_page_id_`: 用于分配新页面的计数器
-
-2. 目录页面（Directory Page）
-- **页面ID**: `HASH_KEY_PAGE` (固定为1)
-- **作用**: 存储桶页面ID的目录，实现从桶索引到实际存储页面的映射
-- **主要字段**:
-  - `bucket_page_ids_[]`: 存储每个桶对应的页面ID数组
-  - 如果某个桶尚未创建，对应的页面ID为`INVALID_PAGE_ID`
-
-3. 桶页面（Bucket Page）
-- **页面ID**: 动态分配（从页面2开始）
-- **作用**: 实际存储键值对数据
-- **主要字段**:
-  - `next_page_id_`: 指向溢出页面的指针，用于处理桶容量不足的情况
-  - `entry_count_`: 当前页面中存储的条目数量
-  - `data_[]`: 存储序列化的键值对数据
-
-#### 数据组织流程
-1. **插入操作**: 通过哈希函数计算键的桶索引 → 在目录页面中查找对应的桶页面ID → 在桶页面中插入键值对
-2. **查找操作**: 计算键的桶索引 → 定位桶页面 → 在桶页面及其溢出页面中线性搜索匹配的键
-3. **溢出处理**: 当桶页面容量不足时，创建新的溢出页面并通过链表连接
-
-#### 哈希函数设计
-NJUDB使用Record类内置的Hash()方法计算哈希值，然后对桶数量取模得到桶索引：
-```cpp
-size_t bucket_index = key.Hash() % bucket_count_;
-```
-
-#### 冲突解决
-采用链式存储方式解决哈希冲突：
-- 每个桶对应一个或多个页面
-- 当页面容量不足时，通过`next_page_id_`字段链接到溢出页面
-- 在同一个桶中线性搜索匹配的键
-
-#### 范围查询的特殊处理
-由于Hash索引不支持高效的范围查询，`SearchRange`方法需要扫描所有桶并在应用层过滤结果，这是Hash索引的固有限制。
-
-#### 迭代器实现
-Hash索引的迭代器需要按桶的顺序遍历所有键值对，由于Hash索引不保证顺序，迭代结果的顺序是不确定的。
-
-## 开放问题f2: 索引性能分析（0 pts）
-请尝试构造测试样例与测试脚本，分析不同索引在不同过滤条件下的查询性能，并在报告中写下你的结论与思考。
-
-## 作业评分与提交
-
-### 评分标准
-
-1. 实验报告（10%）：实现思路，遇到的困难以及如何解决的，实验结果，对框架代码和实验的建议，以及在报告中出现的思考等，请尽量避免直接粘贴代码，建议2-4页。
-
-2. 功能分数（90%）：
-    1. t1需要通过`test/storage/bptree_test.cpp`中的所有Gtest测试。
-
-    2. t2 需要<u>**顺序**</u>通过`njudb/test/sql/lab04/basic`下的SQL测试并与`expected`输出比较，无差异获得该小题满分。
-
-    3. f1需要通过`test/storage/hashindex_test.cpp`中的所有Gtest测试。<u>**顺序**</u>通过`njudb/test/sql/lab04/bonus`下的SQL测试并与`expected`输出比较，无差异获得该小题满分。
-
-**重要：请勿尝试抄袭代码或搬运他人实验结果，我们会严格审查，如被发现将取消大实验分数，情节严重可能会对课程总评产生影响!!!**
-
-3. 测试方法：
-本次实验基于 Lab01 和 Lab02，如果未完成依赖实验，请使用提供的 gold library。修改 `configure.sh` 顶部配置：
-
-```shell
+```bash
 SOURCE_LABS="04"
+ENABLE_LAB05_MVCC=false
+ENABLE_LAB06_WAL=false
+BUILD_TYPE="Debug"
 CLEAN_BUILD=true
 ```
 
-然后在项目根目录执行：
+然后执行：
 
-```shell
+```bash
 ./configure.sh
+cmake --build build -j
 ```
-编译`njudb`，`client`（`cd build && make -j`），`cd`到可执行文件目录下并启动两个终端分别执行：
-   
-   ```shell
-   $ ./njudb
-   $ ./client
-   ```
 
-   如果遇到`./njudb`某个共享链接库的路径无法找到，可以在终端手动设置链接路径
-   ```shell
-   cd /path/to/njudb/build/bin && export LD_LIBRARY_PATH=/path/to/njudb/lib-gold/linux/debug:/path/to/njudb/build/lib:$LD_LIBRARY_PATH
-   ```
-   
-   关于client的更多用法可参考参考[开始之前](./00basic.md)或使用-h参数查看。如果`njudb`因为端口监听异常启动失败（通常原因是已经启用了一个njudb进程或前一次启动进程未正常退出导致端口未释放），需要手动杀死进程或者等待一段时间njudb释放资源后再重新启动。
+首次切换配置时使用`CLEAN_BUILD=true`；干净配置成功后可以改回`false`。
 
-   * 提示：你可以cd到`njudb/test/sql/`目录下通过脚本`evaluate.sh`进行测试。
+## 预备知识
 
-      ```bash
-      $ bash evaluate.sh <build directory> <lab directory> <sql directory>
-      # e.g. bash evaluate.sh /path/to/njudb/build lab03 bonus
-      ```
-  * 在执行02_select.sql文件时可能会遇到打印的索引信息KeySchema部分的索引id与所给期望输出不同，属于正常情况，不算错误。
-  例如下面两个输出是在两个不同机器上执行同一个索引构建指令，在KeySchema部分第一个索引id为6，第二个为7，两种都算对。其他id也可以，但需保证除此以外的其他输出与预期输出一致。
+### 索引键、RID与页式结构
 
-  ```sql
-  +--------------+--------------+--------------+--------------+--------------+
-| Database     | Table        | Index        | IndexType    | KeySchema    | 
-+--------------+--------------+--------------+--------------+--------------+
-| db2025       | stock        | stock_swid_i | BPTREE       | #6.s_w_id:TY | 
-|              |              | dx           |              | PE_INT(4), # | 
-|              |              |              |              | 6.s_i_id:TYP | 
-|              |              |              |              | E_INT(4)     | 
-+--------------+--------------+--------------+--------------+--------------+
-Total tuple(s): 1
+索引保存“索引键→RID”的映射。索引键由索引的`RecordSchema`从表记录中投影得到，可以包含一个或多个字段；RID由页号和槽位组成，用于回到表中读取完整记录。索引不复制整行数据，因此索引扫描需要先得到RID，再通过`TableHandle`访问表页。
 
+NJUDB的索引节点存放在缓冲池管理的页中。读页只能观察节点，写页可以修改键、指针、元数据和链接关系。页守卫离开作用域时负责unpin，写守卫还会使页面以脏页状态返回缓冲池。分裂、合并或根节点变化会同时修改多个页，所有受影响页面的结构关系都必须在操作结束时一致。
 
-  +--------------+--------------+--------------+--------------+--------------+
-| Database     | Table        | Index        | IndexType    | KeySchema    | 
-+--------------+--------------+--------------+--------------+--------------+
-| db2025       | stock        | stock_swid_i | BPTREE       | #7.s_w_id:TY | 
-|              |              | dx           |              | PE_INT(4), # | 
-|              |              |              |              | 7.s_i_id:TYP | 
-|              |              |              |              | E_INT(4)     | 
-+--------------+--------------+--------------+--------------+--------------+
-Total tuple(s): 1
-  ```
+### B+树的导航与重平衡
+
+B+树内部节点保存分隔键和子页号，叶节点保存排序后的键与RID。内部节点的第0个键不参与比较，`value[0]`代表最左子树；从第1个键开始，每个分隔键描述其右侧子树的下界。叶节点通过`next_page_id`串联，使范围扫描在定位起点后可以顺序访问后续叶页。
+
+插入先定位目标叶页。页面未满时直接按键序插入；页面溢出时创建右兄弟，移动后半数据，修复叶链，并把分隔键插入父节点。父节点溢出时继续向上分裂；原根分裂会创建新根并增加树高。删除后若节点低于最小占用量，先判断是否可以向兄弟重新分配；无法分配时合并节点并删除父节点中的对应入口。该过程可能向上传播，最后由根节点调整结束。
+
+### 哈希索引的桶与溢出链
+
+附加题中的哈希索引使用固定数量的桶。文件头记录桶数、总条目数和下一个可分配页号，目录页把桶编号映射到首个桶页，桶页内连续存放键与RID。桶页满时通过`next_page_id`连接溢出页。
+
+等值查询可以通过哈希值直接定位一条桶链。当前实现不会执行rehash；条目超过负载因子后仍使用原目录和溢出页。哈希值不保留键序，因此`SearchRange`需要扫描所有桶并过滤键，迭代结果也不保证有序。
+
+### 从SQL谓词到表记录的完整路径
+
+查询路径从优化器选择索引开始。`IdxScanExecutor::GenerateRangeKeys`按索引键模式将谓词转换为下界键和上界键，`IndexHandle::SearchRange`调用底层B+树或哈希索引获得RID序列。执行器根据升降序要求调整RID顺序，处理严格不等式的边界，再通过`TableHandle::GetRecord`读取完整记录。
+
+写入路径需要保证表与索引的键唯一性。`InsertExecutor::Init`先检查新记录是否与现有索引项或同一批次的其他记录冲突；`UpdateExecutor::Init`先构造全部旧/新记录对，再统一验证更新后的键。只有整批验证通过后才修改表和索引，避免在批量操作中留下部分结果。
+
+## 1. 学习目标
+
+完成本实验后，你应当能够：
+
+- 解释B+树内部页、叶页和文件头的布局与不变量；
+- 实现B+树的点查、范围查询、插入、删除、分裂、合并和迭代；
+- 正确管理索引页的pin/unpin、脏页状态和父子指针；
+- 通过`IndexHandle`维护索引键与RID的映射和唯一约束；
+- 将SQL谓词转换为索引边界，并按executor生命周期返回表记录；
+- 附加题：实现基于桶链的哈希索引，并说明它与B+树的查询边界。
+
+## 2.代码导读
+
+| 模块 | 主要文件 | 职责 |
+|---|---|---|
+| 索引抽象 | `src/storage/index/index_abstract.h` | 定义增删查、范围查询、迭代和维护接口 |
+| B+树 | `src/storage/index/index_bptree.{h,cpp}` | 页内布局、树级导航、分裂、重平衡和迭代 |
+| 哈希索引 | `src/storage/index/index_hash.{h,cpp}` | 桶目录、溢出页链、查询和迭代 |
+| 索引句柄 | `src/system/handle/index_handle.{h,cpp}` | 从表记录投影索引键，封装索引操作和唯一性检查 |
+| 索引扫描 | `src/execution/executor_idxscan.{h,cpp}` | 构造范围键，获取RID并返回可见表记录 |
+| 批量写入 | `src/execution/executor_insert.cpp`、`executor_update.cpp` | 在实际写入前完成唯一索引的整批校验 |
+
+## 3. t1：B+树（80pts）
+
+### t1.1：通用页面状态
+
+本阶段建立叶节点和内部节点共享的元数据。
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `BPTreePage::Init` | 索引ID、当前页ID、父页ID、节点类型和最大条目数 | 无返回值；初始化页元数据并将当前大小置0 | 为两种节点建立统一页头 |
+| `IsLeaf`、`IsRoot` | 无显式参数；读取节点类型或父页ID | 分别返回节点是否为叶页、是否为根页 | 决定导航、分裂、删除和根调整分支 |
+| `GetSize`、`GetMaxSize`、`SetSize` | `SetSize`接收新条目数；其余无显式参数 | getter返回当前/最大条目数；`SetSize`校验边界后更新`size_` | 维护节点容量不变量 |
+| `GetPageId`、`GetParentPageId`、`SetParentPageId` | setter接收新父页ID | getter返回页ID；setter更新父子关系 | 支持向上传播分裂或合并 |
+| `IsSafe` | 操作是否为插入`is_insert` | 返回当前页在执行一次插入或删除后是否仍无需结构调整 | 判断是否可以结束向上检查 |
+
+`SetSize`只允许0到`max_size_`之间的值。`IsSafe(true)`要求页面尚未填满；`IsSafe(false)`要求删除后仍高于代码定义的最小占用边界。根节点有独立调整规则，不能完全套用普通节点的判断。
+
+### t1.2：叶节点操作
+
+叶页按键序存放键/RID对，并通过`next_page_id_`连接右侧叶页。
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `BPTreeLeafPage::Init` | 索引ID、页ID、父页ID、键长度和最大条目数 | 无返回值；初始化通用页头、键长度和无后继叶页状态 | 建立空叶页 |
+| `GetNextPageId`、`SetNextPageId` | setter接收后继页ID | getter返回后继页ID；setter更新叶链 | 支持分裂、合并和范围扫描 |
+| `KeyAt`、`ValueAt`、`SetKeyAt`、`SetValueAt` | 槽位下标；setter另接收键字节或RID | 读取或覆写指定槽位的键/RID | 封装叶页的可变长键布局 |
+| `KeyIndex`、`LowerBound`、`UpperBound` | 目标键和键模式 | 分别返回相等键或插入位置、首个不小于目标的位置、首个大于目标的位置 | 为点查、插入和开闭区间定位提供二分查找 |
+| `Lookup` | 目标键和键模式 | 返回当前叶页中所有相等键的RID | 完成页内等值查询 |
+| `BPTreeLeafPage::Insert` | 键、RID和键模式 | 按序插入键/RID并增加`size_`；返回新大小 | 完成未溢出叶页的局部插入 |
+| `MoveHalfTo`、`CopyNFrom` | 接收叶页，或键数组、RID数组和数量 | 将源页后半数据复制到接收页，并调整两页大小 | 支持叶节点分裂 |
+| `RemoveAndDeleteRecord` | 待删除键和键模式 | 找到时删除一个匹配项并返回新大小；未找到时返回`-1` | 完成页内删除 |
+| `MoveAllTo` | 左侧接收叶页 | 将当前叶页全部追加到接收页，转移后继指针并清空当前页 | 支持叶节点合并和叶链修复 |
+
+叶页内的键必须保持非递减顺序。页面分裂后，原页指向新右页，新右页指向原后继页；页面合并后，左页越过被删除的右页。任何只复制键/RID而不修改叶链的实现都会破坏范围扫描。
+
+### t1.3：内部节点操作
+
+内部页使用子页数组和分隔键数组导航，第0个键槽为占位位置。
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `BPTreeInternalPage::Init` | 索引ID、页ID、父页ID、键长度和最大条目数 | 无返回值；初始化空内部页 | 建立子页导航节点 |
+| `KeyAt`、`GetKeySize`、`ValueAt`、`SetKeyAt`、`SetValueAt` | 槽位下标；setter另接收键字节或子页ID | 读取或更新键、键长度和子页号 | 封装内部页的双数组布局 |
+| `Lookup` | 目标键和键模式 | 返回普通点查应进入的子页ID | 沿分隔键从根向叶导航 |
+| `LookupForLowerBound`、`LookupForUpperBound` | 范围边界键和键模式 | 返回下界或上界定位时应进入的子页ID | 处理重复分隔键下的左/右边界导航 |
+| `PopulateNewRoot` | 旧根ID、新分隔键和新右子页ID | 写入两个子指针和一个有效分隔键，将大小置2 | 在原根分裂后建立新根 |
+| `InsertNodeAfter` | 已有子页ID、新分隔键和新子页ID | 找到旧子页后插入新入口；返回实际或预期新大小 | 把子节点分裂结果接入父节点 |
+| `MoveHalfTo`、`CopyNFrom` | 接收内部页和缓冲池，或键/子页数组、数量与缓冲池 | 转移后半入口，调整两页大小，并将移动子页的父ID改为接收页 | 支持内部节点分裂 |
+| `MoveAllTo` | 左侧接收页、父节点中的中间键和缓冲池 | 将中间键与全部子页追加到接收页，更新子页父ID并清空当前页 | 支持内部节点合并 |
+
+移动内部节点入口时，不能只复制分隔键和子页ID。每个被移动子页的`parent_page_id_`都要指向新父页，且合并时必须把父节点中的中间键下移到子节点。
+
+### t1.4：页面管理与叶页定位
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `BPTreeIndex::NewPage` | 无显式参数；读写索引文件头 | 优先复用空闲页，否则扩大页计数；返回可用页ID | 为新根、新叶页和新内部页分配稳定页号 |
+| `BPTreeIndex::DeletePage` | 待回收页ID | 无返回值；将页接入文件头空闲链 | 使合并后的废弃页可被后续复用 |
+| `FindLeafPage` | 目标键和是否强制定位最左叶页`leftMost` | 返回点查/插入所在叶页ID；空树返回无效页ID | 完成普通树级导航 |
+| `FindLeafPageForRange` | 边界键和是否按下界定位 | 返回可能包含范围边界的叶页ID | 为重复键范围扫描选择导航方向 |
+
+文件头中的`root_page_id_`、`first_free_page_id_`、`tree_height_`和`page_num_`记录当前实现使用的树级元数据。分配和回收页面时必须通过写守卫修改文件头；遍历过程中每个已访问页面都必须在不再需要时解除pin。
+
+### t1.5：插入、分裂与新根
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `StartNewTree` | 首个键和RID | 无返回值；创建根叶页，写入首条索引项，更新根ID和树高 | 处理空树的首次插入 |
+| `InsertIntoLeaf` | 键和RID | 返回是否插入成功；目标叶页已满时创建新右页、重分配条目、修复叶链并向父节点插入分隔键 | 协调叶页局部插入、分裂与叶链修复 |
+| `InsertIntoParent` | 旧子页ID、分隔键和新右子页ID | 无返回值；将分裂结果插入父页，必要时递归分裂父页 | 使结构变化向根方向传播 |
+| `InsertIntoNewRoot` | 旧根ID、分隔键和新右页ID | 无返回值；创建内部根、更新两个子页的父ID并增加树高 | 结束传播到原根的分裂 |
+| `BPTreeIndex::Insert` | 索引键和RID | 无返回值；在全局独占锁下完成空树或普通插入 | 对外提供B+树插入入口 |
+
+插入的页面修改顺序应与结构依赖一致：先建立新页和页内数据，再修复叶链或子页父ID，最后将分隔键接入父页。函数返回时，文件头、父子关系和叶链必须同时反映新结构。
+
+### t1.6：删除与重平衡
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `BPTreeIndex::Delete` | 待删除键 | 返回是否删除成功；成功时更新叶页并在必要时重平衡 | 对外提供按键删除入口 |
+| `CoalesceOrRedistribute` | 发生下溢的节点ID | 返回本次处理是否删除了节点；选择重新分配、合并或根调整 | 作为删除后结构修复的总调度器 |
+| `Coalesce` | 相邻节点ID、当前节点ID、父页ID和父页中的位置 | 返回是否继续删除父节点；合并数据、修改父页并回收废弃页 | 在两节点可容纳于一页时减少节点数 |
+| `Redistribute` | 兄弟节点、下溢节点和它们在父页中的相对位置 | 无返回值；在兄弟间移动一个入口并更新父分隔键 | 在不删除页面的情况下恢复最小占用量 |
+| `AdjustRoot` | 当前根节点 | 返回是否回收旧根；空叶根使树变空，只含一个子页的内部根下移一层 | 处理删除传播到根的特殊情况 |
+
+重新分配后，父页分隔键必须与子树新边界同步。合并内部页时还要更新被移动子页的父ID；合并叶页时要修复叶链。根节点不满足普通节点的最小占用量规则，必须交给`AdjustRoot`单独处理。
+
+### t1.7：查询、迭代与整树维护
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `Search` | 等值键 | 返回所有匹配RID | 对外提供B+树点查 |
+| `SearchRange` | 包含式下界键和上界键 | 按键序返回区间内RID；下界大于上界时返回空结果 | 利用叶链完成连续范围扫描 |
+| `BPTreeIterator::IsValid`、`Next`、`GetKey`、`GetRID` | 迭代器当前叶页ID和槽位；`Next`无额外参数 | 检查位置、跨槽位/叶页前进，或返回当前键/RID | 封装有序叶链遍历 |
+| `Begin`、`Begin(key)`、`End` | 无参数，或起始键 | 返回最左条目、首个不小于指定键的条目，或无效终点迭代器 | 建立全树或定位遍历起点 |
+| `ClearPage`、`Clear` | 子树根页ID，或无显式参数 | 递归回收子树页；`Clear`将根ID置为无效值并将树高置0 | 清空整棵索引并保留可复用页 |
+| `IsEmpty`、`Size`、`GetHeight` | 无显式参数 | 分别根据根ID返回空树状态、通过迭代叶链返回条目数、从文件头返回树高 | 向测试和索引统计提供元数据 |
+
+迭代器不长期保持页指针，每次读取当前键或RID时都通过缓冲池取得相应叶页。`Next`到达当前叶页末尾后进入`next_page_id_`；没有后继页时进入终点状态。
+
+## 4. t2：索引句柄与索引扫描（10pts）
+
+### t2.1：`IndexHandle`与唯一索引
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `IndexHandle::InsertRecord` | 带RID的完整表记录 | 无返回值；投影索引键，拒绝NULL键和重复键，然后插入键/RID | 将表插入接入唯一索引 |
+| `IndexHandle::DeleteRecord` | 删除前的完整表记录 | 无返回值；投影旧键并从底层索引删除 | 使表删除同步移除索引项 |
+| `IndexHandle::UpdateRecord` | 旧表记录和保留相同RID的新表记录 | 无返回值；当键改变时检查与其他RID的冲突，然后删除旧键并插入新键 | 维护更新前后的索引映射 |
+| `IndexHandle::SearchRange` | 包含式下界键和上界键 | 返回底层索引给出的RID向量 | 为索引扫描提供统一范围查询接口 |
+| `IndexHandle::CheckRecordExists` | 完整表记录 | 投影索引键并返回底层索引是否已存在该键 | 为批量INSERT的预校验提供存在性检查 |
+
+`IndexHandle`在句柄级互斥量内完成每次索引操作。底层B+树可以保存重复键，但系统通过`IndexHandle`对SQL索引实施唯一性，因此不能把页内容许重复键与SQL约束混为一件事。
+
+### t2.2：`IdxScanExecutor`生命周期
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `IdxScanExecutor::GenerateRangeKeys` | 构造函数保存的查询条件和索引键模式 | 无返回值；生成`low_`、`high_`，并记录严格上/下界是否需要二次过滤 | 将`=`、`>`、`>=`、`<`、`<=`谓词转换为复合索引范围 |
+| `IdxScanExecutor::Init` | 无显式参数；使用表、索引、事务上下文、边界键和排序方向 | 无返回值；在需要时申请表意向共享锁，获取并排序RID，收紧严格边界，定位首条可读记录 | 建立一次索引扫描的全部运行状态 |
+| `IdxScanExecutor::Next` | 无显式参数 | 向后移动RID下标，跳过已经不存在或对当前事务不可读的记录；到达末尾时清空`record_` | 产生下一条扫描结果 |
+| `IdxScanExecutor::IsEnd` | 无显式参数 | 返回当前RID下标是否已到达有效区间终点 | 为父executor提供结束条件 |
+
+`GetOutSchema`和`GetRecordWithProtocol`由框架提供。前者返回表schema，后者通过`TableHandle::GetRecord`应用2PL或MVCC读取语义，并把索引中已经失效的RID视为可跳过记录。学生实现的四个TODO必须与这两个框架函数配合。
+
+### t2.3：INSERT和UPDATE的批量唯一性校验
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `InsertExecutor::Init`中的Lab04校验 | 待插入记录批次和表上全部索引 | 冲突时在写入前抛出索引异常；通过时不修改额外状态 | 同时排除与现有索引项冲突和批次内重复键 |
+| `UpdateExecutor::Init`中的Lab04校验 | 全部旧/新记录对和表上全部索引 | 忽略未变键和当前记录自身RID；其他冲突在更新前抛出异常 | 保证整个UPDATE批次验证成功后才执行任何表或索引修改 |
+
+这两处是Lab02 DML执行器中专门留给Lab04的校验步骤，不是独立的executor重写任务。检查必须覆盖每一个索引，且必须在首次物理写入之前完成。
+
+## 5. 附加题f1：哈希索引
+
+### f1.1：桶页格式与分配
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `HashBucketPage::GetMaxEntries` | 索引键字节数 | 返回一个桶页可容纳的键/RID对数量 | 根据页大小、页头和条目长度确定容量 |
+| `WriteEntry`、`ReadEntry` | 字节偏移、键和RID，或偏移、输出键/RID与键长度 | 在桶页连续区域写入键数据与RID，或从该区域重建两者 | 封装定长条目的序列化布局 |
+| `HashIndex::AllocateBucketPage` | 无显式参数；读写哈希文件头 | 返回新页ID；推进`next_page_id_`，并初始化空桶页 | 为首个桶页或溢出页分配空间 |
+
+### f1.2：哈希索引增删查
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `HashIndex::Insert` | 键和RID | 无返回值；插入对应桶链，并同步增加内存与文件头条目数 | 对外提供哈希插入入口 |
+| `InsertIntoBucket` | 桶编号、键和RID | 无返回值；必要时创建首页或溢出页，在首个有空间的页末尾写入条目 | 完成一条桶链内的物理插入 |
+| `HashIndex::Delete`、`DeleteAllFromBucket` | 待删除键，或桶编号和键 | 删除该桶链中所有匹配项；辅助函数返回删除数，公开入口返回是否删除并更新总数 | 使重复键条目一次性移除 |
+| `HashIndex::Search`、`SearchInBucket` | 等值键，或桶编号和键 | 返回目标桶链中所有匹配RID | 完成哈希索引的主要高效查询路径 |
+| `HashIndex::SearchRange` | 包含式下界键和上界键 | 扫描全部桶链，过滤并返回范围内RID | 在统一索引接口下提供功能正确但非高效的范围查询 |
+
+当前哈希索引在默认桶数上使用链式溢出，不会执行目录扩容或rehash。删除会移除一条桶链中的所有相等键，但不回收空溢出页或重组桶链。
+
+### f1.3：迭代器与清理
+
+| 函数 | 输入 | 输出或状态变化 | 在本阶段中的作用 |
+|---|---|---|---|
+| `HashIterator::Next`、`FindNextValidEntry` | 无显式参数；使用当前桶、溢出页和条目下标 | 移到下一条目，跨越空桶和溢出链；全部遍历后设置结束状态 | 在不保证键序的前提下遍历所有条目 |
+| `HashIterator::GetKey`、`GetRID` | 迭代器当前位置 | 从当前桶页返回键或RID | 向统一迭代器接口暴露当前条目 |
+| `HashIndex::Begin`、`Begin(key)` | 无参数，或一个键 | `Begin`返回从第一个有效条目开始的迭代器；`Begin(key)`从该键的哈希桶开始向后遍历，不提供有序下界定位 | 适配索引抽象的通用遍历接口 |
+| `HashIndex::Clear` | 无显式参数 | 清空目录中的桶链并将条目数置0 | 将哈希索引恢复为空索引状态 |
+
+`IsValid`、`End`、`IsEmpty`、`Size`和`GetHeight`由框架提供。`GetHeight`始终返回2，表示当前实现中的文件头/目录与桶页两层结构，不表示像B+树一样的动态树高。
+
+## 开放问题f2：索引性能分析（0pts）
+
+请构造测试数据与脚本，比较B+树和哈希索引在等值条件、范围条件、不同选择率和不同数据量下的查询性能，并在报告中说明测量方法、结果和结论。
+
+## 6. 实验问题
+
+请结合你实际构造的键序列、页面状态和测试现象回答以下问题。
+
+1. 给出一组在你的实现中触发叶节点分裂并继续触发内部节点分裂的插入序列，说明分裂前后键、子页指针、父页编号和叶节点链表分别如何变化。
+2. 删除操作中，重新分配、合并和根节点收缩分别在什么条件下发生？任选一个实际测试序列，说明你的实现如何保持B+树高度平衡和父子关系一致。
+3. 从一次带复合索引谓词的SQL查询出发，说明优化器、`IdxScanExecutor`、索引句柄和缓冲池之间的主要调用链；哪些谓词可以形成有效的最左前缀范围？
+4. 描述一个你遇到的结构性错误，例如pin泄漏、脏页遗漏、父指针错误或叶链断裂。说明普通点查为什么可能发现不了它，以及你最终使用什么遍历或测试定位了问题。
+
+## 7. 测试与评分入口
+
+### 7.1. 单元测试
+
+Lab04公开两个直接评分的GoogleTest源文件，各包含19个测试定义。
+
+| 可执行程序 | 源文件 | 定义数 | 实验部分 | 覆盖范围 |
+|---|---|---:|---|---|
+| `b_plus_tree_test` | `test/storage/bptree_test.cpp` | 19 | t1 | 页面基础、插入分裂、删除重平衡、范围查询、迭代、清理与混合操作 |
+| `hash_index_test` | `test/storage/hashindex_test.cpp` | 19 | f1 | 桶页、溢出链、增删查、范围扫描、迭代、清理与混合操作 |
+
+运行方式：
+
+```bash
+cmake --build build --target b_plus_tree_test hash_index_test -j
+./build/bin/b_plus_tree_test
+./build/bin/hash_index_test
+```
+
+### 7.2. SQL测试
+
+`test/sql/lab04/basic`评分B+树索引创建、选择、删除和更新；`test/sql/lab04/bonus`使用同类工作负载评分哈希索引。两个目录都包含5个按顺序执行的SQL文件及对应`expected`输出。
+
+```bash
+bash test/sql/evaluate.sh build/bin lab04 basic
+bash test/sql/evaluate.sh build/bin lab04 bonus
+```
+
+### 7.3调试方法
+
+- 点查正确而范围查询漏行时，检查叶链、`LowerBound`、`UpperBound`和范围导航方向。
+- 分裂后偶发找错页面时，检查父分隔键、新子页父ID和根页元数据。
+- 删除后树结构异常时，分别检查重新分配、合并、父页删除和根收缩。
+- 缓冲池测试卡住或页面无法淘汰时，检查每条返回路径上的页守卫作用域和pin count。
+- SQL批量写入留下部分数据时，检查唯一性校验是否在任何表/索引修改前完成。
+
+## 8. 作业评分与提交
+
+### 评分标准
+
+1. 实验报告：说明实现思路、遇到的困难及解决过程、实验结果、对框架代码和实验的建议，并回答本文的思考题。请避免直接粘贴大段代码，正文建议2–4页。
+
+2. 功能测试：
+
+   - t1需要通过`test/storage/bptree_test.cpp`中的全部GoogleTest测试。
+   - t2需要按顺序通过`test/sql/lab04/basic`下的SQL测试，并与`expected`输出比较无差异。
+   - f1需要通过`test/storage/hashindex_test.cpp`中的全部GoogleTest测试，并按顺序通过`test/sql/lab04/bonus`下的SQL测试。
+
+**重要：请勿抄袭代码或搬运他人实验结果。课程组会严格审查；如被发现，将取消大实验分数，情节严重者可能影响课程总评。**
+
+### 提交前检查
+
+- 必做部分运行`b_plus_tree_test`和`lab04/basic`；完成附加题时再运行`hash_index_test`和`lab04/bonus`。
+- 执行SQL测试前启动`build/bin/njudb`和`build/bin/client`，并确认没有其他进程占用服务端口。
+- `02_select.sql`输出中`KeySchema`的索引ID可能因环境而不同；除ID外的其他输出必须与期望结果一致。
+- 确认没有提交`build/`、`data/`或SQL测试的`output/`等运行产物。
+
 ### 提交材料
 
-1. 实验报告（提交一份PDF，命名格式：lab4\_学号\_姓名.pdf）：请在报告开头写上相关信息。
-   
-   | 学号     | 姓名 | 邮箱                      | 完成题目 |
-      | -------- | ---- | ------------------------- | -------- |
-   | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | t1/t2/f1/f2    |
+1. 实验报告：提交一份PDF，命名为`lab4_学号_姓名.pdf`。请在报告开头填写：
 
-2. 代码：`njudb/src`文件夹
+   | 学号 | 姓名 | 邮箱 | 完成题目 |
+   |---|---|---|---|
+   | 12345678 | 张三 | zhangsan@smail.nju.edu.cn | t1/t2/f1/f2 |
 
-*提交示例：请将以上两部分内容打包并命名为lab4\_学号\_姓名.zip（例如lab4_123456_张三.zip）并上传至提交平台，请确保解压后目录树如下：*
+2. 代码：提交`njudb/src`文件夹。
 
-```
-├── lab4_123456_张三.pdf
+将以上两部分打包并命名为`lab4_学号_姓名.zip`。解压后的目录树应当为：
+
+```text
+├── lab4_12345678_张三.pdf
 └── src
- ├── CMakeLists.txt
- ├── common
- ├── concurrency
- ├── execution
- ├── expr
- ├── log
- ├── main.cpp
- ├── net
- ├── optimizer
- ├── parser
- ├── plan
- ├── storage
- └── system
+    ├── CMakeLists.txt
+    ├── common
+    ├── concurrency
+    ├── execution
+    ├── expr
+    ├── log
+    ├── main.cpp
+    ├── net
+    ├── optimizer
+    ├── parser
+    ├── plan
+    ├── storage
+    └── system
 ```
